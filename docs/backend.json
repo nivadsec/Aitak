@@ -1,0 +1,309 @@
+{
+  "entities": {
+    "Student": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Student",
+      "type": "object",
+      "description": "Represents a student in the SmartCalm Reports system.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the Student entity."
+        },
+        "firstName": {
+          "type": "string",
+          "description": "The first name of the student."
+        },
+        "lastName": {
+          "type": "string",
+          "description": "The last name of the student."
+        },
+        "email": {
+          "type": "string",
+          "description": "The email address of the student.",
+          "format": "email"
+        },
+        "gradeLevel": {
+          "type": "string",
+          "description": "The grade level of the student (e.g., '10th Grade')."
+        },
+        "major": {
+          "type": "string",
+          "description": "The major or field of study for the student, if applicable."
+        },
+        "isActive": {
+          "type": "boolean",
+          "description": "Indicates whether the student's account is active."
+        }
+      },
+      "required": [
+        "id",
+        "firstName",
+        "lastName",
+        "email",
+        "gradeLevel",
+        "major",
+        "isActive"
+      ]
+    },
+    "Teacher": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Teacher",
+      "type": "object",
+      "description": "Represents a teacher or admin in the SmartCalm Reports system.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the Teacher entity."
+        },
+        "firstName": {
+          "type": "string",
+          "description": "The first name of the teacher."
+        },
+        "lastName": {
+          "type": "string",
+          "description": "The last name of the teacher."
+        },
+        "email": {
+          "type": "string",
+          "description": "The email address of the teacher.",
+          "format": "email"
+        }
+      },
+      "required": [
+        "id",
+        "firstName",
+        "lastName",
+        "email"
+      ]
+    },
+    "DailyReport": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "DailyReport",
+      "type": "object",
+      "description": "Represents a student's daily report.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the DailyReport entity."
+        },
+        "studentId": {
+          "type": "string",
+          "description": "Reference to Student. (Relationship: Student 1:N DailyReport)"
+        },
+        "date": {
+          "type": "string",
+          "description": "The date for which the report is recorded.",
+          "format": "date-time"
+        },
+        "wakeUpTime": {
+          "type": "string",
+          "description": "The time the student woke up.",
+          "format": "date-time"
+        },
+        "studyStartTime": {
+          "type": "string",
+          "description": "The time the student started studying.",
+          "format": "date-time"
+        },
+        "studyEndTime": {
+          "type": "string",
+          "description": "The time the student finished studying.",
+          "format": "date-time"
+        },
+        "totalStudyMinutes": {
+          "type": "number",
+          "description": "Total minutes studied on the report date."
+        },
+        "minutesOfClasses": {
+          "type": "number",
+          "description": "Minutes spent in classes"
+        },
+        "sleepAmount": {
+          "type": "number",
+          "description": "Total amount of sleep student got"
+        },
+        "disasterLevel": {
+          "type": "number",
+          "description": "Slider from 1-10 indicating the students current mental status"
+        },
+        "minutesOfMobileUsage": {
+          "type": "number",
+          "description": "Amount of time spent of the students mobile device"
+        }
+      },
+      "required": [
+        "id",
+        "studentId",
+        "date",
+        "wakeUpTime",
+        "studyStartTime",
+        "studyEndTime",
+        "totalStudyMinutes",
+        "minutesOfClasses",
+        "sleepAmount",
+        "disasterLevel",
+        "minutesOfMobileUsage"
+      ]
+    },
+    "SubjectItem": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "SubjectItem",
+      "type": "object",
+      "description": "Represents each subject that the student will be submitting a report for",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the SubjectItem entity."
+        },
+        "dailyReportId": {
+          "type": "string",
+          "description": "Reference to DailyReport. (Relationship: DailyReport 1:N SubjectItem)"
+        },
+        "subject": {
+          "type": "string",
+          "description": "Name of the subject"
+        },
+        "topic": {
+          "type": "string",
+          "description": "The specific topic that was studied"
+        },
+        "studyTime": {
+          "type": "number",
+          "description": "Amount of time spent on the topic"
+        },
+        "totalTestQuestions": {
+          "type": "number",
+          "description": "Total number of questions on the test"
+        },
+        "correctTestQuestions": {
+          "type": "number",
+          "description": "Number of correct answers on the test"
+        },
+        "incorrectTestQuestions": {
+          "type": "number",
+          "description": "Number of incorrect answers on the test"
+        },
+        "testPercentage": {
+          "type": "number",
+          "description": "Students score on the test"
+        },
+        "testTime": {
+          "type": "number",
+          "description": "Time spent on the test"
+        }
+      },
+      "required": [
+        "id",
+        "dailyReportId",
+        "subject",
+        "topic",
+        "studyTime",
+        "totalTestQuestions",
+        "correctTestQuestions",
+        "incorrectTestQuestions",
+        "testPercentage",
+        "testTime"
+      ]
+    }
+  },
+  "auth": {
+    "providers": [
+      "password",
+      "anonymous"
+    ]
+  },
+  "firestore": {
+    "structure": [
+      {
+        "path": "/teachers/{teacherId}",
+        "definition": {
+          "entityName": "teacher",
+          "schema": {
+            "$ref": "#/backend/entities/Teacher"
+          },
+          "description": "Stores teacher profiles. The 'teacherId' is the Firebase Authentication UID.  Teachers can only manage their own profile.",
+          "params": [
+            {
+              "name": "teacherId",
+              "description": "The UID of the teacher, obtained from Firebase Authentication."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/teachers/{teacherId}/students/{studentId}",
+        "definition": {
+          "entityName": "student",
+          "schema": {
+            "$ref": "#/backend/entities/Student"
+          },
+          "description": "Stores student profiles managed by a specific teacher. The 'teacherId' is the Firebase Authentication UID of the teacher. This structure allows easy listing of students managed by a teacher. Includes denormalized 'teacherId' for authorization independence.",
+          "params": [
+            {
+              "name": "teacherId",
+              "description": "The UID of the teacher who manages this student."
+            },
+            {
+              "name": "studentId",
+              "description": "The unique ID of the student."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/teachers/{teacherId}/students/{studentId}/dailyReports/{dailyReportId}",
+        "definition": {
+          "entityName": "DailyReport",
+          "schema": {
+            "$ref": "#/backend/entities/DailyReport"
+          },
+          "description": "Stores daily reports for a specific student managed by a teacher.  The 'teacherId' and 'studentId' ensure proper data scoping. Includes denormalized 'teacherId' and 'studentId' for authorization independence.",
+          "params": [
+            {
+              "name": "teacherId",
+              "description": "The UID of the teacher who manages this student."
+            },
+            {
+              "name": "studentId",
+              "description": "The unique ID of the student."
+            },
+            {
+              "name": "dailyReportId",
+              "description": "The unique ID of the daily report."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/teachers/{teacherId}/students/{studentId}/dailyReports/{dailyReportId}/subjectItems/{subjectItemId}",
+        "definition": {
+          "entityName": "SubjectItem",
+          "schema": {
+            "$ref": "#/backend/entities/SubjectItem"
+          },
+          "description": "Stores subject items for a specific daily report of a student managed by a teacher. The 'teacherId', 'studentId', and 'dailyReportId' ensure data scoping. Includes denormalized 'teacherId', 'studentId', and 'dailyReportId' for authorization independence.",
+          "params": [
+            {
+              "name": "teacherId",
+              "description": "The UID of the teacher who manages this student."
+            },
+            {
+              "name": "studentId",
+              "description": "The unique ID of the student."
+            },
+            {
+              "name": "dailyReportId",
+              "description": "The unique ID of the daily report."
+            },
+            {
+              "name": "subjectItemId",
+              "description": "The unique ID of the subject item."
+            }
+          ]
+        }
+      }
+    ],
+    "reasoning": "The Firestore structure is designed to manage students and teachers, enabling teachers to add, edit, and manage student data. It leverages path-based ownership for managing student data under each teacher, facilitating easy querying and secure access. The structure ensures authorization independence by not relying on parent document data for child document access. QAPs are supported through structural segregation, as the teacher can manage their students, and students' daily reports and subject items are organized under their user ID, simplifying list operations within the scope of a user's data."
+  }
+}
