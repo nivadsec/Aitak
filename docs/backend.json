@@ -205,6 +205,22 @@
         "testPercentage",
         "testTime"
       ]
+    },
+    "Message": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Message",
+      "type": "object",
+      "description": "Represents a message sent from a teacher to a student or all students.",
+      "properties": {
+        "id": { "type": "string" },
+        "teacherId": { "type": "string" },
+        "studentId": { "type": "string", "description": "Can be a specific student ID or 'all'." },
+        "content": { "type": "string" },
+        "timestamp": { "type": "string", "format": "date-time" },
+        "sentByEmail": { "type": "boolean" },
+        "read": { "type": "boolean", "default": false }
+      },
+      "required": ["id", "teacherId", "studentId", "content", "timestamp"]
     }
   },
   "auth": {
@@ -299,6 +315,50 @@
             {
               "name": "subjectItemId",
               "description": "The unique ID of the subject item."
+            }
+          ]
+        }
+      },
+       {
+        "path": "/teachers/{teacherId}/messages/{messageId}",
+        "definition": {
+          "entityName": "Message",
+          "schema": {
+            "$ref": "#/backend/entities/Message"
+          },
+          "description": "Stores messages sent by a teacher to all of their students.",
+          "params": [
+            {
+              "name": "teacherId",
+              "description": "The UID of the teacher sending the message."
+            },
+            {
+              "name": "messageId",
+              "description": "The unique ID of the message."
+            }
+          ]
+        }
+      },
+       {
+        "path": "/teachers/{teacherId}/students/{studentId}/messages/{messageId}",
+        "definition": {
+          "entityName": "Message",
+          "schema": {
+            "$ref": "#/backend/entities/Message"
+          },
+          "description": "Stores messages sent by a teacher to a specific student.",
+          "params": [
+            {
+              "name": "teacherId",
+              "description": "The UID of the teacher who manages this student."
+            },
+            {
+              "name": "studentId",
+              "description": "The unique ID of the student receiving the message."
+            },
+            {
+              "name": "messageId",
+              "description": "The unique ID of the message."
             }
           ]
         }

@@ -1,7 +1,7 @@
 'use client';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { BookCopy, Home, Users, BarChart3 } from 'lucide-react';
+import { BookCopy, Home, Users, BarChart3, MessageSquare } from 'lucide-react';
 
 import {
   Sidebar,
@@ -27,6 +27,7 @@ const studentNav = [
 const teacherNav = [
   { href: '/teacher/dashboard', label: 'داشبورد', icon: Home },
   { href: '/teacher/students', label: 'دانش‌آموزان', icon: Users },
+  { href: '/teacher/messages', label: 'پیام‌ها', icon: MessageSquare },
 ];
 
 export function AppSidebar({ role }: AppSidebarProps) {
@@ -47,7 +48,7 @@ export function AppSidebar({ role }: AppSidebarProps) {
             <SidebarMenuItem key={item.href}>
               <SidebarMenuButton
                 asChild
-                isActive={pathname === item.href}
+                isActive={pathname.startsWith(item.href)}
                 tooltip={{ children: item.label, side: 'left', className: 'font-body' }}
               >
                 <Link href={item.href}>
