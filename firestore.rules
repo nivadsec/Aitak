@@ -1,59 +1,56 @@
 /**
- * @file Firestore Security Rules
- * @description This ruleset enforces a hierarchical data model for managing teachers, students, and their associated data (daily reports, subject items, and messages).
+ * @fileoverview Firestore Security Rules for SmartCalm Reports.
+ *
+ * Core Philosophy:
+ * This ruleset enforces a hierarchical ownership model where teachers manage students,
+ * and only authenticated teachers can create, read, update, or delete data related to their students.
+ * Public announcements are readable by anyone, but only teachers can create, update, or delete them.
  *
  * Data Structure:
- * - /announcements/{announcementId}: Public announcements created by teachers.
- * - /teachers/{teacherId}: Teacher profiles, where teacherId is the Firebase Auth UID.
- * - /teachers/{teacherId}/students/{studentId}: Student profiles managed by a specific teacher.
+ * - /announcements/{announcementId}: Public announcements.
+ * - /teachers/{teacherId}: Teacher profiles.
+ * - /teachers/{teacherId}/students/{studentId}: Student profiles managed by a teacher.
  * - /teachers/{teacherId}/students/{studentId}/dailyReports/{dailyReportId}: Daily reports for a student.
  * - /teachers/{teacherId}/students/{studentId}/dailyReports/{dailyReportId}/subjectItems/{subjectItemId}: Subject items for a daily report.
- * - /teachers/{teacherId}/messages/{messageId}: Messages sent by a teacher to all of their students.
+ * - /teachers/{teacherId}/messages/{messageId}: Messages sent by a teacher to all students.
  * - /teachers/{teacherId}/students/{studentId}/messages/{messageId}: Messages sent by a teacher to a specific student.
  *
  * Key Security Decisions:
- * - Teachers can only manage their own profiles (ownership model).
- * - Teachers can manage student data and messages scoped under their teacher ID.
- * - Public announcements are readable by everyone, but only creatable by teachers.
- *
- * Denormalization for Authorization:
- * The rules leverage the hierarchical structure (teacherId, studentId) present in the paths to authorize access.
+ * - Teachers can only manage their own profiles.
+ * - Students can only be managed by their associated teacher.
+ * - Announcements are publicly readable but teacher-managed for writes.
+ * - Listing of all teachers or students is disallowed to protect privacy.
+ * - Denormalization is used extensively to avoid costly `get()` calls in rules.
  */
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
     /**
-     * @description Allows anyone to read announcements, but only teachers can create them.
+     * @description Allows anyone to read announcements, but only teachers to create, update, or delete them.
      * @path /announcements/{announcementId}
-     * @allow get, list: if true;
-     * @allow create: if isSignedIn() && request.resource.data.teacherId == request.auth.uid;
-     * @allow update: if false;
-     * @allow delete: if false;
-     * @deny create: if !isSignedIn();
-     * @deny update: if true;
-     * @deny delete: if true;
-     * @principle Public read, teacher-only write access for announcements.
+     * @allow (get, list): if true;
+     * @allow (create, update, delete): if isSignedIn() && request.auth.uid == request.resource.data.teacherId;
+     * @deny (create): if request.resource.data.teacherId == null;
+     * @deny (update, delete): if resource.data.teacherId == null;
+     * @principle Public read, owner-only writes, ensures teacher ID consistency.
      */
     match /announcements/{announcementId} {
       allow get, list: if true;
-      allow create: if isSignedIn() && request.resource.data.teacherId == request.auth.uid;
-      allow update: if false;
-      allow delete: if false;
+      allow create: if isSignedIn() && request.auth.uid == request.resource.data.teacherId;
+      allow update: if isSignedIn() && isExistingOwner(resource.data.teacherId);
+      allow delete: if isSignedIn() && isExistingOwner(resource.data.teacherId);
     }
 
     /**
-     * @description Allows a teacher to manage their own profile.
+     * @description Allows teachers to read, create, update, and delete their own profiles.
      * @path /teachers/{teacherId}
-     * @allow get: if isOwner(teacherId);
-     * @allow list: if false;
-     * @allow create: if isOwner(teacherId);
-     * @allow update: if isExistingOwner(teacherId);
-     * @allow delete: if isExistingOwner(teacherId);
-     * @deny create: if !isOwner(teacherId);
-     * @deny update: if !isOwner(teacherId);
-     * @deny delete: if !isOwner(teacherId);
-     * @principle Enforces document ownership for teacher profiles.
+     * @allow (get): if isOwner(teacherId);
+     * @allow (create): if isOwner(teacherId);
+     * @allow (update): if isExistingOwner(teacherId);
+     * @allow (delete): if isExistingOwner(teacherId);
+     * @deny (list): if true;
+     * @principle Enforces document ownership for writes, restricts access to a user's own data tree.
      */
     match /teachers/{teacherId} {
       allow get: if isOwner(teacherId);
@@ -64,108 +61,84 @@ service cloud.firestore {
     }
 
     /**
-     * @description Allows a teacher to manage student profiles under their control.
+     * @description Allows teachers to manage their own students.
      * @path /teachers/{teacherId}/students/{studentId}
-     * @allow get: if isOwner(teacherId);
-     * @allow list: if isOwner(teacherId);
-     * @allow create: if isOwner(teacherId);
-     * @allow update: if isExistingOwner(teacherId);
-     * @allow delete: if isExistingOwner(teacherId);
-     * @deny create: if !isOwner(teacherId);
-     * @deny update: if !isOwner(teacherId);
-     * @deny delete: if !isOwner(teacherId);
-     * @principle Teacher ownership of student profiles.
+     * @allow (get, list): if isOwner(teacherId);
+     * @allow (create): if isOwner(teacherId);
+     * @allow (update): if isExistingOwner(teacherId);
+     * @allow (delete): if isExistingOwner(teacherId);
+     * @principle Enforces document ownership for writes, restricts access to a user's own data tree.
      */
     match /teachers/{teacherId}/students/{studentId} {
-      allow get: if isOwner(teacherId);
-      allow list: if isOwner(teacherId);
+      allow get, list: if isOwner(teacherId);
       allow create: if isOwner(teacherId);
       allow update: if isExistingOwner(teacherId);
       allow delete: if isExistingOwner(teacherId);
     }
 
     /**
-     * @description Allows a teacher to manage daily reports for their students.
+     * @description Allows teachers to manage daily reports for their students.
      * @path /teachers/{teacherId}/students/{studentId}/dailyReports/{dailyReportId}
-     * @allow get: if isOwner(teacherId);
-     * @allow list: if isOwner(teacherId);
-     * @allow create: if isOwner(teacherId);
-     * @allow update: if isExistingOwner(teacherId);
-     * @allow delete: if isExistingOwner(teacherId);
-     * @deny create: if !isOwner(teacherId);
-     * @deny update: if !isOwner(teacherId);
-     * @deny delete: if !isOwner(teacherId);
-     * @principle Teacher ownership of student daily reports.
+     * @allow (get, list): if isOwner(teacherId);
+     * @allow (create): if isOwner(teacherId);
+     * @allow (update): if isExistingOwner(teacherId);
+     * @allow (delete): if isExistingOwner(teacherId);
+     * @principle Enforces document ownership for writes, restricts access to a user's own data tree.
      */
     match /teachers/{teacherId}/students/{studentId}/dailyReports/{dailyReportId} {
-      allow get: if isOwner(teacherId);
-      allow list: if isOwner(teacherId);
+      allow get, list: if isOwner(teacherId);
       allow create: if isOwner(teacherId);
       allow update: if isExistingOwner(teacherId);
       allow delete: if isExistingOwner(teacherId);
     }
 
     /**
-     * @description Allows a teacher to manage subject items for a student's daily report.
+     * @description Allows teachers to manage subject items for daily reports of their students.
      * @path /teachers/{teacherId}/students/{studentId}/dailyReports/{dailyReportId}/subjectItems/{subjectItemId}
-     * @allow get: if isOwner(teacherId);
-     * @allow list: if isOwner(teacherId);
-     * @allow create: if isOwner(teacherId);
-     * @allow update: if isExistingOwner(teacherId);
-     * @allow delete: if isExistingOwner(teacherId);
-     * @deny create: if !isOwner(teacherId);
-     * @deny update: if !isOwner(teacherId);
-     * @deny delete: if !isOwner(teacherId);
-     * @principle Teacher ownership of subject items within daily reports.
+     * @allow (get, list): if isOwner(teacherId);
+     * @allow (create): if isOwner(teacherId);
+     * @allow (update): if isExistingOwner(teacherId);
+     * @allow (delete): if isExistingOwner(teacherId);
+     * @principle Enforces document ownership for writes, restricts access to a user's own data tree.
      */
     match /teachers/{teacherId}/students/{studentId}/dailyReports/{dailyReportId}/subjectItems/{subjectItemId} {
-      allow get: if isOwner(teacherId);
-      allow list: if isOwner(teacherId);
+      allow get, list: if isOwner(teacherId);
       allow create: if isOwner(teacherId);
       allow update: if isExistingOwner(teacherId);
       allow delete: if isExistingOwner(teacherId);
     }
-     /**
-     * @description Allows a teacher to manage messages sent to all students.
+
+    /**
+     * @description Allows teachers to manage messages sent to all of their students.
      * @path /teachers/{teacherId}/messages/{messageId}
-     * @allow get: if isOwner(teacherId);
-     * @allow list: if isOwner(teacherId);
-     * @allow create: if isOwner(teacherId);
-     * @allow update: if isExistingOwner(teacherId);
-     * @allow delete: if isExistingOwner(teacherId);
-     * @deny create: if !isOwner(teacherId);
-     * @deny update: if !isOwner(teacherId);
-     * @deny delete: if !isOwner(teacherId);
-     * @principle Teacher ownership of messages sent to all students.
+     * @allow (get, list): if isOwner(teacherId);
+     * @allow (create): if isOwner(teacherId);
+     * @allow (update): if isExistingOwner(teacherId);
+     * @allow (delete): if isExistingOwner(teacherId);
+     * @principle Enforces document ownership for writes, restricts access to a user's own data tree.
      */
     match /teachers/{teacherId}/messages/{messageId} {
-       allow get: if isOwner(teacherId);
-       allow list: if isOwner(teacherId);
-       allow create: if isOwner(teacherId);
-       allow update: if isExistingOwner(teacherId);
-       allow delete: if isExistingOwner(teacherId);
-    }
-    /**
-     * @description Allows a teacher to manage messages sent to a specific student.
-     * @path /teachers/{teacherId}/students/{studentId}/messages/{messageId}
-     * @allow get: if isOwner(teacherId);
-     * @allow list: if isOwner(teacherId);
-     * @allow create: if isOwner(teacherId);
-     * @allow update: if isExistingOwner(teacherId);
-     * @allow delete: if isExistingOwner(teacherId);
-     * @deny create: if !isOwner(teacherId);
-     * @deny update: if !isOwner(teacherId);
-     * @deny delete: if !isOwner(teacherId);
-     * @principle Teacher ownership of messages sent to a specific student.
-     */
-     match /teachers/{teacherId}/students/{studentId}/messages/{messageId} {
-       allow get: if isOwner(teacherId);
-       allow list: if isOwner(teacherId);
-       allow create: if isOwner(teacherId);
-       allow update: if isExistingOwner(teacherId);
-       allow delete: if isExistingOwner(teacherId);
+      allow get, list: if isOwner(teacherId);
+      allow create: if isOwner(teacherId);
+      allow update: if isExistingOwner(teacherId);
+      allow delete: if isExistingOwner(teacherId);
     }
 
+    /**
+     * @description Allows teachers to manage messages sent to a specific student.
+     * @path /teachers/{teacherId}/students/{studentId}/messages/{messageId}
+     * @allow (get, list): if isOwner(teacherId);
+     * @allow (create): if isOwner(teacherId);
+     * @allow (update): if isExistingOwner(teacherId);
+     * @allow (delete): if isExistingOwner(teacherId);
+     * @principle Enforces document ownership for writes, restricts access to a user's own data tree.
+     */
+    match /teachers/{teacherId}/students/{studentId}/messages/{messageId} {
+      allow get, list: if isOwner(teacherId);
+      allow create: if isOwner(teacherId);
+      allow update: if isExistingOwner(teacherId);
+      allow delete: if isExistingOwner(teacherId);
+    }
 
     // Helper functions
     function isSignedIn() {
@@ -173,11 +146,11 @@ service cloud.firestore {
     }
 
     function isOwner(userId) {
-      return request.auth.uid == userId;
+      return isSignedIn() && request.auth.uid == userId;
     }
 
     function isExistingOwner(userId) {
-        return isOwner(userId) && resource != null;
+      return isOwner(userId) && resource != null;
     }
   }
 }
