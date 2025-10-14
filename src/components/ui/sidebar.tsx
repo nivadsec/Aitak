@@ -310,7 +310,7 @@ const SidebarRail = React.forwardRef<
       )}
       {...props}
     />
-  })
+  )
 })
 SidebarRail.displayName = "SidebarRail"
 
