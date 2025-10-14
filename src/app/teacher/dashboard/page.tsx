@@ -1,12 +1,28 @@
+'use client'
+
 import { AnalyticsDashboard } from '@/components/teacher/AnalyticsDashboard';
 import StudentsDataTable from '@/components/teacher/StudentsDataTable';
-import { students, reports } from '@/lib/data';
+import { useCollection, useFirebase, useMemoFirebase } from '@/firebase';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
+import { collection, query, limit } from 'firebase/firestore';
+import { Skeleton } from '@/components/ui/skeleton';
 
 export default function TeacherDashboardPage() {
+  const { firestore, user } = useFirebase();
+
+  const studentsQuery = useMemoFirebase(() => {
+    if (!user) return null;
+    return query(collection(firestore, 'teachers', user.uid, 'students'), limit(5));
+  }, [firestore, user]);
+
+  const { data: students, isLoading } = useCollection(studentsQuery);
+
+  // Note: We are not fetching reports here for the dashboard overview for performance.
+  // The averages in the table will show 'N/A'. This is acceptable for this view.
+
   return (
     <div className="space-y-6">
       <AnalyticsDashboard />
@@ -24,7 +40,15 @@ export default function TeacherDashboardPage() {
             </Button>
         </CardHeader>
         <CardContent>
-            <StudentsDataTable students={students.slice(0, 5)} reports={reports} />
+            {isLoading ? (
+               <div className="space-y-2">
+                 <Skeleton className="h-12 w-full" />
+                 <Skeleton className="h-12 w-full" />
+                 <Skeleton className="h-12 w-full" />
+               </div>
+            ) : (
+              <StudentsDataTable students={students || []} reports={[]} />
+            )}
         </CardContent>
       </Card>
     </div>

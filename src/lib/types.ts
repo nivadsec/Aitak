@@ -1,9 +1,14 @@
 export interface Student {
-  id: string;
-  name: string;
-  class: string;
-  avatarUrl: string;
+  id: string; // This will be the Firebase Auth UID
+  firstName: string;
+  lastName: string;
+  email: string;
+  gradeLevel: string;
+  major: string;
+  isActive: boolean;
+  avatarUrl?: string; // Optional avatar
 }
+
 
 export interface DailyReportItem {
   subject: string;

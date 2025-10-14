@@ -1,6 +1,7 @@
 import { SidebarProvider, SidebarInset } from '@/components/ui/sidebar';
 import { AppHeader } from '@/components/layout/AppHeader';
 import { AppSidebar } from '@/components/layout/AppSidebar';
+import { FirebaseClientProvider } from '@/firebase';
 
 export default function TeacherLayout({
   children,
@@ -8,12 +9,14 @@ export default function TeacherLayout({
   children: React.ReactNode;
 }) {
   return (
-    <SidebarProvider>
-      <AppSidebar role="teacher" />
-      <SidebarInset>
-        <AppHeader role="teacher" />
-        <main className="flex-1 p-4 md:p-6">{children}</main>
-      </SidebarInset>
-    </SidebarProvider>
+    <FirebaseClientProvider>
+      <SidebarProvider>
+        <AppSidebar role="teacher" />
+        <SidebarInset>
+          <AppHeader role="teacher" />
+          <main className="flex-1 p-4 md:p-6">{children}</main>
+        </SidebarInset>
+      </SidebarProvider>
+    </FirebaseClientProvider>
   );
 }

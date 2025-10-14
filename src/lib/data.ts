@@ -1,11 +1,12 @@
-import type { Student, StudentReport, DailyReportItem } from './types';
+import type { Student, StudentReport } from './types';
 
+// This is now mock data. The app will use Firestore.
 export const students: Student[] = [
-  { id: '1', name: 'سارا رضایی', class: 'A', avatarUrl: 'https://picsum.photos/seed/user-2/100/100' },
-  { id: '2', name: 'علی محمدی', class: 'A', avatarUrl: 'https://picsum.photos/seed/user-1/100/100' },
-  { id: '3', name: 'فاطمه حسینی', class: 'B', avatarUrl: 'https://picsum.photos/seed/user-5/100/100' },
-  { id: '4', name: 'رضا احمدی', class: 'B', avatarUrl: 'https://picsum.photos/seed/user-3/100/100' },
-  { id: '5', name: 'محمد اکبری', class: 'A', avatarUrl: 'https://picsum.photos/seed/user-6/100/100' },
+  { id: '1', firstName: 'سارا', lastName: 'رضایی', gradeLevel: 'دهم', major: 'تجربی', isActive: true, avatarUrl: 'https://picsum.photos/seed/user-2/100/100', email: 'sara@example.com' },
+  { id: '2', firstName: 'علی', lastName: 'محمدی', gradeLevel: 'یازدهم', major: 'ریاضی', isActive: true, avatarUrl: 'https://picsum.photos/seed/user-1/100/100', email: 'ali@example.com' },
+  { id: '3', firstName: 'فاطمه', lastName: 'حسینی', gradeLevel: 'دوازدهم', major: 'انسانی', isActive: false, avatarUrl: 'https://picsum.photos/seed/user-5/100/100', email: 'fatemeh@example.com' },
+  { id: '4', firstName: 'رضا', lastName: 'احمدی', gradeLevel: 'دهم', major: 'ریاضی', isActive: true, avatarUrl: 'https://picsum.photos/seed/user-3/100/100', email: 'reza@example.com' },
+  { id: '5', firstName: 'محمد', lastName: 'اکبری', gradeLevel: 'یازدهم', major: 'تجربی', isActive: true, avatarUrl: 'https://picsum.photos/seed/user-6/100/100', email: 'mohammad@example.com' },
 ];
 
 export const reports: StudentReport[] = [
@@ -75,11 +76,19 @@ export const getReportsForStudent = (studentId: string) => reports.filter(r => r
 
 export const getDailyReportsForGenkit = (studentId: string) => {
     const studentReports = getReportsForStudent(studentId);
-    return studentReports.map(report => ({
-        date: report.date,
-        studyHours: report.items.reduce((total, item) => total + item.studyTime, 0) / 60,
-        testCorrectPercentage: report.items.length > 0 ? report.items.reduce((total, item) => total + (item.correctCount / item.testCount), 0) / report.items.length * 100 : 0,
-        moodRating: report.moodScore,
-        mobileUsageHours: report.mobileHours,
-    }));
+    if (!studentReports || studentReports.length === 0) return [];
+    
+    return studentReports.map(report => {
+        const totalStudyTime = report.items.reduce((total, item) => total + item.studyTime, 0);
+        const totalTests = report.items.reduce((total, item) => total + item.testCount, 0);
+        const totalCorrect = report.items.reduce((total, item) => total + item.correctCount, 0);
+
+        return {
+            date: report.date,
+            studyHours: totalStudyTime / 60,
+            testCorrectPercentage: totalTests > 0 ? (totalCorrect / totalTests) * 100 : 0,
+            moodRating: report.moodScore,
+            mobileUsageHours: report.mobileHours,
+        };
+    });
 }
