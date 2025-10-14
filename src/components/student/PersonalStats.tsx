@@ -7,59 +7,65 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
-import {
-  ChartContainer,
-  ChartTooltip,
-  ChartTooltipContent,
-} from '@/components/ui/chart';
-import { Bar, BarChart, CartesianGrid, XAxis, YAxis } from 'recharts';
-import type { ChartConfig } from '@/components/ui/chart';
+import { BrainCircuit, CheckCircle2, Smile, Smartphone } from 'lucide-react';
 import { MotivationTip } from './MotivationTip';
 
-const chartData = [
-  { day: 'شنبه', hours: 4.5 },
-  { day: 'یکشنبه', hours: 5 },
-  { day: 'دوشنبه', hours: 3 },
-  { day: 'سه‌شنبه', hours: 6 },
-  { day: 'چهارشنبه', hours: 5.5 },
-  { day: 'پنج‌شنبه', hours: 7 },
-  { day: 'جمعه', hours: 4 },
-];
+const StatCard = ({ icon: Icon, title, value, footer, colorClass }) => (
+    <Card>
+      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+        <CardTitle className="text-sm font-medium">{title}</CardTitle>
+        <Icon className={`h-4 w-4 text-muted-foreground ${colorClass}`} />
+      </CardHeader>
+      <CardContent>
+        <div className={`text-2xl font-bold ${colorClass}`}>{value}</div>
+        <p className="text-xs text-muted-foreground">{footer}</p>
+      </CardContent>
+    </Card>
+);
 
-const chartConfig = {
-  hours: {
-    label: 'ساعت مطالعه',
-    color: 'hsl(var(--primary))',
-  },
-} satisfies ChartConfig;
 
 export default function PersonalStats() {
   return (
     <div className="space-y-6">
-      <Card>
+       <Card>
         <CardHeader>
-          <CardTitle className="font-headline text-xl">آمار شخصی</CardTitle>
-          <CardDescription>روند پیشرفت شما در هفته اخیر</CardDescription>
+          <CardTitle className="font-headline text-xl flex items-center gap-2">
+            <BrainCircuit className="h-6 w-6 text-primary" />
+            آمار کلیدی شما
+          </CardTitle>
+          <CardDescription>خلاصه عملکرد شما در این هفته</CardDescription>
         </CardHeader>
         <CardContent>
-          <ChartContainer config={chartConfig} className="h-[200px] w-full">
-            <BarChart accessibilityLayer data={chartData}>
-              <CartesianGrid vertical={false} />
-              <XAxis
-                dataKey="day"
-                tickLine={false}
-                tickMargin={10}
-                axisLine={false}
-                tickFormatter={(value) => value.slice(0, 3)}
-              />
-              <YAxis />
-              <ChartTooltip
-                cursor={false}
-                content={<ChartTooltipContent indicator="dashed" />}
-              />
-              <Bar dataKey="hours" fill="var(--color-hours)" radius={4} />
-            </BarChart>
-          </ChartContainer>
+            <div className="grid grid-cols-2 gap-4">
+                <StatCard 
+                    icon={BrainCircuit}
+                    title="میانگین مطالعه"
+                    value="۴.۵ ساعت"
+                    footer="میانگین روزانه"
+                    colorClass="text-primary"
+                />
+                <StatCard 
+                    icon={CheckCircle2}
+                    title="دقت تست"
+                    value="۸۲٪"
+                    footer="میانگین هفتگی"
+                    colorClass="text-green-500"
+                />
+                 <StatCard 
+                    icon={Smile}
+                    title="شاخص روانی"
+                    value="۷.۵"
+                    footer="میانگین از ۱۰"
+                    colorClass="text-amber-500"
+                />
+                 <StatCard 
+                    icon={Smartphone}
+                    title="استفاده از موبایل"
+                    value="۱.۸ ساعت"
+                    footer="میانگین روزانه"
+                    colorClass="text-red-500"
+                />
+            </div>
         </CardContent>
       </Card>
 
