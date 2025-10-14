@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, UserPlus } from 'lucide-react';
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 
@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Logo } from '@/components/icons/logo';
 import { FirebaseClientProvider, useAuth, initiateAnonymousSignIn, useUser } from '@/firebase';
+import { Separator } from '@/components/ui/separator';
 
 function LoginPageContent() {
   const auth = useAuth();
@@ -69,6 +70,18 @@ function LoginPageContent() {
               <Link href="/teacher/dashboard">
                 <ArrowLeft className="ml-2 h-5 w-5" />
                 ورود به پنل معلم
+              </Link>
+            </Button>
+            <div className="relative my-4">
+                <Separator />
+                <span className="absolute left-1/2 -translate-x-1/2 -translate-y-1/2 bg-card px-2 text-sm text-muted-foreground">
+                    یا
+                </span>
+            </div>
+            <Button asChild variant="outline" size="lg" className="h-12">
+              <Link href="/signup">
+                <UserPlus className="ml-2 h-5 w-5" />
+                ایجاد حساب کاربری دانش‌آموز
               </Link>
             </Button>
           </div>
