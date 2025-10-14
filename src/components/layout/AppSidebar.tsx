@@ -1,7 +1,7 @@
 'use client';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { BookCopy, Home, Users, BarChart3, MessageSquare } from 'lucide-react';
+import { BookCopy, Home, Users, BarChart3, MessageSquare, Megaphone } from 'lucide-react';
 
 import {
   Sidebar,
@@ -28,6 +28,7 @@ const teacherNav = [
   { href: '/teacher/dashboard', label: 'داشبورد', icon: Home },
   { href: '/teacher/students', label: 'دانش‌آموزان', icon: Users },
   { href: '/teacher/messages', label: 'پیام‌ها', icon: MessageSquare },
+  { href: '/teacher/announcements', label: 'اطلاعیه‌ها', icon: Megaphone },
 ];
 
 export function AppSidebar({ role }: AppSidebarProps) {
