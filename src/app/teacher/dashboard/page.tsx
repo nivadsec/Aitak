@@ -14,15 +14,17 @@ import { AnnouncementForm } from '@/components/teacher/AnnouncementForm';
 export default function TeacherDashboardPage() {
   const { firestore, user } = useFirebase();
 
+  // Query only for students, not their reports for this high-level view
   const studentsQuery = useMemoFirebase(() => {
-    if (!user) return null;
+    if (!user || !firestore) return null;
     return query(collection(firestore, 'teachers', user.uid, 'students'), limit(5));
   }, [firestore, user]);
 
-  const { data: students, isLoading } = useCollection(studentsQuery);
+  const { data: students, isLoading: areStudentsLoading } = useCollection(studentsQuery);
 
-  // Note: We are not fetching reports here for the dashboard overview for performance.
+  // We are not fetching reports here for the dashboard overview for performance.
   // The averages in the table will show 'N/A'. This is acceptable for this view.
+  // The full data is loaded on the dedicated students page.
 
   return (
     <div className="grid gap-6 lg:grid-cols-2">
@@ -42,13 +44,14 @@ export default function TeacherDashboardPage() {
               </Button>
           </CardHeader>
           <CardContent>
-              {isLoading ? (
+              {areStudentsLoading ? (
                 <div className="space-y-2">
                   <Skeleton className="h-12 w-full" />
                   <Skeleton className="h-12 w-full" />
                   <Skeleton className="h-12 w-full" />
                 </div>
               ) : (
+                // Pass an empty array for reports, as we are not fetching them here.
                 <StudentsDataTable students={students || []} reports={[]} />
               )}
           </CardContent>
