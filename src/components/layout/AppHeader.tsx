@@ -28,10 +28,12 @@ export function AppHeader({ role }: AppHeaderProps) {
       <div className="md:hidden">
         <SidebarTrigger />
       </div>
-      <h1 className="font-headline text-xl font-bold text-foreground">
-        {role === 'teacher' ? 'پنل معلم' : 'پنل دانش‌آموز'}
-      </h1>
-      <div className="mr-auto flex items-center gap-4">
+      <div className="flex-1">
+        <h1 className="font-headline text-xl font-bold text-foreground">
+          {role === 'teacher' ? 'پنل معلم' : 'پنل دانش‌آموز'}
+        </h1>
+      </div>
+      <div className="flex items-center gap-4">
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant="ghost" className="relative h-9 w-9 rounded-full">
