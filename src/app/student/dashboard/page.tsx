@@ -1,4 +1,5 @@
 import { DailyReportForm } from '@/components/student/DailyReportForm';
+import { MotivationTip } from '@/components/student/MotivationTip';
 import PersonalStats from '@/components/student/PersonalStats';
 
 export default function StudentDashboardPage() {
@@ -8,7 +9,9 @@ export default function StudentDashboardPage() {
         <DailyReportForm />
       </div>
       <div className="lg:col-span-2">
-        <PersonalStats />
+        <PersonalStats>
+          <MotivationTip />
+        </PersonalStats>
       </div>
     </div>
   );
