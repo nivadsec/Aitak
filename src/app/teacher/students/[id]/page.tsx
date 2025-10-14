@@ -4,8 +4,8 @@ import { notFound } from 'next/navigation';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import StudentPerformanceAnalysis from '@/components/teacher/StudentPerformanceAnalysis';
-import { useDoc, useFirebase, useMemoFirebase } from '@/firebase';
-import { doc } from 'firebase/firestore';
+import { useDoc, useFirebase, useMemoFirebase, useCollection } from '@/firebase';
+import { doc, collection, query, orderBy, limit } from 'firebase/firestore';
 import { getDailyReportsForGenkit } from '@/lib/data';
 import { Skeleton } from '@/components/ui/skeleton';
 
@@ -17,7 +17,19 @@ export default function StudentDetailPage({ params }: { params: { id: string } }
     return doc(firestore, 'teachers', user.uid, 'students', params.id);
   }, [firestore, user, params.id]);
 
-  const { data: student, isLoading } = useDoc(studentRef);
+  const reportsQuery = useMemoFirebase(() => {
+    if(!user) return null;
+    return query(
+      collection(firestore, 'teachers', user.uid, 'students', params.id, 'dailyReports'),
+      orderBy('date', 'desc'),
+      limit(14) // Get last 2 weeks of reports for analysis
+    );
+  }, [firestore, user, params.id]);
+
+  const { data: student, isLoading: isStudentLoading } = useDoc(studentRef);
+  const { data: reports, isLoading: areReportsLoading } = useCollection(reportsQuery);
+
+  const isLoading = isStudentLoading || areReportsLoading;
 
   if (isLoading) {
     return (
@@ -49,8 +61,8 @@ export default function StudentDetailPage({ params }: { params: { id: string } }
     notFound();
   }
 
-  // TODO: Replace with actual report data from Firestore
-  const dailyReports = getDailyReportsForGenkit(student.id);
+  // Transform Firestore reports for the Genkit flow
+  const dailyReportsForGenkit = getDailyReportsForGenkit(reports || []);
 
   return (
     <div className="space-y-6">
@@ -67,7 +79,7 @@ export default function StudentDetailPage({ params }: { params: { id: string } }
         </CardHeader>
       </Card>
       
-      <StudentPerformanceAnalysis studentId={student.id} dailyReports={dailyReports} />
+      <StudentPerformanceAnalysis studentId={student.id} dailyReports={dailyReportsForGenkit} />
     </div>
   );
 }

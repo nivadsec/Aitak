@@ -1,13 +1,67 @@
+'use client';
+
 import { analyzeStudentPerformance } from '@/ai/flows/analyze-student-performance';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
 import { BrainCircuit, MessageSquareWarning, Sparkles } from 'lucide-react';
 import type { AnalyzeStudentPerformanceInput } from '@/ai/flows/analyze-student-performance';
+import { useEffect, useState } from 'react';
+import type { AnalyzeStudentPerformanceOutput } from '@/ai/flows/analyze-student-performance';
+import { Skeleton } from '../ui/skeleton';
 
 type StudentPerformanceAnalysisProps = AnalyzeStudentPerformanceInput;
 
-export default async function StudentPerformanceAnalysis({ studentId, dailyReports }: StudentPerformanceAnalysisProps) {
-  if (!dailyReports || dailyReports.length === 0) {
+export default function StudentPerformanceAnalysis({ studentId, dailyReports }: StudentPerformanceAnalysisProps) {
+  const [analysis, setAnalysis] = useState<AnalyzeStudentPerformanceOutput | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    async function fetchAnalysis() {
+      if (!dailyReports || dailyReports.length === 0) {
+        setIsLoading(false);
+        return;
+      }
+      setIsLoading(true);
+      try {
+        const result = await analyzeStudentPerformance({ studentId, dailyReports });
+        setAnalysis(result);
+      } catch (error) {
+        console.error("Error fetching student performance analysis:", error);
+        // Optionally set an error state here
+      } finally {
+        setIsLoading(false);
+      }
+    }
+
+    fetchAnalysis();
+  }, [studentId, dailyReports]);
+
+  if (isLoading) {
+    return (
+      <Card>
+        <CardHeader>
+          <div className="flex items-center gap-2">
+            <BrainCircuit className="h-6 w-6 text-primary" />
+            <CardTitle className="font-headline text-xl">تحلیل عملکرد هوشمند</CardTitle>
+          </div>
+          <CardDescription>
+            در حال پردازش داده‌ها توسط هوش مصنوعی...
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-6">
+          <div className="space-y-2">
+            <Skeleton className="h-4 w-1/3" />
+            <Skeleton className="h-16 w-full" />
+          </div>
+          <div className="space-y-2">
+            <Skeleton className="h-4 w-1/4" />
+            <Skeleton className="h-12 w-full" />
+          </div>
+        </CardContent>
+      </Card>
+    )
+  }
+
+  if (!analysis) {
     return (
       <Card>
         <CardHeader>
@@ -19,8 +73,6 @@ export default async function StudentPerformanceAnalysis({ studentId, dailyRepor
       </Card>
     );
   }
-
-  const analysis = await analyzeStudentPerformance({ studentId, dailyReports });
 
   return (
     <Card>
@@ -47,9 +99,11 @@ export default async function StudentPerformanceAnalysis({ studentId, dailyRepor
             </h3>
             <div className="flex flex-col gap-2">
               {analysis.alerts.map((alert, index) => (
-                <div key={index} className="flex items-start gap-2 rounded-md border border-destructive/50 bg-destructive/10 p-3">
-                  <MessageSquareWarning className="h-5 w-5 flex-shrink-0 text-destructive mt-1" />
-                  <p className="text-sm text-destructive">{alert}</p>
+                <div key={index} className="flex items-start gap-3 rounded-md border border-destructive/50 bg-destructive/10 p-3">
+                  <div className="flex-shrink-0 pt-0.5">
+                    <MessageSquareWarning className="h-5 w-5 text-destructive" />
+                  </div>
+                  <p className="text-sm text-destructive-foreground leading-relaxed">{alert}</p>
                 </div>
               ))}
             </div>
@@ -62,9 +116,14 @@ export default async function StudentPerformanceAnalysis({ studentId, dailyRepor
                 <Sparkles className='h-5 w-5 text-primary' />
                 پیشنهادها
             </h3>
-            <ul className="list-disc space-y-2 pr-5 text-muted-foreground">
+            <ul className="space-y-3 pr-1">
               {analysis.recommendations.map((rec, index) => (
-                <li key={index}>{rec}</li>
+                <li key={index} className="flex items-start gap-3">
+                    <div className="flex-shrink-0 pt-1">
+                        <Sparkles className='h-4 w-4 text-primary' />
+                    </div>
+                    <span className="text-muted-foreground">{rec}</span>
+                </li>
               ))}
             </ul>
           </div>

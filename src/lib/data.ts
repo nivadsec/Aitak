@@ -74,19 +74,22 @@ export const getStudentById = (id: string) => students.find(s => s.id === id);
 
 export const getReportsForStudent = (studentId: string) => reports.filter(r => r.studentId === studentId);
 
-export const getDailyReportsForGenkit = (studentId: string) => {
-    const studentReports = getReportsForStudent(studentId);
+// Updated function to accept reports directly
+export const getDailyReportsForGenkit = (studentReports: StudentReport[]) => {
     if (!studentReports || studentReports.length === 0) return [];
     
     return studentReports.map(report => {
-        const totalStudyTime = report.items.reduce((total, item) => total + item.studyTime, 0);
-        const totalTests = report.items.reduce((total, item) => total + item.testCount, 0);
-        const totalCorrect = report.items.reduce((total, item) => total + item.correctCount, 0);
+        const totalStudyTime = (report.items || []).reduce((total, item) => total + (item.studyTime || 0), 0);
+        const totalTests = (report.items || []).reduce((total, item) => total + (item.testCount || 0), 0);
+        const totalCorrect = (report.items || []).reduce((total, item) => total + (item.correctCount || 0), 0);
+        
+        // Convert Firestore Timestamp to a readable date string if necessary
+        const reportDate = typeof report.date === 'string' ? report.date : (report.date as any).toDate().toISOString().split('T')[0];
 
         return {
-            date: report.date,
-            studyHours: totalStudyTime / 60,
-            testCorrectPercentage: totalTests > 0 ? (totalCorrect / totalTests) * 100 : 0,
+            date: reportDate,
+            studyHours: parseFloat((totalStudyTime / 60).toFixed(1)),
+            testCorrectPercentage: totalTests > 0 ? parseFloat(((totalCorrect / totalTests) * 100).toFixed(1)) : 0,
             moodRating: report.moodScore,
             mobileUsageHours: report.mobileHours,
         };
