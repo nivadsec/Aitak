@@ -5,13 +5,14 @@ import { useFieldArray, useForm } from 'react-hook-form';
 import * as z from 'zod';
 import {
   CalendarIcon,
-  Clock,
   FileUp,
   PlusCircle,
   Trash2,
   Save,
 } from 'lucide-react';
 import { format } from 'date-fns-jalali';
+import { useEffect } from 'react';
+
 
 import { Button } from '@/components/ui/button';
 import {
@@ -56,7 +57,7 @@ const reportItemSchema = z.object({
 });
 
 const formSchema = z.object({
-  date: z.date({ required_error: 'تاریخ الزامی است.' }),
+  date: z.date({ required_error: 'تاریخ الزامی است.' }).optional(),
   wakeUpTime: z.string().optional(),
   studyStartTime: z.string().optional(),
   items: z.array(reportItemSchema),
@@ -72,7 +73,6 @@ export function DailyReportForm() {
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      date: new Date(),
       items: [
         { subject: '', topic: '', studyTime: 0, testCount: 0, correctCount: 0, wrongCount: 0, testTime: 0 },
       ],
@@ -81,6 +81,12 @@ export function DailyReportForm() {
       mobileHours: [2],
     },
   });
+
+  useEffect(() => {
+    // Set the date only on the client-side to avoid hydration mismatch
+    form.setValue('date', new Date());
+  }, [form.setValue]);
+
 
   const { fields, append, remove } = useFieldArray({
     control: form.control,
