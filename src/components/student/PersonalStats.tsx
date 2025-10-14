@@ -9,6 +9,7 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { BrainCircuit, CheckCircle2, Smile, Smartphone } from 'lucide-react';
+import { MotivationTip } from './MotivationTip';
 
 const StatCard = ({ icon: Icon, title, value, footer, colorClass }) => (
     <Card>
@@ -24,7 +25,7 @@ const StatCard = ({ icon: Icon, title, value, footer, colorClass }) => (
 );
 
 
-export default function PersonalStats({ children }: { children: React.ReactNode }) {
+export default function PersonalStats({ children }: { children?: React.ReactNode }) {
   return (
     <div className="space-y-6">
        <Card>
@@ -68,7 +69,7 @@ export default function PersonalStats({ children }: { children: React.ReactNode 
             </div>
         </CardContent>
       </Card>
-      {children}
+      <MotivationTip />
     </div>
   );
 }
