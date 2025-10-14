@@ -9,6 +9,7 @@ import { ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
 import { collection, query, limit } from 'firebase/firestore';
 import { Skeleton } from '@/components/ui/skeleton';
+import { AnnouncementForm } from '@/components/teacher/AnnouncementForm';
 
 export default function TeacherDashboardPage() {
   const { firestore, user } = useFirebase();
@@ -24,33 +25,38 @@ export default function TeacherDashboardPage() {
   // The averages in the table will show 'N/A'. This is acceptable for this view.
 
   return (
-    <div className="space-y-6">
-      <AnalyticsDashboard />
-      <Card>
-        <CardHeader className='flex-row items-center justify-between'>
-            <div>
-                <CardTitle className="font-headline text-xl">نمای کلی دانش‌آموزان</CardTitle>
-                <CardDescription>برای مشاهده جزئیات، روی هر دانش‌آموز کلیک کنید.</CardDescription>
-            </div>
-            <Button asChild variant="outline">
-                <Link href="/teacher/students">
-                    مشاهده همه
-                    <ArrowLeft className="mr-2 h-4 w-4" />
-                </Link>
-            </Button>
-        </CardHeader>
-        <CardContent>
-            {isLoading ? (
-               <div className="space-y-2">
-                 <Skeleton className="h-12 w-full" />
-                 <Skeleton className="h-12 w-full" />
-                 <Skeleton className="h-12 w-full" />
-               </div>
-            ) : (
-              <StudentsDataTable students={students || []} reports={[]} />
-            )}
-        </CardContent>
-      </Card>
+    <div className="grid gap-6 lg:grid-cols-2">
+      <div className="space-y-6">
+        <AnalyticsDashboard />
+        <Card>
+          <CardHeader className='flex-row items-center justify-between'>
+              <div>
+                  <CardTitle className="font-headline text-xl">نمای کلی دانش‌آموزان</CardTitle>
+                  <CardDescription>برای مشاهده جزئیات، روی هر دانش‌آموز کلیک کنید.</CardDescription>
+              </div>
+              <Button asChild variant="outline">
+                  <Link href="/teacher/students">
+                      مشاهده همه
+                      <ArrowLeft className="mr-2 h-4 w-4" />
+                  </Link>
+              </Button>
+          </CardHeader>
+          <CardContent>
+              {isLoading ? (
+                <div className="space-y-2">
+                  <Skeleton className="h-12 w-full" />
+                  <Skeleton className="h-12 w-full" />
+                  <Skeleton className="h-12 w-full" />
+                </div>
+              ) : (
+                <StudentsDataTable students={students || []} reports={[]} />
+              )}
+          </CardContent>
+        </Card>
+      </div>
+       <div className="space-y-6">
+          <AnnouncementForm />
+      </div>
     </div>
   );
 }

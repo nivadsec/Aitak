@@ -221,6 +221,19 @@
         "read": { "type": "boolean", "default": false }
       },
       "required": ["id", "teacherId", "studentId", "content", "timestamp"]
+    },
+    "Announcement": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Announcement",
+      "type": "object",
+      "description": "Represents a public announcement visible to everyone on the main page.",
+      "properties": {
+        "id": { "type": "string" },
+        "content": { "type": "string" },
+        "timestamp": { "type": "string", "format": "date-time" },
+        "teacherId": { "type": "string" }
+      },
+      "required": ["id", "content", "timestamp", "teacherId"]
     }
   },
   "auth": {
@@ -231,6 +244,22 @@
   },
   "firestore": {
     "structure": [
+      {
+        "path": "/announcements/{announcementId}",
+        "definition": {
+          "entityName": "Announcement",
+          "schema": {
+            "$ref": "#/backend/entities/Announcement"
+          },
+          "description": "Stores public announcements created by teachers, visible on the main login page.",
+          "params": [
+            {
+              "name": "announcementId",
+              "description": "The unique ID of the announcement."
+            }
+          ]
+        }
+      },
       {
         "path": "/teachers/{teacherId}",
         "definition": {
