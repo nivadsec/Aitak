@@ -1,10 +1,14 @@
+
 'use client';
 
 import React, { DependencyList, createContext, useContext, ReactNode, useMemo, useState, useEffect } from 'react';
 import { FirebaseApp } from 'firebase/app';
-import { Firestore } from 'firebase/firestore';
+import { Firestore, doc, getDoc } from 'firebase/firestore';
 import { Auth, User, onAuthStateChanged } from 'firebase/auth';
-import { FirebaseErrorListener } from '@/components/FirebaseErrorListener'
+import { useRouter } from 'next/navigation';
+
+import { FirebaseErrorListener } from '@/components/FirebaseErrorListener';
+import { ROLES } from '@/lib/roles';
 
 interface FirebaseProviderProps {
   children: ReactNode;
@@ -18,6 +22,7 @@ interface UserAuthState {
   user: User | null;
   isUserLoading: boolean;
   userError: Error | null;
+  role: string | null;
 }
 
 // Combined state for the Firebase context
@@ -30,6 +35,7 @@ export interface FirebaseContextState {
   user: User | null;
   isUserLoading: boolean; // True during initial auth check
   userError: Error | null; // Error from auth listener
+  role: string | null;
 }
 
 // Return type for useFirebase()
@@ -40,6 +46,7 @@ export interface FirebaseServicesAndUser {
   user: User | null;
   isUserLoading: boolean;
   userError: Error | null;
+  role: string | null;
 }
 
 // Return type for useUser() - specific to user auth state
@@ -47,6 +54,7 @@ export interface UserHookResult { // Renamed from UserAuthHookResult for consist
   user: User | null;
   isUserLoading: boolean;
   userError: Error | null;
+  role: string | null;
 }
 
 // React Context
@@ -65,29 +73,55 @@ export const FirebaseProvider: React.FC<FirebaseProviderProps> = ({
     user: null,
     isUserLoading: true, // Start loading until first auth event
     userError: null,
+    role: null,
   });
+
+  const router = useRouter();
+  const currentPath = typeof window !== 'undefined' ? window.location.pathname : '';
 
   // Effect to subscribe to Firebase auth state changes
   useEffect(() => {
     if (!auth) { // If no Auth service instance, cannot determine user state
-      setUserAuthState({ user: null, isUserLoading: false, userError: new Error("Auth service not provided.") });
+      setUserAuthState({ user: null, isUserLoading: false, userError: new Error("Auth service not provided."), role: null });
       return;
     }
 
-    setUserAuthState({ user: null, isUserLoading: true, userError: null }); // Reset on auth instance change
+    setUserAuthState({ user: null, isUserLoading: true, userError: null, role: null }); // Reset on auth instance change
 
     const unsubscribe = onAuthStateChanged(
       auth,
-      (firebaseUser) => { // Auth state determined
-        setUserAuthState({ user: firebaseUser, isUserLoading: false, userError: null });
+      async (firebaseUser) => { // Auth state determined
+        if (firebaseUser) {
+          const role = firebaseUser.photoURL || ROLES.STUDENT; // Default to student
+          setUserAuthState({ user: firebaseUser, isUserLoading: false, userError: null, role });
+
+          // Centralized Redirect Logic
+          const isAuthPage = currentPath === '/' || currentPath === '/signup';
+          if (role === ROLES.TEACHER && !currentPath.startsWith('/teacher')) {
+            router.push('/teacher/dashboard');
+          } else if (role === ROLES.STUDENT && !currentPath.startsWith('/student')) {
+            router.push('/student/dashboard');
+          } else if (isAuthPage) {
+             // If user is logged in and on an auth page, redirect them.
+             if (role === ROLES.TEACHER) router.push('/teacher/dashboard');
+             else router.push('/student/dashboard');
+          }
+
+        } else {
+          setUserAuthState({ user: null, isUserLoading: false, userError: null, role: null });
+          // If logged out, and on a protected route, redirect to login
+          if (currentPath.startsWith('/teacher') || currentPath.startsWith('/student')) {
+            router.push('/');
+          }
+        }
       },
       (error) => { // Auth listener error
         console.error("FirebaseProvider: onAuthStateChanged error:", error);
-        setUserAuthState({ user: null, isUserLoading: false, userError: error });
+        setUserAuthState({ user: null, isUserLoading: false, userError: error, role: null });
       }
     );
     return () => unsubscribe(); // Cleanup
-  }, [auth]); // Depends on the auth instance
+  }, [auth, router, currentPath]); // Depends on the auth instance
 
   // Memoize the context value
   const contextValue = useMemo((): FirebaseContextState => {
@@ -97,9 +131,7 @@ export const FirebaseProvider: React.FC<FirebaseProviderProps> = ({
       firebaseApp: servicesAvailable ? firebaseApp : null,
       firestore: servicesAvailable ? firestore : null,
       auth: servicesAvailable ? auth : null,
-      user: userAuthState.user,
-      isUserLoading: userAuthState.isUserLoading,
-      userError: userAuthState.userError,
+      ...userAuthState
     };
   }, [firebaseApp, firestore, auth, userAuthState]);
 
@@ -133,6 +165,7 @@ export const useFirebase = (): FirebaseServicesAndUser => {
     user: context.user,
     isUserLoading: context.isUserLoading,
     userError: context.userError,
+    role: context.role,
   };
 };
 
@@ -157,6 +190,7 @@ export const useFirebaseApp = (): FirebaseApp => {
 type MemoFirebase <T> = T & {__memo?: boolean};
 
 export function useMemoFirebase<T>(factory: () => T, deps: DependencyList): T | (MemoFirebase<T>) {
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   const memoized = useMemo(factory, deps);
   
   if(typeof memoized !== 'object' || memoized === null) return memoized;
@@ -171,6 +205,6 @@ export function useMemoFirebase<T>(factory: () => T, deps: DependencyList): T | 
  * @returns {UserHookResult} Object with user, isUserLoading, userError.
  */
 export const useUser = (): UserHookResult => { // Renamed from useAuthUser
-  const { user, isUserLoading, userError } = useFirebase(); // Leverages the main hook
-  return { user, isUserLoading, userError };
+  const { user, isUserLoading, userError, role } = useFirebase(); // Leverages the main hook
+  return { user, isUserLoading, userError, role };
 };

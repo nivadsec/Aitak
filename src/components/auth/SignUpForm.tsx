@@ -26,10 +26,13 @@ import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth, useFirebase } from '@/firebase/provider';
 import { setDocumentNonBlocking } from '@/firebase/non-blocking-updates';
-import { doc } from 'firebase/firestore';
+import { doc, getDoc, doc as firestoreDoc, collection, getDocs } from 'firebase/firestore';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
+
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 import { Alert, AlertDescription, AlertTitle } from '../ui/alert';
+import { ROLES } from '@/lib/roles';
 
 const formSchema = z.object({
   firstName: z.string().min(2, 'نام الزامی است.'),
@@ -67,8 +70,28 @@ export function SignUpForm() {
   });
 
   async function onSubmit(data: FormValues) {
+    if (!firestore) return;
     setIsLoading(true);
     try {
+      // Find teacher by code. For simplicity, we assume teacher code is their UID.
+      // In a real app, you'd have a separate collection to look up codes.
+      let teacherId = data.teacherCode || 'default-teacher'; // Fallback for now
+      if (data.teacherCode) {
+        const teacherRef = firestoreDoc(firestore, 'teachers', data.teacherCode);
+        const teacherSnap = await getDoc(teacherRef);
+        if (!teacherSnap.exists()) {
+          toast({
+            title: 'کد معلم نامعتبر',
+            description: 'معلمی با این کد یافت نشد. لطفاً کد را بررسی کنید یا فیلد را خالی بگذارید.',
+            variant: 'destructive',
+          });
+          setIsLoading(false);
+          return;
+        }
+        teacherId = teacherSnap.id;
+      }
+
+
       const userCredential = await createUserWithEmailAndPassword(
         auth,
         data.email,
@@ -79,20 +102,16 @@ export function SignUpForm() {
       // Update user profile (displayName and role)
       await updateProfile(user, {
         displayName: `${data.firstName} ${data.lastName}`,
-        photoURL: 'student', // Using photoURL to store role
+        photoURL: ROLES.STUDENT, // Using photoURL to store role
       });
 
       // Send verification email
       await sendEmailVerification(user);
 
-      // Store additional student info in Firestore
-      // The teacher code could be used to find the correct teacher document.
-      // For now, we assume a default or known teacher ID if the code is valid.
-      // This is a simplified logic.
-      const teacherId = data.teacherCode || 'default-teacher'; // Placeholder
       const studentRef = doc(firestore, 'teachers', teacherId, 'students', user.uid);
       const studentData = {
         id: user.uid,
+        teacherId: teacherId, // Store the teacher's ID
         firstName: data.firstName,
         lastName: data.lastName,
         email: data.email,
@@ -109,8 +128,6 @@ export function SignUpForm() {
       });
 
       setIsSuccess(true);
-      // Optional: Redirect after a delay
-      // setTimeout(() => router.push('/student/dashboard'), 5000);
     } catch (error: any) {
       console.error('Error signing up:', error);
       let description = 'مشکلی در هنگام ثبت‌نام پیش آمد. لطفاً دوباره تلاش کنید.';

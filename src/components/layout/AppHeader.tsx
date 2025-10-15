@@ -1,6 +1,8 @@
+
+'use client';
+
 import Link from 'next/link';
-import Image from 'next/image';
-import { LogOut, User, Settings, LayoutDashboard } from 'lucide-react';
+import { LogOut, User, Settings } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import {
@@ -13,15 +15,21 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { SidebarTrigger } from '@/components/ui/sidebar';
-import { PlaceHolderImages } from '@/lib/placeholder-images';
+import { useFirebase, initiateSignOut, useAuth } from '@/firebase';
 
 type AppHeaderProps = {
   role: 'student' | 'teacher';
 };
 
 export function AppHeader({ role }: AppHeaderProps) {
-  const userAvatar = role === 'teacher' ? PlaceHolderImages[3] : PlaceHolderImages[0];
-  const userName = role === 'teacher' ? 'معلم' : 'دانش‌آموز';
+  const { user } = useFirebase();
+  const auth = useAuth();
+
+  const handleSignOut = () => {
+    if (auth) {
+      initiateSignOut(auth);
+    }
+  };
 
   return (
     <header className="sticky top-0 z-10 flex h-16 items-center gap-4 border-b bg-background/80 px-4 backdrop-blur-sm md:px-6">
@@ -38,17 +46,17 @@ export function AppHeader({ role }: AppHeaderProps) {
           <DropdownMenuTrigger asChild>
             <Button variant="ghost" className="relative h-9 w-9 rounded-full">
               <Avatar className="h-9 w-9">
-                <AvatarImage src={userAvatar.imageUrl} alt={userName} data-ai-hint={userAvatar.imageHint} />
-                <AvatarFallback>{userName.charAt(0)}</AvatarFallback>
+                <AvatarImage src={user?.photoURL || undefined} alt={user?.displayName || 'کاربر'} />
+                <AvatarFallback>{user?.displayName?.charAt(0) || 'ش'}</AvatarFallback>
               </Avatar>
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent className="w-56" align="end" forceMount>
             <DropdownMenuLabel className="font-normal">
               <div className="flex flex-col space-y-1">
-                <p className="font-headline text-sm font-medium leading-none">{userName}</p>
+                <p className="font-headline text-sm font-medium leading-none">{user?.displayName || 'کاربر'}</p>
                 <p className="text-xs leading-none text-muted-foreground">
-                  {role === 'teacher' ? 'teacher@example.com' : 'student@example.com'}
+                  {user?.email || ''}
                 </p>
               </div>
             </DropdownMenuLabel>
@@ -64,11 +72,9 @@ export function AppHeader({ role }: AppHeaderProps) {
               </DropdownMenuItem>
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
-             <DropdownMenuItem asChild>
-                <Link href="/">
-                    <LogOut className="ml-2 h-4 w-4" />
-                    <span>خروج</span>
-                </Link>
+             <DropdownMenuItem onClick={handleSignOut}>
+                <LogOut className="ml-2 h-4 w-4" />
+                <span>خروج</span>
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>

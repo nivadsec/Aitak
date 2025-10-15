@@ -1,9 +1,9 @@
+
 'use client';
 
 import Link from 'next/link';
 import { UserPlus, Megaphone } from 'lucide-react';
 import { useEffect } from 'react';
-import { useRouter } from 'next/navigation';
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Logo } from '@/components/icons/logo';
@@ -12,6 +12,7 @@ import { Separator } from '@/components/ui/separator';
 import { collection, query, orderBy, limit } from 'firebase/firestore';
 import { Skeleton } from '@/components/ui/skeleton';
 import { LoginForm } from '@/components/auth/LoginForm';
+import { Button } from '@/components/ui/button';
 
 function AnnouncementCard() {
   const { firestore } = useFirebase();
@@ -68,30 +69,18 @@ function AnnouncementCard() {
 function LoginPageContent() {
   const auth = useAuth();
   const { user, isUserLoading } = useUser();
-  const router = useRouter();
 
   // Automatically sign in the user anonymously if not already signed in.
-  // This is useful for public pages that might read public data, but we
-  // will redirect authenticated users away from this page.
+  // This allows fetching public data like announcements before login.
   useEffect(() => {
     if (!isUserLoading && !user) {
       initiateAnonymousSignIn(auth);
     }
   }, [isUserLoading, user, auth]);
   
-  // This is a simple role-based redirect.
-  useEffect(() => {
-    if (user && user.email) { // Anonymous users do not have emails
-      if(user.photoURL === 'teacher'){
-         router.push('/teacher/dashboard');
-      } else {
-         router.push('/student/dashboard');
-      }
-    }
-  }, [user, router]);
 
-
-  if (isUserLoading || (user && user.email)) {
+  if (isUserLoading || user) {
+    // Show a loading spinner while checking auth state or redirecting
     return (
         <div className="flex min-h-screen w-full items-center justify-center">
             <Logo className="h-12 w-12 animate-spin text-primary" />
