@@ -2,13 +2,13 @@
 
 import React, { useMemo } from 'react';
 import Link from 'next/link';
-import { collection, getDocs, query } from 'firebase/firestore';
+import { collection, getDocs, query, doc, getDoc } from 'firebase/firestore';
 import { ArrowLeft, Download, Megaphone, PlusCircle } from 'lucide-react';
 import { subDays, format, eachDayOfInterval, isSameDay } from 'date-fns';
 
 import { AnalyticsDashboard } from '@/components/teacher/AnalyticsDashboard';
 import StudentsDataTable from '@/components/teacher/StudentsDataTable';
-import { useCollection, useFirebase, useMemoFirebase } from '@/firebase';
+import { useCollection, useFirebase, useMemoFirebase, errorEmitter, FirestorePermissionError } from '@/firebase';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -78,6 +78,7 @@ export default function TeacherDashboardPage() {
   const [isDialogOpen, setIsDialogOpen] = React.useState(false);
   const [allReports, setAllReports] = React.useState<StudentReport[]>([]);
   const [areReportsLoading, setAreReportsLoading] = React.useState(true);
+  const { toast } = useToast();
 
   // 1. Fetch students
   const studentsQuery = useMemoFirebase(() => {
@@ -98,9 +99,17 @@ export default function TeacherDashboardPage() {
 
     setAreReportsLoading(true);
     const fetchAllReports = async () => {
-      const reportsPromises = students.map(student => 
-        getDocs(query(collection(firestore, 'teachers', user.uid, 'students', student.id, 'dailyReports')))
-      );
+      const reportsPromises = students.map(student => {
+        const reportsRef = collection(firestore, 'teachers', user.uid, 'students', student.id, 'dailyReports');
+        return getDocs(query(reportsRef)).catch(serverError => {
+            const permissionError = new FirestorePermissionError({
+                path: reportsRef.path,
+                operation: 'list'
+            });
+            errorEmitter.emit('permission-error', permissionError);
+            throw permissionError;
+        });
+      });
       const reportsSnapshots = await Promise.all(reportsPromises);
       const reports = reportsSnapshots.flatMap(snapshot => snapshot.docs.map(doc => doc.data() as StudentReport));
       setAllReports(reports);
@@ -138,18 +147,33 @@ export default function TeacherDashboardPage() {
 
     for (const student of students) {
         const studentData: any = { ...student, dailyReports: [] };
-        const reportsQuery = query(collection(firestore, 'teachers', user.uid, 'students', student.id, 'dailyReports'));
-        const reportsSnapshot = await getDocs(reportsQuery);
+        const reportsQueryRef = query(collection(firestore, 'teachers', user.uid, 'students', student.id, 'dailyReports'));
         
-        for (const reportDoc of reportsSnapshot.docs) {
-            const reportData = reportDoc.data();
-            const subjectItemsQuery = query(collection(reportDoc.ref, 'subjectItems'));
-            const subjectItemsSnapshot = await getDocs(subjectItemsQuery);
-            const subjectItems = subjectItemsSnapshot.docs.map(doc => doc.data());
-            (reportData as any).subjectItems = subjectItems;
-            studentData.dailyReports.push(reportData);
+        try {
+            const reportsSnapshot = await getDocs(reportsQueryRef);
+            
+            for (const reportDoc of reportsSnapshot.docs) {
+                const reportData = reportDoc.data();
+                const subjectItemsQueryRef = query(collection(reportDoc.ref, 'subjectItems'));
+                const subjectItemsSnapshot = await getDocs(subjectItemsQueryRef);
+                const subjectItems = subjectItemsSnapshot.docs.map(doc => doc.data());
+                (reportData as any).subjectItems = subjectItems;
+                studentData.dailyReports.push(reportData);
+            }
+            (exportData.students as any[]).push(studentData);
+        } catch (serverError) {
+             const permissionError = new FirestorePermissionError({
+                path: reportsQueryRef.path, // This is an approximation. The error could be on subjectItems.
+                operation: 'list'
+            });
+            errorEmitter.emit('permission-error', permissionError);
+            toast({
+                title: "خطای دسترسی",
+                description: "امکان خروجی گرفتن داده‌ها به دلیل مشکل در مجوزهای دسترسی وجود ندارد.",
+                variant: "destructive",
+            });
+            return; // Stop the export process
         }
-        (exportData.students as any[]).push(studentData);
     }
     
     downloadJson(exportData, `itab_backup_all_${new Date().toISOString().split('T')[0]}.json`);

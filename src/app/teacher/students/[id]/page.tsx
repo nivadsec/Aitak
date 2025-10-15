@@ -4,7 +4,7 @@ import { notFound } from 'next/navigation';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import StudentPerformanceAnalysis from '@/components/teacher/StudentPerformanceAnalysis';
-import { useDoc, useFirebase, useMemoFirebase, useCollection } from '@/firebase';
+import { useDoc, useFirebase, useMemoFirebase, useCollection, errorEmitter, FirestorePermissionError } from '@/firebase';
 import { doc, collection, query, orderBy, getDocs } from 'firebase/firestore';
 import { getDailyReportsForGenkit } from '@/lib/data';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -52,10 +52,25 @@ export default function StudentDetailPage({ params }: { params: { id: string } }
     
     for (const report of reports) {
       const reportRef = doc(firestore, 'teachers', user.uid, 'students', params.id, 'dailyReports', (report as any).id);
-      const subjectItemsQuery = query(collection(reportRef, 'subjectItems'));
-      const subjectItemsSnapshot = await getDocs(subjectItemsQuery);
-      const subjectItems = subjectItemsSnapshot.docs.map(doc => doc.data());
-      (exportData.dailyReports as any[]).push({ ...report, subjectItems });
+      const subjectItemsQueryRef = query(collection(reportRef, 'subjectItems'));
+      
+      try {
+        const subjectItemsSnapshot = await getDocs(subjectItemsQueryRef);
+        const subjectItems = subjectItemsSnapshot.docs.map(doc => doc.data());
+        (exportData.dailyReports as any[]).push({ ...report, subjectItems });
+      } catch (serverError) {
+         const permissionError = new FirestorePermissionError({
+            path: subjectItemsQueryRef.path,
+            operation: 'list'
+        });
+        errorEmitter.emit('permission-error', permissionError);
+         toast({
+            title: "خطای دسترسی",
+            description: "امکان خروجی گرفتن داده‌های درسی به دلیل مشکل در مجوزهای دسترسی وجود ندارد.",
+            variant: "destructive",
+        });
+        return; // Stop the export
+      }
     }
     
     downloadJson(exportData, `itab_backup_${student.firstName}_${student.lastName}.json`);
