@@ -5,7 +5,7 @@ import React, { DependencyList, createContext, useContext, ReactNode, useMemo, u
 import { FirebaseApp } from 'firebase/app';
 import { Firestore, doc, getDoc } from 'firebase/firestore';
 import { Auth, User, onAuthStateChanged } from 'firebase/auth';
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
 
 import { FirebaseErrorListener } from '@/components/FirebaseErrorListener';
 import { ROLES } from '@/lib/roles';
@@ -77,7 +77,7 @@ export const FirebaseProvider: React.FC<FirebaseProviderProps> = ({
   });
 
   const router = useRouter();
-  const currentPath = typeof window !== 'undefined' ? window.location.pathname : '';
+  const pathname = usePathname();
 
   // Effect to subscribe to Firebase auth state changes
   useEffect(() => {
@@ -100,10 +100,10 @@ export const FirebaseProvider: React.FC<FirebaseProviderProps> = ({
           setUserAuthState({ user: firebaseUser, isUserLoading: false, userError: null, role: roleInfo });
 
           // Centralized Redirect Logic
-          const isAuthPage = currentPath === '/' || currentPath === '/signup';
-          if (role === ROLES.TEACHER && !currentPath.startsWith('/teacher')) {
+          const isAuthPage = pathname === '/' || pathname === '/signup';
+          if (role === ROLES.TEACHER && !pathname.startsWith('/teacher')) {
             router.push('/teacher/dashboard');
-          } else if (role === ROLES.STUDENT && !currentPath.startsWith('/student')) {
+          } else if (role === ROLES.STUDENT && !pathname.startsWith('/student')) {
             router.push('/student/dashboard');
           } else if (isAuthPage) {
              // If user is logged in and on an auth page, redirect them.
@@ -114,7 +114,7 @@ export const FirebaseProvider: React.FC<FirebaseProviderProps> = ({
         } else {
           setUserAuthState({ user: null, isUserLoading: false, userError: null, role: null });
           // If logged out, and on a protected route, redirect to login
-          if (currentPath.startsWith('/teacher') || currentPath.startsWith('/student')) {
+          if (pathname.startsWith('/teacher') || pathname.startsWith('/student')) {
             router.push('/');
           }
         }
@@ -125,7 +125,7 @@ export const FirebaseProvider: React.FC<FirebaseProviderProps> = ({
       }
     );
     return () => unsubscribe(); // Cleanup
-  }, [auth, router, currentPath]); // Depends on the auth instance
+  }, [auth, router]); // Depends on the auth instance, not pathname
 
   // Memoize the context value
   const contextValue = useMemo((): FirebaseContextState => {
