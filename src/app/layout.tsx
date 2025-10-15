@@ -23,8 +23,17 @@ export default function RootLayout({
       <body className="font-body antialiased flex-1 flex flex-col">
         <main className="flex-1 flex flex-col">{children}</main>
         <Toaster />
-        <footer className="text-center p-4 text-sm text-muted-foreground">
-          توسعه دهنده حسین طاهری
+        <footer className="bg-muted/50 border-t">
+          <div className="container mx-auto py-6 px-4 md:px-6">
+            <div className="flex flex-col md:flex-row items-center justify-between gap-4">
+                <p className="text-sm text-muted-foreground text-center md:text-right">
+                    © 1403 آی‌تاب. تمام حقوق محفوظ است.
+                </p>
+                <p className="text-sm text-muted-foreground text-center md:text-left">
+                    طراحی و توسعه توسط <span className="font-semibold text-foreground">حسین طاهری</span>
+                </p>
+            </div>
+          </div>
         </footer>
       </body>
     </html>
