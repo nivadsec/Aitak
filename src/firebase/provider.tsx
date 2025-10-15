@@ -81,8 +81,9 @@ export const FirebaseProvider: React.FC<FirebaseProviderProps> = ({
 
   // Effect to subscribe to Firebase auth state changes
   useEffect(() => {
-    if (!auth) { // If no Auth service instance, cannot determine user state
-      setUserAuthState({ user: null, isUserLoading: false, userError: new Error("Auth service not provided."), role: null });
+    if (!auth || !firestore) {
+      // If no Auth service instance, cannot determine user state
+      setUserAuthState({ user: null, isUserLoading: false, userError: new Error("Auth or Firestore service not provided."), role: null });
       return;
     }
 
@@ -92,10 +93,21 @@ export const FirebaseProvider: React.FC<FirebaseProviderProps> = ({
       auth,
       async (firebaseUser) => { // Auth state determined
         if (firebaseUser) {
-          // photoURL is used to store role, and for students, also their teacher's ID
-          // e.g., "teacher" or "student:teacher123"
-          const roleInfo = firebaseUser.photoURL || ROLES.STUDENT;
-          const role = roleInfo.split(':')[0];
+           // Check if the user is a teacher first
+          const teacherRef = doc(firestore, 'teachers', firebaseUser.uid);
+          const teacherSnap = await getDoc(teacherRef);
+          
+          let roleInfo: string;
+          let role: string;
+
+          if (teacherSnap.exists()) {
+            role = ROLES.TEACHER;
+            roleInfo = ROLES.TEACHER;
+          } else {
+             // Fallback to student role detection via photoURL
+            roleInfo = firebaseUser.photoURL || ROLES.STUDENT; // Default to student
+            role = roleInfo.split(':')[0];
+          }
           
           setUserAuthState({ user: firebaseUser, isUserLoading: false, userError: null, role: roleInfo });
 
@@ -115,6 +127,7 @@ export const FirebaseProvider: React.FC<FirebaseProviderProps> = ({
           const isProtectedRoute = pathname.startsWith('/teacher/') || pathname.startsWith('/student/');
           const isTeacherLogin = pathname === '/teacher/login';
 
+          // Do not redirect away from the teacher login page if they just logged out
           if (isProtectedRoute && !isTeacherLogin) {
             router.push('/');
           }
@@ -126,7 +139,7 @@ export const FirebaseProvider: React.FC<FirebaseProviderProps> = ({
       }
     );
     return () => unsubscribe(); // Cleanup
-  }, [auth, router, pathname]);
+  }, [auth, firestore, router, pathname]);
 
   // Memoize the context value
   const contextValue = useMemo((): FirebaseContextState => {
