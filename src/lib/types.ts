@@ -33,3 +33,46 @@ export interface StudentReport {
   mobileHours: number;
   attachmentUrl?: string;
 }
+
+export interface ExamAnalysisSubject {
+  subject: string;
+  before_exam: {
+    previous_score?: number;
+    goal_first?: number;
+  };
+  execution: {
+    correct: number;
+    wrong: number;
+    blank: number;
+    time_spent?: number;
+    notes?: string;
+  };
+  after_exam: {
+    score?: number;
+  };
+}
+
+export interface EffortCompare {
+    subject: string;
+    study_hours?: number;
+    test_hours?: number;
+    exam_score?: number;
+    teacher_opinion?: string;
+    reason?: string;
+}
+
+
+export interface ExamReport {
+  id: string;
+  studentId: string;
+  exam_date: string;
+  total_score?: number;
+  rank_country?: number;
+  subjects_summary?: {
+    correct?: number;
+    wrong?: number;
+    blank?: number;
+  };
+  exam_analysis: ExamAnalysisSubject[];
+  effort_compare: EffortCompare[];
+}

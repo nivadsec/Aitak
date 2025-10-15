@@ -1,7 +1,7 @@
 'use client';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { BookCopy, Home, Users, BarChart3, MessageSquare, Megaphone } from 'lucide-react';
+import { BookCopy, Home, Users, BarChart3, MessageSquare, Megaphone, ClipboardPen } from 'lucide-react';
 
 import {
   Sidebar,
@@ -22,6 +22,7 @@ type AppSidebarProps = {
 const studentNav = [
   { href: '/student/dashboard', label: 'گزارش روزانه', icon: Home },
   { href: '/student/weekly-progress', label: 'گزارش هفتگی', icon: BookCopy },
+  { href: '/student/exam-analysis', label: 'تحلیل آزمون', icon: ClipboardPen },
   { href: '/student/stats', label: 'آمار فردی', icon: BarChart3 },
 ];
 
