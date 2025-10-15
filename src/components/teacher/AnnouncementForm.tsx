@@ -80,8 +80,8 @@ export function AnnouncementForm({ announcement, onSuccess }: AnnouncementFormPr
                     className: 'font-body',
                 });
             }
-            onSuccess();
-            form.reset();
+            if (onSuccess) onSuccess();
+            form.reset({ content: '' });
 
         } catch (error: any) {
             console.error("Error saving announcement:", error);
@@ -104,7 +104,7 @@ export function AnnouncementForm({ announcement, onSuccess }: AnnouncementFormPr
                     name="content"
                     render={({ field }) => (
                         <FormItem>
-                            <FormLabel>متن اطلاعیه</FormLabel>
+                            <FormLabel className="sr-only">متن اطلاعیه</FormLabel>
                             <FormControl>
                                 <Textarea
                                     placeholder="پیام خود را در اینجا بنویسید..."

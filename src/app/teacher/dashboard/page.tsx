@@ -5,16 +5,20 @@ import StudentsDataTable from '@/components/teacher/StudentsDataTable';
 import { useCollection, useFirebase, useMemoFirebase } from '@/firebase';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Download } from 'lucide-react';
+import { ArrowLeft, Download, Megaphone, PlusCircle } from 'lucide-react';
 import Link from 'next/link';
 import { collection, getDocs, query } from 'firebase/firestore';
 import { Skeleton } from '@/components/ui/skeleton';
 import { AnnouncementForm } from '@/components/teacher/AnnouncementForm';
 import { downloadJson } from '@/lib/utils';
 import { toast } from '@/hooks/use-toast';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import React from 'react';
 
 export default function TeacherDashboardPage() {
   const { firestore, user } = useFirebase();
+  const [isDialogOpen, setIsDialogOpen] = React.useState(false);
+
 
   // Query only for students, not their reports for this high-level view
   const studentsQuery = useMemoFirebase(() => {
@@ -64,9 +68,10 @@ export default function TeacherDashboardPage() {
   };
 
   return (
-    <div className="grid gap-6 lg:grid-cols-2">
+    <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
       <div className="space-y-6">
         <AnalyticsDashboard />
+        
         <Card>
           <CardHeader className='flex-row items-center justify-between'>
               <div>
@@ -98,10 +103,43 @@ export default function TeacherDashboardPage() {
               )}
           </CardContent>
         </Card>
+        
+        <Card>
+            <CardHeader className="flex-row items-center justify-between">
+                <div>
+                    <CardTitle className="font-headline text-xl flex items-center gap-2">
+                        <Megaphone />
+                        ارسال اطلاعیه سریع
+                    </CardTitle>
+                    <CardDescription>
+                        این اطلاعیه در صفحه اصلی برای همه نمایش داده می‌شود.
+                    </CardDescription>
+                </div>
+                 <DialogTrigger asChild>
+                    <Button variant="outline">
+                        <PlusCircle className="ml-2 h-4 w-4" />
+                        اطلاعیه جدید
+                    </Button>
+                </DialogTrigger>
+            </CardHeader>
+            <CardContent>
+                <AnnouncementForm onSuccess={() => {}} announcement={null} />
+            </CardContent>
+        </Card>
+
+        <DialogContent className="sm:max-w-[600px]">
+            <DialogHeader>
+            <DialogTitle className="font-headline flex items-center gap-2">
+                <Megaphone />
+                ارسال اطلاعیه عمومی
+            </DialogTitle>
+            <DialogDescription>
+                این اطلاعیه برای همه کاربران در صفحه اصلی نمایش داده می‌شود.
+            </DialogDescription>
+            </DialogHeader>
+            <AnnouncementForm onSuccess={() => setIsDialogOpen(false)} announcement={null} />
+        </DialogContent>
       </div>
-       <div className="space-y-6">
-          <AnnouncementForm />
-      </div>
-    </div>
+    </Dialog>
   );
 }
