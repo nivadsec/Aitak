@@ -26,8 +26,7 @@ import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth, useFirebase } from '@/firebase/provider';
 import { setDocumentNonBlocking } from '@/firebase/non-blocking-updates';
-import { doc, getDoc, doc as firestoreDoc, collection, getDocs, where, query } from 'firebase/firestore';
-import { useRouter } from 'next/navigation';
+import { doc, getDoc, doc as firestoreDoc } from 'firebase/firestore';
 import Link from 'next/link';
 
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
@@ -54,7 +53,6 @@ export function SignUpForm() {
   const { toast } = useToast();
   const auth = useAuth();
   const { firestore } = useFirebase();
-  const router = useRouter();
   const [isLoading, setIsLoading] = React.useState(false);
   const [isSuccess, setIsSuccess] = React.useState(false);
 
@@ -97,10 +95,11 @@ export function SignUpForm() {
       );
       const user = userCredential.user;
 
-      // Update user profile (displayName and role)
+      // Update user profile (displayName and role/teacherId in photoURL)
       await updateProfile(user, {
         displayName: `${data.firstName} ${data.lastName}`,
-        photoURL: ROLES.STUDENT, // Using photoURL to store role
+        // Storing role and teacherId in photoURL, e.g., "student:teacher123"
+        photoURL: `${ROLES.STUDENT}:${teacherId}`,
       });
 
       // Send verification email

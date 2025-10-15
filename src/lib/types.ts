@@ -1,5 +1,6 @@
 export interface Student {
   id: string; // This will be the Firebase Auth UID
+  teacherId: string;
   firstName: string;
   lastName: string;
   email: string;

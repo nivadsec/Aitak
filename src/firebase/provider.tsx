@@ -92,8 +92,12 @@ export const FirebaseProvider: React.FC<FirebaseProviderProps> = ({
       auth,
       async (firebaseUser) => { // Auth state determined
         if (firebaseUser) {
-          const role = firebaseUser.photoURL || ROLES.STUDENT; // Default to student
-          setUserAuthState({ user: firebaseUser, isUserLoading: false, userError: null, role });
+          // photoURL is used to store role, and for students, also their teacher's ID
+          // e.g., "teacher" or "student:teacher123"
+          const roleInfo = firebaseUser.photoURL || ROLES.STUDENT;
+          const role = roleInfo.split(':')[0];
+          
+          setUserAuthState({ user: firebaseUser, isUserLoading: false, userError: null, role: roleInfo });
 
           // Centralized Redirect Logic
           const isAuthPage = currentPath === '/' || currentPath === '/signup';

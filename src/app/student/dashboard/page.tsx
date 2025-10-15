@@ -1,4 +1,3 @@
-
 'use client'
 import { DailyReportForm } from '@/components/student/DailyReportForm';
 import { MotivationTip } from '@/components/student/MotivationTip';
@@ -6,7 +5,7 @@ import PersonalStats from '@/components/student/PersonalStats';
 import { Button } from '@/components/ui/button';
 import { useCollection, useFirebase, useMemoFirebase, FirestorePermissionError, errorEmitter } from '@/firebase';
 import { downloadJson } from '@/lib/utils';
-import { collection, doc, getDocs, query, orderBy, limit, getDoc, collectionGroup, where } from 'firebase/firestore';
+import { collection, doc, getDocs, query, orderBy, limit, getDoc } from 'firebase/firestore';
 import { Download } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import type { StudentReport } from '@/lib/types';
@@ -43,41 +42,21 @@ const createTrendDescription = (reports: StudentReport[]): string => {
 
 
 export default function StudentDashboardPage() {
-  const { firestore, user } = useFirebase();
+  const { firestore, user, role } = useFirebase();
   const { toast } = useToast();
-  const [studentData, setStudentData] = React.useState<{teacherId: string} | null>(null);
-
-  // Fetch the current student's own data to find their teacherId
-  React.useEffect(() => {
-    if (!user || !firestore) return;
-
-    const findStudentData = async () => {
-        const studentQuery = query(collectionGroup(firestore, 'students'), where('id', '==', user.uid));
-        const studentSnapshot = await getDocs(studentQuery).catch(serverError => {
-            const permissionError = new FirestorePermissionError({
-                path: `students`, // This is a collection group query, path is not specific
-                operation: 'list'
-            });
-            errorEmitter.emit('permission-error', permissionError);
-            throw permissionError; // Stop further execution
-        });
-        if (!studentSnapshot.empty) {
-            const studentDoc = studentSnapshot.docs[0];
-            setStudentData(studentDoc.data() as {teacherId: string});
-        }
-    }
-    findStudentData();
-  }, [user, firestore]);
+  
+  // The teacherId is now extracted from the role string "student:teacherId"
+  const teacherId = role?.split(':')[1];
 
   // Fetch the latest 2 reports for analytics and trend analysis
   const reportsQuery = useMemoFirebase(() => {
-    if (!user || !firestore || !studentData) return null;
+    if (!user || !firestore || !teacherId) return null;
     return query(
-        collection(firestore, 'teachers', studentData.teacherId, 'students', user.uid, 'dailyReports'),
+        collection(firestore, 'teachers', teacherId, 'students', user.uid, 'dailyReports'),
         orderBy('date', 'desc'),
         limit(2) // Fetch last two reports for trend analysis
     );
-  }, [firestore, user, studentData]);
+  }, [firestore, user, teacherId]);
 
   const { data: reports, isLoading: isReportLoading } = useCollection<StudentReport>(reportsQuery);
   
@@ -86,7 +65,7 @@ export default function StudentDashboardPage() {
 
 
   const handleExportData = async () => {
-     if (!user || !firestore || !studentData) {
+     if (!user || !firestore || !teacherId) {
         toast({
             title: "خطا",
             description: "برای خروجی گرفتن باید وارد شده باشید و اطلاعات شما در دسترس باشد.",
@@ -99,7 +78,7 @@ export default function StudentDashboardPage() {
         description: "لطفا صبر کنید، در حال جمع‌آوری اطلاعات شما هستیم.",
     });
 
-    const studentDocRef = doc(firestore, `teachers/${studentData.teacherId}/students`, user.uid);
+    const studentDocRef = doc(firestore, `teachers/${teacherId}/students`, user.uid);
     const studentDocSnap = await getDoc(studentDocRef).catch(serverError => {
         const permissionError = new FirestorePermissionError({
             path: studentDocRef.path,
@@ -116,7 +95,7 @@ export default function StudentDashboardPage() {
       dailyReports: []
     };
     
-    const reportsCollectionRef = collection(firestore, 'teachers', studentData.teacherId, 'students', user.uid, 'dailyReports');
+    const reportsCollectionRef = collection(firestore, 'teachers', teacherId, 'students', user.uid, 'dailyReports');
     const reportsSnapshot = await getDocs(reportsCollectionRef).catch(serverError => {
         const permissionError = new FirestorePermissionError({
             path: reportsCollectionRef.path,
@@ -162,7 +141,7 @@ export default function StudentDashboardPage() {
           />
         </PersonalStats>
          <div className="text-center">
-            <Button variant="outline" onClick={handleExportData} disabled={!user || !studentData}>
+            <Button variant="outline" onClick={handleExportData} disabled={!user || !teacherId}>
               <Download className="ml-2 h-4 w-4" />
               پشتیبان‌گیری از اطلاعات من
             </Button>
