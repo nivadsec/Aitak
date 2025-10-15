@@ -66,14 +66,51 @@ export interface EffortCompare {
 export interface ExamReport {
   id: string;
   studentId: string;
-  exam_date: string;
+  exam_date: Date;
   total_score?: number;
   rank_country?: number;
-  subjects_summary?: {
-    correct?: number;
-    wrong?: number;
-    blank?: number;
-  };
+  subjects_summary_correct?: number;
+  subjects_summary_wrong?: number;
+  subjects_summary_blank?: number;
   exam_analysis: ExamAnalysisSubject[];
   effort_compare: EffortCompare[];
+}
+
+export interface WeeklyProgressReport {
+    id: string;
+    studentId: string;
+    weekNumber: number;
+    weekDateRange: string;
+    studyTimeDetails: Array<{ subject: string; targetTime: number; actualTime: number; }>;
+    testDetails: Array<{ subject: string; targetCount: number; actualCount: number; }>;
+    lastWeekTotalStudy: number;
+    thisWeekTotalStudy: number;
+    lastWeekTotalTests: number;
+    thisWeekTotalTests: number;
+    keyAchievements?: string;
+    whatWentWell?: string;
+    whatCouldBeBetter?: string;
+    nextWeekGoals?: string;
+}
+
+export interface TopicInvestmentReport {
+    id: string;
+    studentId: string;
+    lessonName: string;
+    averageScore?: number;
+    mostColor?: string;
+    holidayGoal?: string;
+    examGoal?: string;
+    lessonTimeInvestment?: number;
+    partCount?: number;
+    partTime?: number;
+    finalNotes?: string;
+    topics: Array<{
+        topic: string;
+        priority: number;
+        studyHours: number;
+        videoHours: number;
+        testHours: number;
+        extraActions?: string;
+    }>;
 }

@@ -9,8 +9,12 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '
 import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Textarea } from '@/components/ui/textarea';
-import { ClipboardCheck, PlusCircle, Save, Trash2 } from 'lucide-react';
+import { ClipboardCheck, PlusCircle, Save, Trash2, Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import React from 'react';
+import { useFirebase } from '@/firebase';
+import { doc, serverTimestamp } from 'firebase/firestore';
+import { setDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 
 const topicSchema = z.object({
   topic: z.string().min(1, "مبحث الزامی است."),
@@ -38,6 +42,10 @@ type FormValues = z.infer<typeof formSchema>;
 
 export function TopicInvestmentForm() {
     const { toast } = useToast();
+    const { firestore, user, role } = useFirebase();
+    const [isLoading, setIsLoading] = React.useState(false);
+    const teacherId = role?.split(':')[1];
+    
     const form = useForm<FormValues>({
         resolver: zodResolver(formSchema),
         defaultValues: {
@@ -51,13 +59,46 @@ export function TopicInvestmentForm() {
         name: "topics"
     });
 
-    function onSubmit(data: FormValues) {
-        console.log(data);
-        toast({
-            title: "فرم ذخیره شد",
-            description: "اطلاعات سرمایه‌گذاری زمانی شما با موفقیت ثبت شد.",
-            className: 'font-body',
-        });
+    async function onSubmit(data: FormValues) {
+        if (!user || !teacherId) {
+            toast({
+                title: "خطا",
+                description: "اطلاعات کاربری برای ثبت گزارش یافت نشد.",
+                variant: "destructive",
+            });
+            return;
+        }
+        setIsLoading(true);
+
+        const reportId = `${data.lessonName.replace(/\s/g, '-')}-${new Date().getTime()}`;
+        const reportRef = doc(firestore, 'teachers', teacherId, 'students', user.uid, 'topicInvestments', reportId);
+
+        const reportData = {
+            id: reportId,
+            studentId: user.uid,
+            ...data,
+            createdAt: serverTimestamp(),
+            updatedAt: serverTimestamp(),
+        };
+
+        try {
+            setDocumentNonBlocking(reportRef, reportData, { merge: true });
+            toast({
+                title: "فرم ذخیره شد",
+                description: "اطلاعات سرمایه‌گذاری زمانی شما با موفقیت ثبت شد.",
+                className: 'font-body',
+            });
+            form.reset();
+        } catch (error) {
+            console.error("Error saving topic investment report: ", error);
+            toast({
+                title: "خطا در ثبت گزارش",
+                description: "مشکلی در هنگام ذخیره اطلاعات پیش آمد.",
+                variant: "destructive",
+            });
+        } finally {
+            setIsLoading(false);
+        }
     }
 
     const totalInvestment = form.watch('topics').reduce((acc, topic) => {
@@ -166,8 +207,8 @@ export function TopicInvestmentForm() {
                 </Card>
 
                 <div className="flex justify-end">
-                    <Button type="submit" size="lg">
-                        <Save className="ml-2 h-4 w-4" />
+                    <Button type="submit" size="lg" disabled={isLoading}>
+                        {isLoading ? <Loader2 className="ml-2 h-4 w-4 animate-spin" /> : <Save className="ml-2 h-4 w-4" />}
                         ذخیره فرم
                     </Button>
                 </div>

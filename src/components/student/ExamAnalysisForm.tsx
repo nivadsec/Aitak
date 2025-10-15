@@ -8,15 +8,17 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Textarea } from '@/components/ui/textarea';
-import { ClipboardPen, PlusCircle, Save, Trash2 } from 'lucide-react';
+import { ClipboardPen, PlusCircle, Save, Trash2, CalendarIcon, Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/tabs';
 import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover';
-import { CalendarIcon } from 'lucide-react';
 import { Calendar } from '../ui/calendar';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns-jalali';
+import { useFirebase } from '@/firebase';
+import React from 'react';
+import { doc, serverTimestamp } from 'firebase/firestore';
+import { setDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 
 
 const beforeExamSchema = z.object({
@@ -68,6 +70,10 @@ type FormValues = z.infer<typeof formSchema>;
 
 export function ExamAnalysisForm() {
     const { toast } = useToast();
+    const { firestore, user, role } = useFirebase();
+    const [isLoading, setIsLoading] = React.useState(false);
+    const teacherId = role?.split(':')[1];
+
     const form = useForm<FormValues>({
         resolver: zodResolver(formSchema),
         defaultValues: {
@@ -99,13 +105,46 @@ export function ExamAnalysisForm() {
         name: "effort_compare"
     });
 
-    function onSubmit(data: FormValues) {
-        console.log(data);
-        toast({
-            title: "فرم تحلیل آزمون ذخیره شد",
-            description: "اطلاعات آزمون شما با موفقیت در سیستم ثبت گردید.",
-            className: 'font-body',
-        });
+    async function onSubmit(data: FormValues) {
+        if (!user || !teacherId) {
+            toast({
+                title: "خطا",
+                description: "اطلاعات کاربری برای ثبت گزارش یافت نشد.",
+                variant: "destructive",
+            });
+            return;
+        }
+        setIsLoading(true);
+
+        const reportId = format(data.exam_date, 'yyyy-MM-dd');
+        const reportRef = doc(firestore, 'teachers', teacherId, 'students', user.uid, 'examReports', reportId);
+
+        const reportData = {
+            id: reportId,
+            studentId: user.uid,
+            ...data,
+            createdAt: serverTimestamp(),
+            updatedAt: serverTimestamp(),
+        };
+
+        try {
+            setDocumentNonBlocking(reportRef, reportData, { merge: true });
+            toast({
+                title: "فرم تحلیل آزمون ذخیره شد",
+                description: "اطلاعات آزمون شما با موفقیت در سیستم ثبت گردید.",
+                className: 'font-body',
+            });
+            form.reset();
+        } catch (error) {
+             console.error("Error saving exam report: ", error);
+             toast({
+                title: "خطا در ثبت گزارش",
+                description: "مشکلی در هنگام ذخیره اطلاعات پیش آمد.",
+                variant: "destructive",
+            });
+        } finally {
+            setIsLoading(false);
+        }
     }
 
     return (
@@ -259,8 +298,8 @@ export function ExamAnalysisForm() {
                 </Tabs>
 
                 <div className="flex justify-end">
-                    <Button type="submit" size="lg">
-                        <Save className="ml-2 h-4 w-4" />
+                     <Button type="submit" size="lg" disabled={isLoading}>
+                        {isLoading ? <Loader2 className="ml-2 h-4 w-4 animate-spin" /> : <Save className="ml-2 h-4 w-4" />}
                         ذخیره تحلیل آزمون
                     </Button>
                 </div>

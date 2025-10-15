@@ -23,6 +23,7 @@ const studentNav = [
   { href: '/student/dashboard', label: 'گزارش روزانه', icon: Home },
   { href: '/student/weekly-progress', label: 'گزارش هفتگی', icon: BookCopy },
   { href: '/student/exam-analysis', label: 'تحلیل آزمون', icon: ClipboardPen },
+  { href: '/student/topic-investment', label: 'سرمایه‌گذاری زمانی', icon: BarChart3 },
   { href: '/student/stats', label: 'آمار فردی', icon: BarChart3 },
 ];
 

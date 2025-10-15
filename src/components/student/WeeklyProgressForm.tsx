@@ -9,7 +9,12 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '
 import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Textarea } from '@/components/ui/textarea';
-import { BookCopy, PlusCircle, Save, Trash2 } from 'lucide-react';
+import { BookCopy, PlusCircle, Save, Trash2, Loader2 } from 'lucide-react';
+import React from 'react';
+import { useToast } from '@/hooks/use-toast';
+import { useFirebase } from '@/firebase';
+import { doc, serverTimestamp } from 'firebase/firestore';
+import { setDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 
 const studyTimeDetailSchema = z.object({
     subject: z.string().min(1, "نام درس الزامی است."),
@@ -41,13 +46,18 @@ const formSchema = z.object({
 type FormValues = z.infer<typeof formSchema>;
 
 export function WeeklyProgressForm() {
+    const { toast } = useToast();
+    const { firestore, user, role } = useFirebase();
+    const [isLoading, setIsLoading] = React.useState(false);
+    const teacherId = role?.split(':')[1];
+
     const form = useForm<FormValues>({
         resolver: zodResolver(formSchema),
         defaultValues: {
             weekNumber: 1,
             weekDateRange: '',
-            studyTimeDetails: [{ subject: 'ریاضی', targetTime: 600, actualTime: 550 }],
-            testDetails: [{ subject: 'فیزیک', targetCount: 150, actualCount: 120 }],
+            studyTimeDetails: [{ subject: '', targetTime: 0, actualTime: 0 }],
+            testDetails: [{ subject: '', targetCount: 0, actualCount: 0 }],
             lastWeekTotalStudy: 0,
             thisWeekTotalStudy: 0,
             lastWeekTotalTests: 0,
@@ -69,9 +79,46 @@ export function WeeklyProgressForm() {
         name: "testDetails"
     });
 
-    function onSubmit(data: FormValues) {
-        console.log(data);
-        // Logic to save data will be added later
+    async function onSubmit(data: FormValues) {
+        if (!user || !teacherId) {
+            toast({
+                title: "خطا",
+                description: "اطلاعات کاربری برای ثبت گزارش یافت نشد.",
+                variant: "destructive",
+            });
+            return;
+        }
+        setIsLoading(true);
+
+        const reportId = `week-${data.weekNumber}-${data.weekDateRange.replace(/\s/g, '-')}`;
+        const reportRef = doc(firestore, 'teachers', teacherId, 'students', user.uid, 'weeklyProgress', reportId);
+
+        const reportData = {
+            id: reportId,
+            studentId: user.uid,
+            ...data,
+            createdAt: serverTimestamp(),
+            updatedAt: serverTimestamp(),
+        };
+
+        try {
+            setDocumentNonBlocking(reportRef, reportData, { merge: true });
+            toast({
+                title: "گزارش هفتگی ذخیره شد",
+                description: "اطلاعات این هفته با موفقیت در سیستم ثبت گردید.",
+                className: 'font-body',
+            });
+            form.reset();
+        } catch (error) {
+             console.error("Error saving weekly report: ", error);
+             toast({
+                title: "خطا در ثبت گزارش",
+                description: "مشکلی در هنگام ذخیره اطلاعات پیش آمد.",
+                variant: "destructive",
+            });
+        } finally {
+            setIsLoading(false);
+        }
     }
 
     return (
@@ -134,7 +181,7 @@ export function WeeklyProgressForm() {
                                             <TableCell><Input {...form.register(`studyTimeDetails.${index}.subject`)} /></TableCell>
                                             <TableCell><Input type="number" {...form.register(`studyTimeDetails.${index}.targetTime`)} /></TableCell>
                                             <TableCell><Input type="number" {...form.register(`studyTimeDetails.${index}.actualTime`)} /></TableCell>
-                                            <TableCell><Button variant="ghost" size="icon" onClick={() => removeStudy(index)}><Trash2 className="h-4 w-4" /></Button></TableCell>
+                                            <TableCell><Button variant="ghost" size="icon" type="button" onClick={() => removeStudy(index)}><Trash2 className="h-4 w-4" /></Button></TableCell>
                                         </TableRow>
                                     ))}
                                 </TableBody>
@@ -165,7 +212,7 @@ export function WeeklyProgressForm() {
                                             <TableCell><Input {...form.register(`testDetails.${index}.subject`)} /></TableCell>
                                             <TableCell><Input type="number" {...form.register(`testDetails.${index}.targetCount`)} /></TableCell>
                                             <TableCell><Input type="number" {...form.register(`testDetails.${index}.actualCount`)} /></TableCell>
-                                            <TableCell><Button variant="ghost" size="icon" onClick={() => removeTest(index)}><Trash2 className="h-4 w-4" /></Button></TableCell>
+                                            <TableCell><Button variant="ghost" size="icon" type="button" onClick={() => removeTest(index)}><Trash2 className="h-4 w-4" /></Button></TableCell>
                                         </TableRow>
                                     ))}
                                 </TableBody>
@@ -243,8 +290,8 @@ export function WeeklyProgressForm() {
                 </Card>
 
                 <div className="flex justify-end">
-                    <Button type="submit" size="lg">
-                        <Save className="ml-2 h-4 w-4" />
+                    <Button type="submit" size="lg" disabled={isLoading}>
+                         {isLoading ? <Loader2 className="ml-2 h-4 w-4 animate-spin" /> : <Save className="ml-2 h-4 w-4" />}
                         ذخیره گزارش هفتگی
                     </Button>
                 </div>

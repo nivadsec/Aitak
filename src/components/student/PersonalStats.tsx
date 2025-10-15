@@ -49,10 +49,10 @@ function TestAnalyticsChart({ report }: { report: StudentReport }) {
     const chartData = [
       { name: 'صحیح', value: correct, color: CHART_COLORS.correct },
       { name: 'غلط', value: wrong, color: CHART_COLORS.wrong },
-      { name: 'نزده', value: unanswered, color: CHART_COLORS.unanswered },
+      { name: 'نزده', value: unanswered > 0 ? unanswered : 0, color: CHART_COLORS.unanswered },
     ].filter(item => item.value > 0);
 
-    const accuracyPercent = totalQuestions > 0 ? (correct / totalQuestions) * 100 : 0;
+    const accuracyPercent = totalQuestions > 0 ? ((correct * 3 - wrong) / (totalQuestions * 3)) * 100 : 0;
     const accuracyRate = (correct + wrong) > 0 ? (correct / (correct + wrong)) * 100 : 0;
     const responseCoverage = totalQuestions > 0 ? ((correct + wrong) / totalQuestions) * 100 : 0;
 
@@ -156,13 +156,15 @@ export default function PersonalStats({ children, report, isLoading }: { childre
     
     const totalCorrect = report.items ? report.items.reduce((sum, item) => sum + (item.correctCount || 0), 0) : 0;
     const totalTests = report.items ? report.items.reduce((sum, item) => sum + (item.testCount || 0), 0) : 0;
-    const accuracy = totalTests > 0 ? ((totalCorrect / totalTests) * 100).toFixed(0) : 0;
+    const totalWrong = report.items ? report.items.reduce((sum, item) => sum + (item.wrongCount || 0), 0) : 0;
+    
+    const accuracy = totalTests > 0 ? (((totalCorrect * 3) - totalWrong) / (totalTests * 3)) * 100 : 0;
 
     return {
       avgStudyHours,
       moodScore: report.moodScore,
       mobileHours: report.mobileHours,
-      accuracy,
+      accuracy: accuracy.toFixed(1),
     }
   }, [report]);
 
@@ -189,14 +191,16 @@ export default function PersonalStats({ children, report, isLoading }: { childre
                     <Skeleton className="h-48 w-full" />
                 </CardContent>
             </Card>
-            <Card>
-                 <CardHeader>
-                    <Skeleton className="h-6 w-1/2" />
-                </CardHeader>
-                 <CardContent>
-                    <Skeleton className="h-20 w-full" />
-                </CardContent>
-            </Card>
+            {children && (
+              <Card>
+                  <CardHeader>
+                      <Skeleton className="h-6 w-1/2" />
+                  </CardHeader>
+                  <CardContent>
+                      <Skeleton className="h-20 w-full" />
+                  </CardContent>
+              </Card>
+            )}
         </div>
     )
   }
@@ -242,7 +246,7 @@ export default function PersonalStats({ children, report, isLoading }: { childre
                 />
                 <StatCard 
                     icon={CheckCircle2}
-                    title="دقت تست"
+                    title="درصد تست"
                     value={`${stats.accuracy}%`}
                     footer="در کل تست‌ها"
                     colorClass="text-green-500"
