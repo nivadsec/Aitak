@@ -100,21 +100,22 @@ export const FirebaseProvider: React.FC<FirebaseProviderProps> = ({
           setUserAuthState({ user: firebaseUser, isUserLoading: false, userError: null, role: roleInfo });
 
           // Centralized Redirect Logic
-          const isAuthPage = pathname === '/' || pathname === '/signup';
-          if (role === ROLES.TEACHER && !pathname.startsWith('/teacher')) {
-            router.push('/teacher/dashboard');
-          } else if (role === ROLES.STUDENT && !pathname.startsWith('/student')) {
-            router.push('/student/dashboard');
-          } else if (isAuthPage) {
-             // If user is logged in and on an auth page, redirect them.
-             if (role === ROLES.TEACHER) router.push('/teacher/dashboard');
-             else router.push('/student/dashboard');
+          const isAuthPage = pathname === '/' || pathname === '/signup' || pathname === '/teacher/login';
+          if (isAuthPage) {
+             if (role === ROLES.TEACHER) {
+                router.push('/teacher/dashboard');
+             } else if (role === ROLES.STUDENT) {
+                router.push('/student/dashboard');
+             }
           }
 
         } else {
           setUserAuthState({ user: null, isUserLoading: false, userError: null, role: null });
           // If logged out, and on a protected route, redirect to login
-          if (pathname.startsWith('/teacher') || pathname.startsWith('/student')) {
+          const isProtectedRoute = pathname.startsWith('/teacher/') || pathname.startsWith('/student/');
+          const isTeacherLogin = pathname === '/teacher/login';
+
+          if (isProtectedRoute && !isTeacherLogin) {
             router.push('/');
           }
         }
@@ -125,7 +126,7 @@ export const FirebaseProvider: React.FC<FirebaseProviderProps> = ({
       }
     );
     return () => unsubscribe(); // Cleanup
-  }, [auth, router]); // Depends on the auth instance, not pathname
+  }, [auth, router, pathname]);
 
   // Memoize the context value
   const contextValue = useMemo((): FirebaseContextState => {

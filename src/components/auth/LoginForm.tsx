@@ -20,6 +20,7 @@ import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/firebase/provider';
 import { initiateEmailSignIn } from '@/firebase/non-blocking-login';
+import { ROLES } from '@/lib/roles';
 
 const formSchema = z.object({
   email: z.string().email('ایمیل وارد شده معتبر نیست.'),
@@ -28,7 +29,11 @@ const formSchema = z.object({
 
 type FormValues = z.infer<typeof formSchema>;
 
-export function LoginForm() {
+interface LoginFormProps {
+  role: typeof ROLES.STUDENT | typeof ROLES.TEACHER;
+}
+
+export function LoginForm({ role }: LoginFormProps) {
   const { toast } = useToast();
   const auth = useAuth();
 
@@ -55,8 +60,8 @@ export function LoginForm() {
 
     try {
       await initiateEmailSignIn(auth, data.email, data.password);
-      // On successful login, the onAuthStateChanged listener in AuthProvider
-      // will handle user state updates and redirects.
+      // On successful login, the onAuthStateChanged listener in FirebaseProvider
+      // will handle user state updates and redirects based on the role stored in auth.
     } catch (error: any) {
       console.error('Login Error:', error);
       let description = 'مشکلی در هنگام ورود پیش آمد. لطفاً دوباره تلاش کنید.';
@@ -66,6 +71,8 @@ export function LoginForm() {
         error.code === 'auth/invalid-credential'
       ) {
         description = 'ایمیل یا رمز عبور وارد شده صحیح نمی‌باشد.';
+      } else if (error.code === 'auth/user-disabled') {
+         description = 'حساب کاربری شما غیرفعال شده است. لطفاً با مدیر خود تماس بگیرید.'
       }
       toast({
         title: 'خطا در ورود',
@@ -86,7 +93,7 @@ export function LoginForm() {
             <FormItem>
               <FormLabel>ایمیل</FormLabel>
               <FormControl>
-                <Input placeholder="user@example.com" {...field} />
+                <Input placeholder={role === ROLES.TEACHER ? "teacher@example.com" : "student@example.com"} {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>

@@ -2,7 +2,7 @@
 'use client';
 
 import Link from 'next/link';
-import { UserPlus, Megaphone, Loader2 } from 'lucide-react';
+import { UserPlus, Megaphone, Loader2, ShieldCheck } from 'lucide-react';
 import React, { useEffect } from 'react';
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -69,45 +69,45 @@ function AnnouncementCard() {
 
 function LoginPageContent() {
   const auth = useAuth();
-  const { user, isUserLoading, role } = useUser();
-  const [showRedirecting, setShowRedirecting] = React.useState(false);
-  
+  const { user, isUserLoading } = useUser();
+  const [showRedirecting, setShowRedirecting] = React.useState(true);
+
   // Initiate anonymous sign-in only if no user is logged in or loading.
   useEffect(() => {
     if (!isUserLoading && !user) {
       initiateAnonymousSignIn(auth);
+      setShowRedirecting(false); // Anonymous user is the "public" state
     }
   }, [isUserLoading, user, auth]);
 
   // Show loading indicator while user state is being determined or redirecting.
   useEffect(() => {
-    // We show the loading screen if the user is loading OR if a user object exists (implying a redirect is imminent)
-     if (isUserLoading || user) {
-       setShowRedirecting(true);
-     } else {
-       setShowRedirecting(false);
-     }
-  }, [isUserLoading, user, role]);
-  
+    if (isUserLoading || (user && !user.isAnonymous)) {
+      setShowRedirecting(true);
+    } else {
+      setShowRedirecting(false);
+    }
+  }, [isUserLoading, user]);
 
   if (showRedirecting) {
     return (
         <div className="flex min-h-screen w-full flex-col items-center justify-center bg-background gap-6">
-          <div className="relative flex items-center justify-center h-24 w-24">
-             <div className="absolute inset-0 rounded-full bg-primary/10 animate-ping"></div>
-             <div className="absolute inset-2 rounded-full bg-primary/20 animate-ping delay-200"></div>
-            <Logo className="h-12 w-12 text-primary" />
+          <div className="flex items-center justify-center">
+            <div className="relative flex items-center justify-center h-24 w-24">
+                <div className="absolute inset-0 rounded-full bg-primary/10 animate-pulse"></div>
+                <div className="absolute inset-2 rounded-full bg-primary/20 animate-pulse" style={{ animationDelay: '0.2s' }}></div>
+                <Logo className="h-12 w-12 text-primary" />
+            </div>
           </div>
-          <div className='w-64 text-center space-y-3'>
+          <div className='w-64 text-center space-y-4'>
             <p className="text-sm text-muted-foreground animate-pulse flex items-center justify-center gap-2">
-                <Loader2 className="h-4 w-4 animate-spin" />
                 در حال بارگذاری...
             </p>
+            <Progress value={Date.now() % 100} className="h-2 [&>div]:animate-progress-indeterminate" />
           </div>
         </div>
-    )
+    );
   }
-
 
   return (
      <main className="flex min-h-screen w-full items-center justify-center bg-background p-4">
@@ -116,27 +116,33 @@ function LoginPageContent() {
         <Card className="shadow-2xl shadow-primary/10">
           <CardHeader className="items-center text-center">
             <Logo className="mb-4 h-12 w-12 text-primary" />
-            <CardTitle className="font-headline text-2xl">آی‌تاب</CardTitle>
+            <CardTitle className="font-headline text-2xl">ورود دانش‌آموز</CardTitle>
             <CardDescription className="pt-2">
-              به آی‌تاب خوش آمدید. پلتفرم هوشمند خودارزیابی و نظم شخصی.
-              <br />
-              برای ورود، ایمیل و رمز عبور خود را وارد کنید.
+              به آی‌تاب خوش آمدید. برای ورود، ایمیل و رمز عبور خود را وارد کنید.
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <LoginForm />
+            <LoginForm role="student" />
             <div className="relative my-6">
                 <Separator />
                 <span className="absolute left-1/2 -translate-x-1/2 -translate-y-1/2 bg-card px-2 text-sm text-muted-foreground">
                     یا
                 </span>
             </div>
-            <Button asChild variant="outline" className="w-full">
-              <Link href="/signup">
-                <UserPlus className="ml-2 h-5 w-5" />
-                ایجاد حساب کاربری جدید (دانش‌آموز)
-              </Link>
-            </Button>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <Button asChild variant="outline" className="w-full">
+                <Link href="/signup">
+                  <UserPlus className="ml-2 h-5 w-5" />
+                  ایجاد حساب دانش‌آموزی
+                </Link>
+              </Button>
+              <Button asChild variant="secondary" className="w-full">
+                <Link href="/teacher/login">
+                  <ShieldCheck className="ml-2 h-5 w-5" />
+                  ورود معلمان
+                </Link>
+              </Button>
+            </div>
           </CardContent>
         </Card>
         <AnnouncementCard />

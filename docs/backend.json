@@ -1,3 +1,4 @@
+
 {
   "entities": {
     "Student": {
@@ -150,7 +151,7 @@
   "firestore": {
     "structure": [
       { "path": "/announcements/{announcementId}", "definition": { "entityName": "Announcement", "schema": { "$ref": "#/backend/entities/Announcement" }, "description": "Stores public announcements created by teachers, visible on the main login page." } },
-      { "path": "/teachers/{teacherId}", "definition": { "entityName": "teacher", "schema": { "$ref": "#/backend/entities/Teacher" }, "description": "Stores teacher profiles." } },
+      { "path": "/teachers/{teacherId}", "definition": { "entityName": "Teacher", "schema": { "$ref": "#/backend/entities/Teacher" }, "description": "Stores teacher profiles." } },
       { "path": "/teachers/{teacherId}/students/{studentId}", "definition": { "entityName": "student", "schema": { "$ref": "#/backend/entities/Student" }, "description": "Stores student profiles managed by a specific teacher." } },
       { "path": "/teachers/{teacherId}/students/{studentId}/dailyReports/{dailyReportId}", "definition": { "entityName": "DailyReport", "schema": { "$ref": "#/backend/entities/DailyReport" }, "description": "Stores daily reports for a specific student." } },
       { "path": "/teachers/{teacherId}/students/{studentId}/dailyReports/{dailyReportId}/subjectItems/{subjectItemId}", "definition": { "entityName": "SubjectItem", "schema": { "$ref": "#/backend/entities/SubjectItem" }, "description": "Stores subject items for a specific daily report." } },
