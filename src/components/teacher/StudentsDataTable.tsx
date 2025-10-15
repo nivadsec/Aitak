@@ -12,7 +12,7 @@ import {
   getFilteredRowModel,
   ColumnFiltersState,
 } from '@tanstack/react-table';
-import { MoreHorizontal, Trash2, Edit, ToggleLeft, ToggleRight, AlertTriangle } from 'lucide-react';
+import { MoreHorizontal, Trash2, Edit, ToggleLeft, ToggleRight, AlertTriangle, User, LineChart } from 'lucide-react';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -64,13 +64,17 @@ const calculateAverages = (studentId: string, reports: StudentReport[]) => {
     return { avgStudyHours: 'N/A', avgMood: 'N/A' };
   }
   const totalStudyMinutes = studentReports.reduce((sum, report) => {
-    return sum + report.items.reduce((itemSum, item) => itemSum + item.studyTime, 0);
+    return sum + (report.items || []).reduce((itemSum, item) => itemSum + (item.studyTime || 0), 0);
   }, 0);
-  const totalMood = studentReports.reduce((sum, report) => sum + report.moodScore, 0);
 
+  const totalMood = studentReports.reduce((sum, report) => sum + (report.moodScore || 0), 0);
+
+  const avgStudyHours = (totalStudyMinutes / 60 / studentReports.length).toFixed(1);
+  const avgMood = (totalMood / studentReports.length).toFixed(1);
+  
   return {
-    avgStudyHours: (totalStudyMinutes / 60 / studentReports.length).toFixed(1),
-    avgMood: (totalMood / studentReports.length).toFixed(1),
+    avgStudyHours: parseFloat(avgStudyHours) > 0 ? avgStudyHours : '0',
+    avgMood: parseFloat(avgMood) > 0 ? avgMood : '0'
   };
 };
 
@@ -113,8 +117,8 @@ export default function StudentsDataTable({ students, reports }: StudentsDataTab
 
   const columns: ColumnDef<Student>[] = [
     {
-      accessorKey: 'firstName',
-      header: 'نام',
+      accessorKey: 'fullName',
+      header: 'نام دانش آموز',
       cell: ({ row }) => (
         <div className="flex items-center gap-3">
           <Avatar>
@@ -129,12 +133,20 @@ export default function StudentsDataTable({ students, reports }: StudentsDataTab
       ),
     },
     {
-      accessorKey: 'gradeLevel',
-      header: 'پایه',
+        id: 'avgStudyHours',
+        header: 'میانگین مطالعه (ساعت)',
+        cell: ({ row }) => {
+            const { avgStudyHours } = calculateAverages(row.original.id, reports);
+            return <span>{avgStudyHours}</span>;
+        }
     },
-     {
-      accessorKey: 'major',
-      header: 'رشته',
+    {
+        id: 'avgMood',
+        header: 'میانگین روانی',
+        cell: ({ row }) => {
+            const { avgMood } = calculateAverages(row.original.id, reports);
+            return <span>{avgMood}</span>;
+        }
     },
     {
       accessorKey: 'isActive',
@@ -161,7 +173,10 @@ export default function StudentsDataTable({ students, reports }: StudentsDataTab
             <DropdownMenuContent align="end" className='font-body'>
               <DropdownMenuLabel>عملیات</DropdownMenuLabel>
               <DropdownMenuItem asChild>
-                  <Link href={`/teacher/students/${student.id}`}>مشاهده جزئیات</Link>
+                  <Link href={`/teacher/students/${student.id}`}>
+                    <LineChart className="ml-2 h-4 w-4" />
+                    مشاهده جزئیات و تحلیل
+                  </Link>
               </DropdownMenuItem>
               <DropdownMenuItem onClick={() => setEditingStudent(student)}>
                 <Edit className="ml-2 h-4 w-4" />
@@ -206,9 +221,9 @@ export default function StudentsDataTable({ students, reports }: StudentsDataTab
       <div className="flex items-center py-4">
         <Input
           placeholder="جستجوی دانش‌آموز..."
-          value={(table.getColumn('firstName')?.getFilterValue() as string) ?? ''}
+          value={(table.getColumn('fullName')?.getFilterValue() as string) ?? ''}
           onChange={(event) =>
-            table.getColumn('firstName')?.setFilterValue(event.target.value)
+            table.getColumn('fullName')?.setFilterValue(event.target.value)
           }
           className="max-w-sm"
         />
@@ -237,6 +252,11 @@ export default function StudentsDataTable({ students, reports }: StudentsDataTab
                 <TableRow
                   key={row.id}
                   data-state={row.getIsSelected() && 'selected'}
+                  className="cursor-pointer"
+                  onClick={() => {
+                     const student = row.original;
+                     window.location.href = `/teacher/students/${student.id}`;
+                  }}
                 >
                   {row.getVisibleCells().map((cell) => (
                     <TableCell key={cell.id}>
