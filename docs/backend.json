@@ -4,7 +4,7 @@
       "$schema": "http://json-schema.org/draft-07/schema#",
       "title": "Student",
       "type": "object",
-      "description": "Represents a student in the SmartCalm Reports system.",
+      "description": "Represents a student in the آی‌تاب system.",
       "properties": {
         "id": {
           "type": "string",
@@ -50,7 +50,7 @@
       "$schema": "http://json-schema.org/draft-07/schema#",
       "title": "Teacher",
       "type": "object",
-      "description": "Represents a teacher or admin in the SmartCalm Reports system.",
+      "description": "Represents a teacher or admin in the آی‌تاب system.",
       "properties": {
         "id": {
           "type": "string",

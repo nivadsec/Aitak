@@ -58,7 +58,7 @@ export default function StudentDetailPage({ params }: { params: { id: string } }
       (exportData.dailyReports as any[]).push({ ...report, subjectItems });
     }
     
-    downloadJson(exportData, `smartcalm_backup_${student.firstName}_${student.lastName}.json`);
+    downloadJson(exportData, `itab_backup_${student.firstName}_${student.lastName}.json`);
   };
 
 

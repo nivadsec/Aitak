@@ -3,8 +3,8 @@ import './globals.css';
 import { Toaster } from "@/components/ui/toaster"
 
 export const metadata: Metadata = {
-  title: 'سیستم گزارش‌کار هوشمند',
-  description: 'Smart Calm Report System',
+  title: 'آی‌تاب',
+  description: 'آی‌تاب | پلتفرم هوشمند خودارزیابی و نظم شخصی',
 };
 
 export default function RootLayout({

@@ -106,9 +106,9 @@ function LoginPageContent() {
         <Card className="shadow-2xl shadow-primary/10">
           <CardHeader className="items-center text-center">
             <Logo className="mb-4 h-12 w-12 text-primary" />
-            <CardTitle className="font-headline text-2xl">سیستم گزارش‌کار هوشمند</CardTitle>
+            <CardTitle className="font-headline text-2xl">آی‌تاب</CardTitle>
             <CardDescription className="pt-2">
-              به پلتفرم خودارزیابی و نظم شخصی خوش آمدید.
+              به آی‌تاب خوش آمدید. پلتفرم هوشمند خودارزیابی و نظم شخصی.
               <br />
               نقش خود را برای ورود انتخاب کنید.
             </CardDescription>

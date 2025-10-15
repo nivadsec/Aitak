@@ -56,7 +56,7 @@ export default function StudentDashboardPage() {
         exportData.dailyReports.push(reportData);
     }
 
-    downloadJson(exportData, `smartcalm_backup_student_${user.displayName?.replace(' ', '_')}.json`);
+    downloadJson(exportData, `itab_backup_student_${user.displayName?.replace(' ', '_')}.json`);
   };
 
   return (

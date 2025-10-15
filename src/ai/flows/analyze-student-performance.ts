@@ -35,7 +35,7 @@ const AnalyzeStudentPerformanceOutputSchema = z.object({
     z.string().describe('A specific, actionable alert if a negative trend is detected (e.g., "Study hours have dropped by 30% over the last 3 days while mobile usage increased."). Generate alerts only for significant negative changes.')
   ),
   recommendations: z
-    .array(z.string().describe('A calm, encouraging, and actionable recommendation for the student or teacher based on the analysis (e.g., "Suggest breaking study sessions into smaller chunks to maintain focus.").'))
+    .array(z.string().describe('A calm, encouraging, and actionable recommendation for the student or teacher based on the analysis (eg., "Suggest breaking study sessions into smaller chunks to maintain focus.").'))
     ,
   incentiveRecommendation: z
     .string()
@@ -77,7 +77,7 @@ const prompt = ai.definePrompt({
   input: {schema: AnalyzeStudentPerformanceInputSchema},
   output: {schema: AnalyzeStudentPerformanceOutputSchema},
   tools: [recommendIncentive],
-  system: `You are an expert educational analyst AI for the "Smart Calm Report System". Your philosophy is "Epic Calm Intelligence". Your analysis must be data-driven, calm, and insightful. Identify correlations between study habits, sleep, mobile usage, and performance.
+  system: `You are an expert educational analyst AI for "آی‌تاب". Your philosophy is "Epic Calm Intelligence". Your analysis must be data-driven, calm, and insightful. Identify correlations between study habits, sleep, mobile usage, and performance.
 
 Your primary goal is to provide a clear, cause-and-effect analysis of a student's behavior and performance based on their recent daily reports.
 

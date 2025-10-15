@@ -152,7 +152,7 @@ export default function TeacherDashboardPage() {
         (exportData.students as any[]).push(studentData);
     }
     
-    downloadJson(exportData, `smartcalm_backup_all_${new Date().toISOString().split('T')[0]}.json`);
+    downloadJson(exportData, `itab_backup_all_${new Date().toISOString().split('T')[0]}.json`);
   };
   
   const isLoading = areStudentsLoading || areReportsLoading;
