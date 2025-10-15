@@ -7,27 +7,63 @@ import { useCollection, useFirebase, useMemoFirebase } from '@/firebase';
 import { downloadJson } from '@/lib/utils';
 import { collection, doc, getDocs, query, orderBy, limit } from 'firebase/firestore';
 import { Download } from 'lucide-react';
-import { toast } from '@/hooks/use-toast';
+import { useToast } from '@/hooks/use-toast';
 import type { StudentReport } from '@/lib/types';
+import React from 'react';
+
+// Helper function to create a simple trend description
+const createTrendDescription = (reports: StudentReport[]): string => {
+    if (reports.length < 2) {
+        return "گزارش‌های کافی برای تحلیل روند وجود ندارد.";
+    }
+    const latest = reports[0];
+    const previous = reports[1];
+
+    const latestStudyTime = latest.items.reduce((sum, item) => sum + (item.studyTime || 0), 0);
+    const previousStudyTime = previous.items.reduce((sum, item) => sum + (item.studyTime || 0), 0);
+
+    let trend = "";
+    if (latestStudyTime > previousStudyTime) {
+        trend += "افزایش در ساعت مطالعه";
+    } else if (latestStudyTime < previousStudyTime) {
+        trend += "کاهش در ساعت مطالعه";
+    } else {
+        trend += "ثبات در ساعت مطالعه";
+    }
+
+    if (latest.moodScore > previous.moodScore) {
+        trend += " و بهبود در وضعیت روانی";
+    } else if (latest.moodScore < previous.moodScore) {
+        trend += " و افت در وضعیت روانی";
+    }
+
+    return trend + ".";
+};
+
 
 export default function StudentDashboardPage() {
   const { firestore, user } = useFirebase();
+  const { toast } = useToast();
 
-  // Fetch the latest report for analytics
-  const latestReportQuery = useMemoFirebase(() => {
-    if (!user) return null;
-    // Assuming a teacherId is needed. We'll use a placeholder for now.
-    // In a real app, the student's document would contain their teacherId.
-    const teacherId = 'default-teacher'; // Placeholder
+  // Fetch the latest 2 reports for analytics and trend analysis
+  const reportsQuery = useMemoFirebase(() => {
+    if (!user || !firestore) return null;
+    // This logic assumes a student is associated with a teacher.
+    // In a more robust app, the student's doc would contain their teacher's ID.
+    // We'll use a placeholder 'default-teacher' for now.
+    const teacherId = 'default-teacher'; 
     return query(
         collection(firestore, 'teachers', teacherId, 'students', user.uid, 'dailyReports'),
         orderBy('date', 'desc'),
-        limit(1)
+        limit(2) // Fetch last two reports for trend analysis
     );
   }, [firestore, user]);
 
-  const { data: latestReports, isLoading: isReportLoading } = useCollection<StudentReport>(latestReportQuery);
-  const latestReport = latestReports?.[0];
+  const { data: reports, isLoading: isReportLoading } = useCollection<StudentReport>(reportsQuery);
+  
+  const latestReport = reports?.[0];
+  const trendDescription = React.useMemo(() => reports ? createTrendDescription(reports) : undefined, [reports]);
+
 
   const handleExportData = async () => {
      if (!user || !firestore) {
@@ -44,8 +80,10 @@ export default function StudentDashboardPage() {
     });
 
     const teacherId = 'default-teacher'; // Placeholder
-    const studentDocRef = doc(firestore, 'teachers', teacherId, 'students', user.uid);
-    const studentData = (await getDocs(query(collection(firestore, `teachers/${teacherId}/students`)))).docs.find(d => d.id === user.uid)?.data();
+    // Fetch student data. This assumes student data exists.
+    const studentQuery = query(collection(firestore, `teachers/${teacherId}/students`));
+    const studentSnapshot = await getDocs(studentQuery);
+    const studentData = studentSnapshot.docs.find(d => d.id === user.uid)?.data();
 
 
     const exportData: any = {
@@ -65,7 +103,11 @@ export default function StudentDashboardPage() {
         exportData.dailyReports.push(reportData);
     }
 
-    downloadJson(exportData, `itab_backup_student_${user.displayName?.replace(' ', '_')}.json`);
+    downloadJson(exportData, `itab_backup_${user.displayName?.replace(' ', '_') || user.uid}.json`);
+     toast({
+        title: "پشتیبان‌گیری کامل شد",
+        description: "فایل JSON اطلاعات شما دانلود شد.",
+    });
   };
 
   return (
@@ -75,10 +117,13 @@ export default function StudentDashboardPage() {
       </div>
       <div className="lg:col-span-2 space-y-6">
         <PersonalStats report={latestReport} isLoading={isReportLoading}>
-          <MotivationTip />
+          <MotivationTip 
+            reportTrends={trendDescription} 
+            studentName={user?.displayName?.split(' ')[0]} 
+          />
         </PersonalStats>
          <div className="text-center">
-            <Button variant="outline" onClick={handleExportData}>
+            <Button variant="outline" onClick={handleExportData} disabled={!user}>
               <Download className="ml-2 h-4 w-4" />
               پشتیبان‌گیری از اطلاعات من
             </Button>
