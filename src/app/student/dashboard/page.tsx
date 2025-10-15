@@ -5,12 +5,29 @@ import PersonalStats from '@/components/student/PersonalStats';
 import { Button } from '@/components/ui/button';
 import { useCollection, useFirebase, useMemoFirebase } from '@/firebase';
 import { downloadJson } from '@/lib/utils';
-import { collection, doc, getDocs, query } from 'firebase/firestore';
+import { collection, doc, getDocs, query, orderBy, limit } from 'firebase/firestore';
 import { Download } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
+import type { StudentReport } from '@/lib/types';
 
 export default function StudentDashboardPage() {
   const { firestore, user } = useFirebase();
+
+  // Fetch the latest report for analytics
+  const latestReportQuery = useMemoFirebase(() => {
+    if (!user) return null;
+    // Assuming a teacherId is needed. We'll use a placeholder for now.
+    // In a real app, the student's document would contain their teacherId.
+    const teacherId = 'default-teacher'; // Placeholder
+    return query(
+        collection(firestore, 'teachers', teacherId, 'students', user.uid, 'dailyReports'),
+        orderBy('date', 'desc'),
+        limit(1)
+    );
+  }, [firestore, user]);
+
+  const { data: latestReports, isLoading: isReportLoading } = useCollection<StudentReport>(latestReportQuery);
+  const latestReport = latestReports?.[0];
 
   const handleExportData = async () => {
      if (!user || !firestore) {
@@ -26,13 +43,9 @@ export default function StudentDashboardPage() {
         description: "لطفا صبر کنید، در حال جمع‌آوری اطلاعات شما هستیم.",
     });
 
-    // This is simplified. We're assuming the student exists under a teacher.
-    // A more robust solution might need to find the teacher first.
-    // For now, we'll try to fetch data assuming a teacherId. This part is tricky without knowing the teacher.
-    // We will assume the teacherId is stored somewhere accessible or we just export reports.
-    // Let's just export the user profile and assume reports are under a path we can guess.
-     const studentDocRef = doc(firestore, 'students', user.uid); // This path is a guess
-     const studentData = (await getDocs(query(collection(firestore, `teachers/default-teacher/students`)))).docs.find(d => d.id === user.uid)?.data();
+    const teacherId = 'default-teacher'; // Placeholder
+    const studentDocRef = doc(firestore, 'teachers', teacherId, 'students', user.uid);
+    const studentData = (await getDocs(query(collection(firestore, `teachers/${teacherId}/students`)))).docs.find(d => d.id === user.uid)?.data();
 
 
     const exportData: any = {
@@ -40,10 +53,6 @@ export default function StudentDashboardPage() {
       dailyReports: []
     };
     
-    // This part is difficult because we don't know the teacher ID from the student panel.
-    // This is a placeholder to show the functionality.
-    // In a real app, the student document should contain their teacher's ID.
-    const teacherId = 'default-teacher'; // Placeholder
     const reportsQuery = query(collection(firestore, 'teachers', teacherId, 'students', user.uid, 'dailyReports'));
     const reportsSnapshot = await getDocs(reportsQuery);
 
@@ -65,7 +74,7 @@ export default function StudentDashboardPage() {
         <DailyReportForm />
       </div>
       <div className="lg:col-span-2 space-y-6">
-        <PersonalStats>
+        <PersonalStats report={latestReport} isLoading={isReportLoading}>
           <MotivationTip />
         </PersonalStats>
          <div className="text-center">
