@@ -4,7 +4,7 @@ import { DailyReportForm } from '@/components/student/DailyReportForm';
 import { MotivationTip } from '@/components/student/MotivationTip';
 import PersonalStats from '@/components/student/PersonalStats';
 import { Button } from '@/components/ui/button';
-import { useCollection, useFirebase, useMemoFirebase } from '@/firebase';
+import { useCollection, useFirebase, useMemoFirebase, FirestorePermissionError, errorEmitter } from '@/firebase';
 import { downloadJson } from '@/lib/utils';
 import { collection, doc, getDocs, query, orderBy, limit, getDoc, collectionGroup, where } from 'firebase/firestore';
 import { Download } from 'lucide-react';
@@ -53,7 +53,14 @@ export default function StudentDashboardPage() {
 
     const findStudentData = async () => {
         const studentQuery = query(collectionGroup(firestore, 'students'), where('id', '==', user.uid));
-        const studentSnapshot = await getDocs(studentQuery);
+        const studentSnapshot = await getDocs(studentQuery).catch(serverError => {
+            const permissionError = new FirestorePermissionError({
+                path: `students`, // This is a collection group query, path is not specific
+                operation: 'list'
+            });
+            errorEmitter.emit('permission-error', permissionError);
+            throw permissionError; // Stop further execution
+        });
         if (!studentSnapshot.empty) {
             const studentDoc = studentSnapshot.docs[0];
             setStudentData(studentDoc.data() as {teacherId: string});
@@ -93,7 +100,15 @@ export default function StudentDashboardPage() {
     });
 
     const studentDocRef = doc(firestore, `teachers/${studentData.teacherId}/students`, user.uid);
-    const studentDocSnap = await getDoc(studentDocRef);
+    const studentDocSnap = await getDoc(studentDocRef).catch(serverError => {
+        const permissionError = new FirestorePermissionError({
+            path: studentDocRef.path,
+            operation: 'get'
+        });
+        errorEmitter.emit('permission-error', permissionError);
+        throw permissionError; // Stop further execution
+    });
+    
     const fullStudentData = studentDocSnap.exists() ? studentDocSnap.data() : {};
 
     const exportData: any = {
@@ -101,13 +116,27 @@ export default function StudentDashboardPage() {
       dailyReports: []
     };
     
-    const reportsQuery = query(collection(firestore, 'teachers', studentData.teacherId, 'students', user.uid, 'dailyReports'));
-    const reportsSnapshot = await getDocs(reportsQuery);
+    const reportsCollectionRef = collection(firestore, 'teachers', studentData.teacherId, 'students', user.uid, 'dailyReports');
+    const reportsSnapshot = await getDocs(reportsCollectionRef).catch(serverError => {
+        const permissionError = new FirestorePermissionError({
+            path: reportsCollectionRef.path,
+            operation: 'list'
+        });
+        errorEmitter.emit('permission-error', permissionError);
+        throw permissionError; // Stop further execution
+    });
 
      for (const reportDoc of reportsSnapshot.docs) {
         const reportData = reportDoc.data();
         const subjectItemsQuery = query(collection(reportDoc.ref, 'subjectItems'));
-        const subjectItemsSnapshot = await getDocs(subjectItemsQuery);
+        const subjectItemsSnapshot = await getDocs(subjectItemsQuery).catch(serverError => {
+            const permissionError = new FirestorePermissionError({
+                path: collection(reportDoc.ref, 'subjectItems').path,
+                operation: 'list'
+            });
+            errorEmitter.emit('permission-error', permissionError);
+            throw permissionError; // Stop further execution
+        });
         const subjectItems = subjectItemsSnapshot.docs.map(d => d.data());
         (reportData as any).subjectItems = subjectItems;
         exportData.dailyReports.push(reportData);
