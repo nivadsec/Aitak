@@ -88,7 +88,15 @@ export default function StudentDashboardPage() {
         throw permissionError; // Stop further execution
     });
     
-    const fullStudentData = studentDocSnap.exists() ? studentDocSnap.data() : {};
+    if (!studentDocSnap.exists()) {
+        toast({
+            title: "خطا",
+            description: "اطلاعات دانش‌آموز یافت نشد.",
+            variant: "destructive",
+        });
+        return;
+    }
+    const fullStudentData = studentDocSnap.data();
 
     const exportData: any = {
       ...fullStudentData,
