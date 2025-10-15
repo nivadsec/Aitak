@@ -5,8 +5,8 @@ import { useFieldArray, useForm } from 'react-hook-form';
 import * as z from 'zod';
 import { CalendarIcon, FileUp, PlusCircle, Trash2, Save, Loader2 } from 'lucide-react';
 import { format } from 'date-fns-jalali';
-import React, { useEffect } from 'react';
-import { collection, collectionGroup, doc, getDocs, query, serverTimestamp, where } from 'firebase/firestore';
+import React from 'react';
+import { collection, doc, serverTimestamp } from 'firebase/firestore';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -39,9 +39,8 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Calendar } from '@/components/ui/calendar';
 import { Slider } from '@/components/ui/slider';
 import { useToast } from '@/hooks/use-toast';
-import { useFirebase, FirestorePermissionError, errorEmitter } from '@/firebase';
+import { useFirebase } from '@/firebase';
 import { setDocumentNonBlocking } from '@/firebase/non-blocking-updates';
-import type { DailyReportItem, Student } from '@/lib/types';
 
 const reportItemSchema = z.object({
   subject: z.string().min(1, 'درس الزامی است.'),
@@ -67,32 +66,11 @@ type FormValues = z.infer<typeof formSchema>;
 
 export function DailyReportForm() {
   const { toast } = useToast();
-  const { user, firestore } = useFirebase();
+  const { user, firestore, role } = useFirebase();
   const [isLoading, setIsLoading] = React.useState(false);
-  const [studentData, setStudentData] = React.useState<{ id: string; teacherId: string } | null>(null);
-
-  useEffect(() => {
-    if (!user || !firestore) return;
-
-    const findStudentData = async () => {
-      const studentQuery = query(collectionGroup(firestore, 'students'), where('id', '==', user.uid));
-      try {
-        const studentSnapshot = await getDocs(studentQuery);
-        if (!studentSnapshot.empty) {
-          const studentDoc = studentSnapshot.docs[0];
-          const data = studentDoc.data() as Student;
-          setStudentData({ id: data.id, teacherId: (data as any).teacherId });
-        }
-      } catch (serverError) {
-        const permissionError = new FirestorePermissionError({
-          path: 'students', // This is a collection group query
-          operation: 'list',
-        });
-        errorEmitter.emit('permission-error', permissionError);
-      }
-    };
-    findStudentData();
-  }, [user, firestore]);
+  
+  // The teacherId is now available from the role info string "student:teacherId"
+  const teacherId = role?.split(':')[1];
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -113,10 +91,10 @@ export function DailyReportForm() {
   });
 
   async function onSubmit(data: FormValues) {
-    if (!user || !studentData) {
+    if (!user || !teacherId) {
       toast({
         title: 'خطا',
-        description: 'اطلاعات کاربری برای ثبت گزارش یافت نشد.',
+        description: 'اطلاعات کاربری یا معلم برای ثبت گزارش یافت نشد.',
         variant: 'destructive',
       });
       return;
@@ -124,7 +102,7 @@ export function DailyReportForm() {
     setIsLoading(true);
 
     const reportId = format(data.date, 'yyyy-MM-dd');
-    const reportRef = doc(firestore, 'teachers', studentData.teacherId, 'students', user.uid, 'dailyReports', reportId);
+    const reportRef = doc(firestore, 'teachers', teacherId, 'students', user.uid, 'dailyReports', reportId);
     
     // Calculate total study time
     const totalStudyMinutes = data.items.reduce((sum, item) => sum + item.studyTime, 0);
@@ -132,7 +110,7 @@ export function DailyReportForm() {
     const reportData = {
         id: reportId,
         studentId: user.uid,
-        teacherId: studentData.teacherId,
+        teacherId: teacherId,
         date: data.date,
         wakeUpTime: data.wakeUpTime,
         studyStartTime: data.studyStartTime,
@@ -146,7 +124,7 @@ export function DailyReportForm() {
     };
 
     // Prepare subject items for subcollection
-    const subjectItems = data.items.map((item, index) => {
+    const subjectItems = data.items.map((item) => {
         const testCount = item.testCount || 0;
         const correctCount = item.correctCount || 0;
         const wrongCount = item.wrongCount || 0;
@@ -362,7 +340,7 @@ export function DailyReportForm() {
 
           </CardContent>
           <CardFooter>
-            <Button type="submit" size="lg" disabled={isLoading || !studentData}>
+            <Button type="submit" size="lg" disabled={isLoading || !teacherId}>
               {isLoading ? <Loader2 className="ml-2 h-4 w-4 animate-spin" /> : <Save className="ml-2 h-4 w-4" />}
               ثبت گزارش
             </Button>
