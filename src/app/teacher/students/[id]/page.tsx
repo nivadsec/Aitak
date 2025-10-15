@@ -11,10 +11,11 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
 import { Download } from 'lucide-react';
 import { downloadJson } from '@/lib/utils';
-import { toast } from '@/hooks/use-toast';
+import { useToast } from '@/hooks/use-toast';
 
 export default function StudentDetailPage({ params }: { params: { id: string } }) {
   const { firestore, user } = useFirebase();
+  const { toast } = useToast();
 
   const studentRef = useMemoFirebase(() => {
     if (!user) return null;
@@ -74,6 +75,10 @@ export default function StudentDetailPage({ params }: { params: { id: string } }
     }
     
     downloadJson(exportData, `itab_backup_${student.firstName}_${student.lastName}.json`);
+    toast({
+        title: "پشتیبان‌گیری کامل شد",
+        description: `فایل JSON اطلاعات ${student.firstName} دانلود شد.`,
+    });
   };
 
 
@@ -113,7 +118,7 @@ export default function StudentDetailPage({ params }: { params: { id: string } }
   return (
     <div className="space-y-6">
       <Card>
-        <CardHeader className="flex flex-row items-center justify-between">
+        <CardHeader className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
           <div className="flex items-center gap-4">
             <Avatar className="h-16 w-16">
               <AvatarImage src={(student as any).avatarUrl} alt={`${student.firstName} ${student.lastName}`} />

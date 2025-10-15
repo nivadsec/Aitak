@@ -77,7 +77,9 @@ export default function StudentsPage() {
               </div>
             </div>
           ) : (
-            <StudentsDataTable students={students || []} reports={[]} />
+            <div className="overflow-x-auto">
+              <StudentsDataTable students={students || []} reports={[]} />
+            </div>
           )}
         </CardContent>
       </Card>

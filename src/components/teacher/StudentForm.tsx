@@ -93,6 +93,7 @@ export function StudentForm({ student, onSuccess, onCancel }: StudentFormProps) 
             const newDocRef = doc(studentsCollection);
             const studentData: Student = {
                 id: newDocRef.id, // using the generated doc id
+                teacherId: user.uid,
                 ...data
             };
             setDocumentNonBlocking(newDocRef, studentData, {});

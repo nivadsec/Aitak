@@ -217,7 +217,9 @@ export default function TeacherDashboardPage() {
                   <Skeleton className="h-12 w-full" />
                 </div>
               ) : (
-                <StudentsDataTable students={students || []} reports={allReports || []} />
+                <div className="overflow-x-auto">
+                  <StudentsDataTable students={students || []} reports={allReports || []} />
+                </div>
               )}
           </CardContent>
         </Card>
@@ -261,5 +263,3 @@ export default function TeacherDashboardPage() {
     </Dialog>
   );
 }
-
-    

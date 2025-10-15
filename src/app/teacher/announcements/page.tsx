@@ -66,7 +66,7 @@ export default function TeacherAnnouncementsPage() {
                         این اطلاعیه برای همه کاربران در صفحه اصلی نمایش داده می‌شود.
                     </DialogDescription>
                     </DialogHeader>
-                    <AnnouncementForm onSuccess={() => setIsDialogOpen(false)} />
+                    <AnnouncementForm onSuccess={() => setIsDialogOpen(false)} announcement={null} />
                 </DialogContent>
             </div>
         </Dialog>
