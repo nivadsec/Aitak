@@ -17,3 +17,35 @@ export function downloadJson(data: unknown, filename: string) {
   document.body.removeChild(link);
   URL.revokeObjectURL(url);
 }
+
+export async function copyToClipboard(text: string): Promise<boolean> {
+  // Modern method: Clipboard API
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    try {
+      await navigator.clipboard.writeText(text);
+      return true;
+    } catch (err) {
+      console.warn("Clipboard API failed, falling back to execCommand.", err);
+      // Fallback will be attempted below
+    }
+  }
+
+  // Fallback method: execCommand
+  const textArea = document.createElement("textarea");
+  textArea.value = text;
+  textArea.style.position = "fixed"; // Stay out of view
+  textArea.style.opacity = "0";
+  document.body.appendChild(textArea);
+  textArea.focus();
+  textArea.select();
+
+  try {
+    const successful = document.execCommand('copy');
+    document.body.removeChild(textArea);
+    return successful;
+  } catch (err) {
+    console.error("Fallback to execCommand failed.", err);
+    document.body.removeChild(textArea);
+    return false;
+  }
+}

@@ -6,7 +6,6 @@ import { useForm } from 'react-hook-form';
 import * as z from 'zod';
 import { Loader2, LogIn } from 'lucide-react';
 import React from 'react';
-import { useRouter } from 'next/navigation';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -32,8 +31,6 @@ type FormValues = z.infer<typeof formSchema>;
 export function LoginForm() {
   const { toast } = useToast();
   const auth = useAuth();
-  const router = useRouter();
-  const [isLoading, setIsLoading] = React.useState(false);
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -43,17 +40,31 @@ export function LoginForm() {
     },
   });
 
+  const { isSubmitting } = form.formState;
+
   async function onSubmit(data: FormValues) {
-    setIsLoading(true);
+    if (!auth) {
+      toast({
+        title: 'عدم ارتباط با سرور',
+        description: 'اتصال به Firebase هنوز برقرار نشده است.',
+        variant: 'destructive',
+        className: 'font-body',
+      });
+      return;
+    }
+
     try {
-      // We don't await this. The onAuthStateChanged listener in the provider
-      // will handle the user state update and redirection.
-      initiateEmailSignIn(auth, data.email, data.password);
-    
+      await initiateEmailSignIn(auth, data.email, data.password);
+      // On successful login, the onAuthStateChanged listener in AuthProvider
+      // will handle user state updates and redirects.
     } catch (error: any) {
-      console.error('Login Error:', error.code);
+      console.error('Login Error:', error);
       let description = 'مشکلی در هنگام ورود پیش آمد. لطفاً دوباره تلاش کنید.';
-      if (error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password' || error.code === 'auth/invalid-credential') {
+      if (
+        error.code === 'auth/user-not-found' ||
+        error.code === 'auth/wrong-password' ||
+        error.code === 'auth/invalid-credential'
+      ) {
         description = 'ایمیل یا رمز عبور وارد شده صحیح نمی‌باشد.';
       }
       toast({
@@ -62,22 +73,7 @@ export function LoginForm() {
         variant: 'destructive',
         className: 'font-body',
       });
-       setIsLoading(false);
     }
-    // Don't set loading to false here immediately. The redirection will take care of unmounting this component.
-    // If there's an error, onAuthStateChanged will not fire with a new user, so we handle the error case.
-    // A timeout can be added here as a fallback in case redirection fails for some reason.
-     setTimeout(() => {
-        if(isLoading){
-            setIsLoading(false);
-            toast({
-                title: 'خطا در ورود',
-                description: 'ایمیل یا رمز عبور وارد شده صحیح نمی‌باشد.',
-                variant: 'destructive',
-                className: 'font-body',
-            });
-        }
-    }, 8000); 
   }
 
   return (
@@ -110,8 +106,8 @@ export function LoginForm() {
           )}
         />
         <div className="flex justify-end pt-2">
-          <Button type="submit" disabled={isLoading} className="w-full">
-            {isLoading ? (
+          <Button type="submit" disabled={isSubmitting} className="w-full">
+            {isSubmitting ? (
               <Loader2 className="ml-2 h-4 w-4 animate-spin" />
             ) : (
               <LogIn className="ml-2 h-4 w-4" />
