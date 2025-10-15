@@ -2,7 +2,7 @@
 'use client';
 
 import Link from 'next/link';
-import { UserPlus, Megaphone } from 'lucide-react';
+import { UserPlus, Megaphone, Loader2 } from 'lucide-react';
 import React, { useEffect } from 'react';
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -69,42 +69,40 @@ function AnnouncementCard() {
 
 function LoginPageContent() {
   const auth = useAuth();
-  const { user, isUserLoading } = useUser();
-  const [progress, setProgress] = React.useState(10);
+  const { user, isUserLoading, role } = useUser();
   const [showRedirecting, setShowRedirecting] = React.useState(false);
-
+  
+  // Initiate anonymous sign-in only if no user is logged in or loading.
   useEffect(() => {
     if (!isUserLoading && !user) {
       initiateAnonymousSignIn(auth);
     }
   }, [isUserLoading, user, auth]);
 
+  // Show loading indicator while user state is being determined or redirecting.
   useEffect(() => {
-    let progressTimer: NodeJS.Timeout;
-    if (isUserLoading || user) {
+    // We show the loading screen if the user is loading OR if a user object exists (implying a redirect is imminent)
+     if (isUserLoading || user) {
        setShowRedirecting(true);
-      progressTimer = setInterval(() => {
-        setProgress((prev) => (prev >= 90 ? 90 : prev + 8));
-      }, 300);
-    } else {
+     } else {
        setShowRedirecting(false);
-       setProgress(0);
-    }
-    return () => clearInterval(progressTimer);
-  }, [isUserLoading, user]);
+     }
+  }, [isUserLoading, user, role]);
   
 
   if (showRedirecting) {
     return (
         <div className="flex min-h-screen w-full flex-col items-center justify-center bg-background gap-6">
           <div className="relative flex items-center justify-center h-24 w-24">
-            <div className="absolute inset-0 rounded-full bg-primary/10 animate-pulse-slow"></div>
-            <div className="absolute inset-2 rounded-full bg-primary/20 animate-pulse-slow delay-200"></div>
+             <div className="absolute inset-0 rounded-full bg-primary/10 animate-ping"></div>
+             <div className="absolute inset-2 rounded-full bg-primary/20 animate-ping delay-200"></div>
             <Logo className="h-12 w-12 text-primary" />
           </div>
           <div className='w-64 text-center space-y-3'>
-            <Progress value={progress} className="h-2" />
-            <p className="text-sm text-muted-foreground animate-pulse">در حال بارگذاری...</p>
+            <p className="text-sm text-muted-foreground animate-pulse flex items-center justify-center gap-2">
+                <Loader2 className="h-4 w-4 animate-spin" />
+                در حال بارگذاری...
+            </p>
           </div>
         </div>
     )
