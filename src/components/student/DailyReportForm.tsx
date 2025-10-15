@@ -39,7 +39,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Calendar } from '@/components/ui/calendar';
 import { Slider } from '@/components/ui/slider';
 import { useToast } from '@/hooks/use-toast';
-import { useFirebase } from '@/firebase';
+import { useFirebase, FirestorePermissionError, errorEmitter } from '@/firebase';
 import { setDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 import type { DailyReportItem, Student } from '@/lib/types';
 
@@ -76,11 +76,19 @@ export function DailyReportForm() {
 
     const findStudentData = async () => {
       const studentQuery = query(collectionGroup(firestore, 'students'), where('id', '==', user.uid));
-      const studentSnapshot = await getDocs(studentQuery);
-      if (!studentSnapshot.empty) {
-        const studentDoc = studentSnapshot.docs[0];
-        const data = studentDoc.data() as Student;
-        setStudentData({ id: data.id, teacherId: (data as any).teacherId });
+      try {
+        const studentSnapshot = await getDocs(studentQuery);
+        if (!studentSnapshot.empty) {
+          const studentDoc = studentSnapshot.docs[0];
+          const data = studentDoc.data() as Student;
+          setStudentData({ id: data.id, teacherId: (data as any).teacherId });
+        }
+      } catch (serverError) {
+        const permissionError = new FirestorePermissionError({
+          path: 'students', // This is a collection group query
+          operation: 'list',
+        });
+        errorEmitter.emit('permission-error', permissionError);
       }
     };
     findStudentData();
@@ -364,5 +372,3 @@ export function DailyReportForm() {
     </Card>
   );
 }
-
-    
