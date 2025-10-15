@@ -1,137 +1,191 @@
+/**
+ * @fileoverview Firestore Security Rules for the آی‌تاب system.
+ *
+ * Core Philosophy:
+ * This ruleset enforces a strict teacher-ownership model for student data,
+ * while allowing public read access to announcements. Teachers can only
+ * manage their own profile and the data associated with their students.
+ *
+ * Data Structure:
+ * - /announcements/{announcementId}: Public announcements.
+ * - /teachers/{teacherId}: Teacher profiles, where teacherId is the Firebase Auth UID.
+ * - /teachers/{teacherId}/students/{studentId}: Student profiles managed by a teacher.
+ * - /teachers/{teacherId}/students/{studentId}/dailyReports/{dailyReportId}: Daily reports for a student.
+ * - /teachers/{teacherId}/students/{studentId}/dailyReports/{dailyReportId}/subjectItems/{subjectItemId}: Subject items for a daily report.
+ * - /teachers/{teacherId}/messages/{messageId}: Messages sent to all students.
+ * - /teachers/{teacherId}/students/{studentId}/messages/{messageId}: Messages sent to specific students.
+ *
+ * Key Security Decisions:
+ * - Teachers can only manage their own profile.
+ * - Student data is scoped under a teacher's UID, ensuring only the teacher can manage that data.
+ * - Announcements are publicly readable.
+ * - Data validation is relaxed to allow rapid prototyping, focusing on authorization.
+ * - Listing all documents in a collection is allowed for a teacher within their own collections.
+ *
+ * Denormalization for Authorization:
+ * The data model denormalizes `teacherId` and `studentId` into child documents (e.g., DailyReport, SubjectItem) to allow authorization rules to be independent of parent documents.
+ * This ensures that access control can be determined directly from the document being accessed, without needing costly `get()` operations on parent documents.
+ */
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
     /**
-     * @description Allows anyone to read announcements, but only allows teachers to create, update, or delete them.
+     * @description Allows anyone to read announcements, but only teachers to create, update, or delete them.
      * @path /announcements/{announcementId}
-     * @allow (get, list): if true
-     * @allow (create): if isSignedIn()
-     * @allow (update, delete): if isSignedIn()
-     * @principle Allows public read access to announcements, but restricts writes to authenticated teachers.
+     * @allow (get, list): if true (Public read access)
+     * @allow (create): if isSignedIn() && request.auth.uid == request.resource.data.teacherId (Teacher creates an announcement)
+     * @allow (update): if isSignedIn() && resource.data.teacherId == request.auth.uid (Teacher updates their own announcement)
+     * @allow (delete): if isSignedIn() && resource.data.teacherId == request.auth.uid (Teacher deletes their own announcement)
+     * @deny (create): if !isSignedIn() (Not signed in)
+     * @deny (update): if !isSignedIn() || resource.data.teacherId != request.auth.uid (Not the owner or not signed in)
+     * @deny (delete): if !isSignedIn() || resource.data.teacherId != request.auth.uid (Not the owner or not signed in)
+     * @principle Allows public read access to announcements and enforces teacher ownership for writes.
      */
     match /announcements/{announcementId} {
       allow get, list: if true;
-      allow create: if isSignedIn();
-      allow update, delete: if isSignedIn();
+      allow create: if isSignedIn() && request.auth.uid == request.resource.data.teacherId;
+      allow update: if isSignedIn() && resource.data.teacherId == request.auth.uid && resource != null;
+      allow delete: if isSignedIn() && resource.data.teacherId == request.auth.uid && resource != null;
     }
 
     /**
-     * @description Allows a teacher to read, create, update, and delete their own profile.
+     * @description Allows teachers to manage their own profile.
      * @path /teachers/{teacherId}
-     * @allow (get, list): if isOwner(teacherId);
-     * @allow (create): if isOwner(teacherId);
-     * @allow (update, delete): if isOwner(teacherId);
+     * @allow (get): if isOwner(teacherId) (Teacher reads their own profile)
+     * @allow (create): if isOwner(teacherId) (Teacher creates their own profile)
+     * @allow (update): if isExistingOwner(teacherId) (Teacher updates their own profile)
+     * @allow (delete): if isExistingOwner(teacherId) (Teacher deletes their own profile)
+     * @allow (list): if false; (Teachers cannot list all profiles)
+     * @deny (create): if !isOwner(teacherId) (Not the owner)
+     * @deny (update): if !isExistingOwner(teacherId) (Not the owner or document does not exist)
+     * @deny (delete): if !isExistingOwner(teacherId) (Not the owner or document does not exist)
      * @principle Enforces document ownership for teacher profiles.
      */
     match /teachers/{teacherId} {
-      allow get, list: if isOwner(teacherId);
-      allow create: if request.auth.uid == teacherId;
-      allow update, delete: if isOwner(teacherId);
+      allow get: if isOwner(teacherId);
+      allow list: if false;
+      allow create: if isOwner(teacherId);
+      allow update: if isExistingOwner(teacherId);
+      allow delete: if isExistingOwner(teacherId);
     }
 
     /**
-     * @description Allows a teacher to manage students associated with their profile.
+     * @description Allows a teacher to manage their students' profiles.
      * @path /teachers/{teacherId}/students/{studentId}
-     * @allow (get, list): if isOwner(teacherId);
-     * @allow (create): if isOwner(teacherId);
-     * @allow (update, delete): if isOwner(teacherId);
-     * @principle Enforces path-based ownership for student profiles.
+     * @allow (get): if isOwner(teacherId) (Teacher reads a student profile)
+     * @allow (list): if isOwner(teacherId) (Teacher lists their students)
+     * @allow (create): if isOwner(teacherId) (Teacher creates a student profile)
+     * @allow (update): if isExistingOwner(teacherId) (Teacher updates a student profile)
+     * @allow (delete): if isExistingOwner(teacherId) (Teacher deletes a student profile)
+     * @deny (create): if !isOwner(teacherId) (Not the teacher)
+     * @deny (update): if !isExistingOwner(teacherId) (Not the teacher or student profile does not exist)
+     * @deny (delete): if !isExistingOwner(teacherId) (Not the teacher or student profile does not exist)
+     * @principle Enforces teacher ownership for student profiles.
      */
     match /teachers/{teacherId}/students/{studentId} {
-      allow get, list: if isOwner(teacherId);
+      allow get: if isOwner(teacherId);
+      allow list: if isOwner(teacherId);
       allow create: if isOwner(teacherId);
-      allow update, delete: if isOwner(teacherId);
+      allow update: if isExistingOwner(teacherId);
+      allow delete: if isExistingOwner(teacherId);
     }
 
     /**
-     * @description Allows a teacher to manage daily reports for students associated with their profile.
+     * @description Allows a teacher to manage daily reports for their students.
      * @path /teachers/{teacherId}/students/{studentId}/dailyReports/{dailyReportId}
-     * @allow (get, list): if isOwner(teacherId);
-     * @allow (create): if isOwner(teacherId);
-     * @allow (update, delete): if isOwner(teacherId);
-     * @principle Enforces path-based ownership for daily reports.
+     * @allow (get): if isOwner(teacherId) (Teacher reads a daily report)
+     * @allow (list): if isOwner(teacherId) (Teacher lists daily reports for a student)
+     * @allow (create): if isOwner(teacherId) (Teacher creates a daily report)
+     * @allow (update): if isExistingOwner(teacherId) (Teacher updates a daily report)
+     * @allow (delete): if isExistingOwner(teacherId) (Teacher deletes a daily report)
+     * @deny (create): if !isOwner(teacherId) (Not the teacher)
+     * @deny (update): if !isExistingOwner(teacherId) (Not the teacher or daily report does not exist)
+     * @deny (delete): if !isExistingOwner(teacherId) (Not the teacher or daily report does not exist)
+     * @principle Enforces teacher ownership for daily reports.
      */
     match /teachers/{teacherId}/students/{studentId}/dailyReports/{dailyReportId} {
-      allow get, list: if isOwner(teacherId);
+      allow get: if isOwner(teacherId);
+      allow list: if isOwner(teacherId);
       allow create: if isOwner(teacherId);
-      allow update, delete: if isOwner(teacherId);
+      allow update: if isExistingOwner(teacherId);
+      allow delete: if isExistingOwner(teacherId);
     }
 
     /**
-     * @description Allows a teacher to manage subject items for daily reports of students associated with their profile.
+     * @description Allows a teacher to manage subject items for a specific daily report of a student.
      * @path /teachers/{teacherId}/students/{studentId}/dailyReports/{dailyReportId}/subjectItems/{subjectItemId}
-     * @allow (get, list): if isOwner(teacherId);
-     * @allow (create): if isOwner(teacherId);
-     * @allow (update, delete): if isOwner(teacherId);
-     * @principle Enforces path-based ownership for subject items.
+     * @allow (get): if isOwner(teacherId) (Teacher reads a subject item)
+     * @allow (list): if isOwner(teacherId) (Teacher lists subject items for a daily report)
+     * @allow (create): if isOwner(teacherId) (Teacher creates a subject item)
+     * @allow (update): if isExistingOwner(teacherId) (Teacher updates a subject item)
+     * @allow (delete): if isExistingOwner(teacherId) (Teacher deletes a subject item)
+     * @deny (create): if !isOwner(teacherId) (Not the teacher)
+     * @deny (update): if !isExistingOwner(teacherId) (Not the teacher or subject item does not exist)
+     * @deny (delete): if !isExistingOwner(teacherId) (Not the teacher or subject item does not exist)
+     * @principle Enforces teacher ownership for subject items.
      */
     match /teachers/{teacherId}/students/{studentId}/dailyReports/{dailyReportId}/subjectItems/{subjectItemId} {
-      allow get, list: if isOwner(teacherId);
+      allow get: if isOwner(teacherId);
+      allow list: if isOwner(teacherId);
       allow create: if isOwner(teacherId);
-      allow update, delete: if isOwner(teacherId);
+      allow update: if isExistingOwner(teacherId);
+      allow delete: if isExistingOwner(teacherId);
     }
-
-      /**
-     * @description Allows a teacher to create, read, update and delete messages sent to all students.
+    
+    /**
+     * @description Allows a teacher to manage messages sent to all of their students.
      * @path /teachers/{teacherId}/messages/{messageId}
-     * @allow (get, list): if isOwner(teacherId);
-     * @allow (create): if isOwner(teacherId);
-     * @allow (update, delete): if isOwner(teacherId);
-     * @principle Enforces path-based ownership for messages sent to all students.
+     * @allow (get): if isOwner(teacherId) (Teacher reads a message)
+     * @allow (list): if isOwner(teacherId) (Teacher lists messages)
+     * @allow (create): if isOwner(teacherId) (Teacher creates a message)
+     * @allow (update): if isExistingOwner(teacherId) (Teacher updates a message)
+     * @allow (delete): if isExistingOwner(teacherId) (Teacher deletes a message)
+     * @deny (create): if !isOwner(teacherId) (Not the teacher)
+     * @deny (update): if !isExistingOwner(teacherId) (Not the teacher or message does not exist)
+     * @deny (delete): if !isExistingOwner(teacherId) (Not the teacher or message does not exist)
+     * @principle Enforces teacher ownership for messages.
      */
     match /teachers/{teacherId}/messages/{messageId} {
-        allow get, list: if isOwner(teacherId);
-        allow create: if isOwner(teacherId);
-        allow update, delete: if isOwner(teacherId);
+      allow get: if isOwner(teacherId);
+      allow list: if isOwner(teacherId);
+      allow create: if isOwner(teacherId);
+      allow update: if isExistingOwner(teacherId);
+      allow delete: if isExistingOwner(teacherId);
     }
 
-    /**
-     * @description Allows a teacher to create, read, update and delete messages sent to a specific student.
-     * @path /teachers/{teacherId}/students/{studentId}/messages/{messageId}
-     * @allow (get, list): if isOwner(teacherId);
-     * @allow (create): if isOwner(teacherId);
-     * @allow (update, delete): if isOwner(teacherId);
-     * @principle Enforces path-based ownership for messages sent to a specific student.
-     */
-     match /teachers/{teacherId}/students/{studentId}/messages/{messageId} {
-        allow get, list: if isOwner(teacherId);
+     /**
+      * @description Allows a teacher to manage messages sent to a specific student.
+      * @path /teachers/{teacherId}/students/{studentId}/messages/{messageId}
+      * @allow (get): if isOwner(teacherId) (Teacher reads a message)
+      * @allow (list): if isOwner(teacherId) (Teacher lists messages to a specific student)
+      * @allow (create): if isOwner(teacherId) (Teacher creates a message)
+      * @allow (update): if isExistingOwner(teacherId) (Teacher updates a message)
+      * @allow (delete): if isExistingOwner(teacherId) (Teacher deletes a message)
+      * @deny (create): if !isOwner(teacherId) (Not the teacher)
+      * @deny (update): if !isExistingOwner(teacherId) (Not the teacher or message does not exist)
+      * @deny (delete): if !isExistingOwner(teacherId) (Not the teacher or message does not exist)
+      * @principle Enforces teacher ownership for messages to specific students.
+      */
+    match /teachers/{teacherId}/students/{studentId}/messages/{messageId} {
+        allow get: if isOwner(teacherId);
+        allow list: if isOwner(teacherId);
         allow create: if isOwner(teacherId);
-        allow update, delete: if isOwner(teacherId);
+        allow update: if isExistingOwner(teacherId);
+        allow delete: if isExistingOwner(teacherId);
+    }
+
+    // Helper functions
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    function isExistingOwner(userId) {
+        return isOwner(userId) && resource != null;
     }
   }
-
-  // Helper functions
-  function isSignedIn() {
-    return request.auth != null;
-  }
-
-  function isOwner(userId) {
-    return isSignedIn() && request.auth.uid == userId;
-  }
-
-  // The following functions are not needed in prototype mode, since the data shape is flexible.
-  // function isExistingOwner(userId) {
-  //   return isSignedIn() && request.auth.uid == userId && resource.data.teacherId == userId;
-  // }
-
-  // function isExistingOwnerForStudent(teacherId, studentId) {
-  //   return isOwner(teacherId) && resource.data.teacherId == teacherId;
-  // }
-
-  //   function isExistingOwnerForDailyReport(teacherId, studentId, dailyReportId) {
-  //   return isOwner(teacherId) && resource.data.teacherId == teacherId;
-  // }
-
-  //   function isExistingOwnerForSubjectItem(teacherId, studentId, dailyReportId, subjectItemId) {
-  //   return isOwner(teacherId) && resource.data.teacherId == teacherId;
-  // }
-
-  //   function isExistingOwnerForMessage(teacherId, messageId) {
-  //   return isOwner(teacherId) && resource.data.teacherId == teacherId;
-  // }
-
-  //     function isExistingOwnerForStudentMessage(teacherId, studentId, messageId) {
-  //   return isOwner(teacherId) && resource.data.teacherId == teacherId;
-  // }
 }
