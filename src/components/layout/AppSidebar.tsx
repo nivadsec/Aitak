@@ -21,7 +21,8 @@ type AppSidebarProps = {
 
 const studentNav = [
   { href: '/student/dashboard', label: 'گزارش روزانه', icon: Home },
-  { href: '/student/stats', label: 'آمار من', icon: BarChart3 },
+  { href: '/student/weekly-progress', label: 'گزارش هفتگی', icon: BookCopy },
+  { href: '/student/stats', label: 'آمار فردی', icon: BarChart3 },
 ];
 
 const teacherNav = [
