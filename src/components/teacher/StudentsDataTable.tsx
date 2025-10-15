@@ -12,7 +12,7 @@ import {
   getFilteredRowModel,
   ColumnFiltersState,
 } from '@tanstack/react-table';
-import { MoreHorizontal, Trash2, Edit, ToggleLeft, ToggleRight, AlertTriangle, User, LineChart } from 'lucide-react';
+import { MoreHorizontal, Trash2, Edit, ToggleLeft, ToggleRight, AlertTriangle, LineChart } from 'lucide-react';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -119,18 +119,26 @@ export default function StudentsDataTable({ students, reports }: StudentsDataTab
     {
       accessorKey: 'fullName',
       header: 'نام دانش آموز',
-      cell: ({ row }) => (
-        <div className="flex items-center gap-3">
-          <Avatar>
-            <AvatarImage src={(row.original as any).avatarUrl} alt={`${row.original.firstName} ${row.original.lastName}`} />
-            <AvatarFallback>{row.original.firstName?.charAt(0) ?? ''}</AvatarFallback>
-          </Avatar>
-          <div className="flex flex-col">
-            <span className="font-medium">{`${row.original.firstName} ${row.original.lastName}`}</span>
-            <span className="text-xs text-muted-foreground">{row.original.email}</span>
-          </div>
-        </div>
-      ),
+      cell: ({ row }) => {
+        const student = row.original;
+        return (
+            <div className="flex items-center gap-3">
+            <Avatar>
+                <AvatarImage src={student.avatarUrl} alt={`${student.firstName} ${student.lastName}`} />
+                <AvatarFallback>{student.firstName?.charAt(0) ?? ''}</AvatarFallback>
+            </Avatar>
+            <div className="flex flex-col">
+                <span className="font-medium">{`${student.firstName} ${student.lastName}`}</span>
+                <span className="text-xs text-muted-foreground">{student.email}</span>
+            </div>
+            </div>
+        );
+      },
+      filterFn: (row, columnId, filterValue) => {
+          const student = row.original;
+          const fullName = `${student.firstName} ${student.lastName}`;
+          return fullName.toLowerCase().includes(String(filterValue).toLowerCase());
+      }
     },
     {
         id: 'avgStudyHours',
@@ -162,7 +170,7 @@ export default function StudentsDataTable({ students, reports }: StudentsDataTab
       cell: ({ row }) => {
         const student = row.original;
         return (
-          <div className="text-left">
+          <div className="text-left" onClick={(e) => e.stopPropagation()}>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" className="h-8 w-8 p-0">

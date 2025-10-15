@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import StudentPerformanceAnalysis from '@/components/teacher/StudentPerformanceAnalysis';
 import { useDoc, useFirebase, useMemoFirebase, useCollection } from '@/firebase';
-import { doc, collection, query, orderBy, limit, getDocs } from 'firebase/firestore';
+import { doc, collection, query, orderBy, getDocs } from 'firebase/firestore';
 import { getDailyReportsForGenkit } from '@/lib/data';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
@@ -35,7 +35,7 @@ export default function StudentDetailPage({ params }: { params: { id: string } }
   const isLoading = isStudentLoading || areReportsLoading;
   
   const handleExportStudentData = async () => {
-    if (!student || !reports) {
+    if (!user || !firestore || !student || !reports) {
          toast({
             title: "خطا",
             description: "داده دانش‌آموز برای خروجی گرفتن آماده نیست.",
@@ -102,7 +102,7 @@ export default function StudentDetailPage({ params }: { params: { id: string } }
           <div className="flex items-center gap-4">
             <Avatar className="h-16 w-16">
               <AvatarImage src={(student as any).avatarUrl} alt={`${student.firstName} ${student.lastName}`} />
-              <AvatarFallback>{student.firstName?.substring(0, 2)}</AvatarFallback>
+              <AvatarFallback>{student.firstName?.substring(0, 1)}{student.lastName?.substring(0, 1)}</AvatarFallback>
             </Avatar>
             <div>
               <CardTitle className="font-headline text-2xl">{`${student.firstName} ${student.lastName}`}</CardTitle>
