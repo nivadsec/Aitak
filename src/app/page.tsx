@@ -1,17 +1,17 @@
 'use client';
 
 import Link from 'next/link';
-import { ArrowLeft, UserPlus, Megaphone } from 'lucide-react';
+import { UserPlus, Megaphone } from 'lucide-react';
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 
-import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Logo } from '@/components/icons/logo';
 import { FirebaseClientProvider, useAuth, initiateAnonymousSignIn, useUser, useCollection, useFirebase, useMemoFirebase } from '@/firebase';
 import { Separator } from '@/components/ui/separator';
 import { collection, query, orderBy, limit } from 'firebase/firestore';
 import { Skeleton } from '@/components/ui/skeleton';
+import { LoginForm } from '@/components/auth/LoginForm';
 
 function AnnouncementCard() {
   const { firestore } = useFirebase();
@@ -71,16 +71,17 @@ function LoginPageContent() {
   const router = useRouter();
 
   // Automatically sign in the user anonymously if not already signed in.
+  // This is useful for public pages that might read public data, but we
+  // will redirect authenticated users away from this page.
   useEffect(() => {
     if (!isUserLoading && !user) {
       initiateAnonymousSignIn(auth);
     }
   }, [isUserLoading, user, auth]);
   
-  // This is a simple role-based redirect. In a real app, you'd
-  // likely have a more sophisticated way of determining roles.
+  // This is a simple role-based redirect.
   useEffect(() => {
-    if (user && user.email) { // Anonymouse users do not have emails
+    if (user && user.email) { // Anonymous users do not have emails
       if(user.photoURL === 'teacher'){
          router.push('/teacher/dashboard');
       } else {
@@ -90,7 +91,7 @@ function LoginPageContent() {
   }, [user, router]);
 
 
-  if (isUserLoading) {
+  if (isUserLoading || (user && user.email)) {
     return (
         <div className="flex min-h-screen w-full items-center justify-center">
             <Logo className="h-12 w-12 animate-spin text-primary" />
@@ -110,36 +111,23 @@ function LoginPageContent() {
             <CardDescription className="pt-2">
               به آی‌تاب خوش آمدید. پلتفرم هوشمند خودارزیابی و نظم شخصی.
               <br />
-              نقش خود را برای ورود انتخاب کنید.
+              برای ورود، ایمیل و رمز عبور خود را وارد کنید.
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-1 gap-4">
-              <Button asChild size="lg" className="h-12">
-                <Link href="/student/dashboard">
-                  <ArrowLeft className="ml-2 h-5 w-5" />
-                  ورود به پنل دانش‌آموز
-                </Link>
-              </Button>
-              <Button asChild variant="secondary" size="lg" className="h-12">
-                <Link href="/teacher/dashboard">
-                  <ArrowLeft className="ml-2 h-5 w-5" />
-                  ورود به پنل معلم
-                </Link>
-              </Button>
-              <div className="relative my-4">
-                  <Separator />
-                  <span className="absolute left-1/2 -translate-x-1/2 -translate-y-1/2 bg-card px-2 text-sm text-muted-foreground">
-                      یا
-                  </span>
-              </div>
-              <Button asChild variant="outline" size="lg" className="h-12">
-                <Link href="/signup">
-                  <UserPlus className="ml-2 h-5 w-5" />
-                  ایجاد حساب کاربری دانش‌آموز
-                </Link>
-              </Button>
+            <LoginForm />
+            <div className="relative my-6">
+                <Separator />
+                <span className="absolute left-1/2 -translate-x-1/2 -translate-y-1/2 bg-card px-2 text-sm text-muted-foreground">
+                    یا
+                </span>
             </div>
+            <Button asChild variant="outline" className="w-full">
+              <Link href="/signup">
+                <UserPlus className="ml-2 h-5 w-5" />
+                ایجاد حساب کاربری جدید (دانش‌آموز)
+              </Link>
+            </Button>
           </CardContent>
         </Card>
         <AnnouncementCard />
