@@ -191,11 +191,11 @@ const Sidebar = React.forwardRef<
         </div>
       )
     }
-
-    return (
-      <>
-        {isMobile && (
-          <Sheet open={openMobile} onOpenChange={setOpenMobile} {...props}>
+    
+    // The mobile sidebar is a sheet
+    if (isMobile) {
+      return (
+         <Sheet open={openMobile} onOpenChange={setOpenMobile} {...props}>
             <SheetContent
               data-sidebar="sidebar"
               data-mobile="true"
@@ -213,12 +213,17 @@ const Sidebar = React.forwardRef<
               <div className="flex h-full w-full flex-col">{children}</div>
             </SheetContent>
           </Sheet>
-        )}
+      )
+    }
+
+    return (
+      <>
         <div
           ref={ref}
           className={cn(
             "group peer text-sidebar-foreground",
-            "hidden md:block" // Show on desktop, hide on mobile
+            // "hidden md:block" // This was causing the issue, removing it.
+             "md:block"
           )}
           data-state={state}
           data-collapsible={state === "collapsed" ? collapsible : ""}
@@ -766,3 +771,5 @@ export {
   SidebarTrigger,
   useSidebar,
 }
+
+    

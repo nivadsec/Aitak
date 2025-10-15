@@ -191,12 +191,12 @@ export default function TeacherDashboardPage() {
         />
         
         <Card>
-          <CardHeader className='flex-row items-center justify-between'>
+          <CardHeader className='flex-col md:flex-row items-start md:items-center justify-between gap-4'>
               <div>
                   <CardTitle className="font-headline text-xl">نمای کلی دانش‌آموزان</CardTitle>
                   <CardDescription>برای مشاهده جزئیات، روی هر دانش‌آموز کلیک کنید.</CardDescription>
               </div>
-              <div className="flex gap-2">
+              <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
                 <Button asChild variant="outline">
                     <Link href="/teacher/students">
                         مشاهده همه
@@ -261,3 +261,5 @@ export default function TeacherDashboardPage() {
     </Dialog>
   );
 }
+
+    
