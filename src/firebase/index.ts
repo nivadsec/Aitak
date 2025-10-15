@@ -7,12 +7,7 @@ import { Firestore, getFirestore } from 'firebase/firestore'
 
 // IMPORTANT: DO NOT MODIFY THIS FUNCTION
 export function initializeFirebase(): { firebaseApp: FirebaseApp, auth: Auth, firestore: Firestore } {
-    if (getApps().length) {
-        const app = getApp();
-        return getSdks(app);
-    }
-    
-    const app = initializeApp(firebaseConfig);
+    const app = getApps().length ? getApp() : initializeApp(firebaseConfig);
     return getSdks(app);
 }
 
