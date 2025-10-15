@@ -24,7 +24,7 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
-import { useAuth, useFirebase } from '@/firebase/provider';
+import { useAuth, useFirebase, FirestorePermissionError, errorEmitter } from '@/firebase';
 import { setDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 import { doc, getDoc, doc as firestoreDoc } from 'firebase/firestore';
 import Link from 'next/link';
@@ -70,78 +70,93 @@ export function SignUpForm() {
   async function onSubmit(data: FormValues) {
     if (!firestore || !auth) return;
     setIsLoading(true);
-    let teacherId = '';
 
-    try {
-      // Find teacher by code. We assume the teacher's UID is their code.
-      const teacherRef = firestoreDoc(firestore, 'teachers', data.teacherCode);
-      const teacherSnap = await getDoc(teacherRef);
-      
-      if (!teacherSnap.exists()) {
+    // Find teacher by code. We assume the teacher's UID is their code.
+    const teacherRef = firestoreDoc(firestore, 'teachers', data.teacherCode);
+    
+    getDoc(teacherRef)
+      .then(async (teacherSnap) => {
+        if (!teacherSnap.exists()) {
+          toast({
+            title: 'کد معلم نامعتبر',
+            description: 'معلمی با این کد یافت نشد. لطفاً کد را بررسی کنید.',
+            variant: 'destructive',
+          });
+          setIsLoading(false);
+          return;
+        }
+        const teacherId = teacherSnap.id;
+
+        try {
+          const userCredential = await createUserWithEmailAndPassword(
+            auth,
+            data.email,
+            data.password
+          );
+          const user = userCredential.user;
+
+          // Update user profile (displayName and role/teacherId in photoURL)
+          await updateProfile(user, {
+            displayName: `${data.firstName} ${data.lastName}`,
+            photoURL: `${ROLES.STUDENT}:${teacherId}`,
+          });
+
+          // Send verification email
+          await sendEmailVerification(user);
+
+          const studentRef = doc(firestore, 'teachers', teacherId, 'students', user.uid);
+          const studentData = {
+            id: user.uid,
+            teacherId: teacherId,
+            firstName: data.firstName,
+            lastName: data.lastName,
+            email: data.email,
+            gradeLevel: data.gradeLevel,
+            major: data.major,
+            isActive: true,
+          };
+          setDocumentNonBlocking(studentRef, studentData, {});
+
+          toast({
+            title: 'ثبت‌نام موفق',
+            description: 'ایمیل تأیید برای شما ارسال شد. لطفاً صندوق ورودی خود را بررسی کنید.',
+            className: 'font-body',
+          });
+
+          setIsSuccess(true);
+
+        } catch (error: any) {
+          console.error('Error signing up:', error);
+          let description = 'مشکلی در هنگام ثبت‌نام پیش آمد. لطفاً دوباره تلاش کنید.';
+          if (error.code === 'auth/email-already-in-use') {
+            description = 'این ایمیل قبلاً در سیستم ثبت شده است.';
+          } else if (error.code === 'auth/invalid-email') {
+            description = 'فرمت ایمیل وارد شده صحیح نیست.';
+          }
+          toast({
+            title: 'خطا در ثبت‌نام',
+            description,
+            variant: 'destructive',
+            className: 'font-body',
+          });
+        } finally {
+          setIsLoading(false);
+        }
+      })
+      .catch((serverError) => {
+        const permissionError = new FirestorePermissionError({
+          path: teacherRef.path,
+          operation: 'get',
+        });
+        errorEmitter.emit('permission-error', permissionError);
+        
         toast({
-          title: 'کد معلم نامعتبر',
-          description: 'معلمی با این کد یافت نشد. لطفاً کد را بررسی کنید.',
+          title: 'خطای دسترسی',
+          description: 'امکان تایید کد معلم به دلیل مشکل در مجوزهای دسترسی وجود ندارد.',
           variant: 'destructive',
         });
         setIsLoading(false);
-        return;
-      }
-      teacherId = teacherSnap.id;
-
-      const userCredential = await createUserWithEmailAndPassword(
-        auth,
-        data.email,
-        data.password
-      );
-      const user = userCredential.user;
-
-      // Update user profile (displayName and role/teacherId in photoURL)
-      await updateProfile(user, {
-        displayName: `${data.firstName} ${data.lastName}`,
-        // Storing role and teacherId in photoURL, e.g., "student:teacher123"
-        photoURL: `${ROLES.STUDENT}:${teacherId}`,
       });
-
-      // Send verification email
-      await sendEmailVerification(user);
-
-      const studentRef = doc(firestore, 'teachers', teacherId, 'students', user.uid);
-      const studentData = {
-        id: user.uid,
-        teacherId: teacherId, // Store the teacher's ID
-        firstName: data.firstName,
-        lastName: data.lastName,
-        email: data.email,
-        gradeLevel: data.gradeLevel,
-        major: data.major,
-        isActive: true, // Active by default after signup
-      };
-      setDocumentNonBlocking(studentRef, studentData, {});
-
-      toast({
-        title: 'ثبت‌نام موفق',
-        description: 'ایمیل تأیید برای شما ارسال شد. لطفاً صندوق ورودی خود را بررسی کنید.',
-        className: 'font-body',
-      });
-
-      setIsSuccess(true);
-    } catch (error: any) {
-      console.error('Error signing up:', error);
-      let description = 'مشکلی در هنگام ثبت‌نام پیش آمد. لطفاً دوباره تلاش کنید.';
-      if (error.code === 'auth/email-already-in-use') {
-        description = 'این ایمیل قبلاً در سیستم ثبت شده است.';
-      } else if (error.code === 'auth/invalid-email') {
-        description = 'فرمت ایمیل وارد شده صحیح نیست.';
-      }
-      toast({
-        title: 'خطا در ثبت‌نام',
-        description,
-        variant: 'destructive',
-        className: 'font-body',
-      });
-    } finally {
-      setIsLoading(false);
-    }
   }
 
   if (isSuccess) {
@@ -246,7 +261,7 @@ export function SignUpForm() {
                     <FormControl>
                       <SelectTrigger>
                         <SelectValue placeholder="رشته را انتخاب کنید" />
-                      </SelectTrigger>
+                      </Trigger>
                     </FormControl>
                     <SelectContent>
                       <SelectItem value="تجربی">تجربی</SelectItem>
