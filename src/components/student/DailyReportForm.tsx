@@ -3,16 +3,10 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useFieldArray, useForm } from 'react-hook-form';
 import * as z from 'zod';
-import {
-  CalendarIcon,
-  FileUp,
-  PlusCircle,
-  Trash2,
-  Save,
-} from 'lucide-react';
+import { CalendarIcon, FileUp, PlusCircle, Trash2, Save, Loader2 } from 'lucide-react';
 import { format } from 'date-fns-jalali';
-import { useEffect } from 'react';
-
+import React, { useEffect } from 'react';
+import { collection, collectionGroup, doc, getDocs, query, serverTimestamp, where } from 'firebase/firestore';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -45,61 +39,152 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Calendar } from '@/components/ui/calendar';
 import { Slider } from '@/components/ui/slider';
 import { useToast } from '@/hooks/use-toast';
+import { useFirebase } from '@/firebase';
+import { setDocumentNonBlocking } from '@/firebase/non-blocking-updates';
+import type { DailyReportItem, Student } from '@/lib/types';
 
 const reportItemSchema = z.object({
   subject: z.string().min(1, 'درس الزامی است.'),
-  topic: z.string().optional(),
-  studyTime: z.coerce.number().min(0, 'زمان مطالعه نمی‌تواند منفی باشد.'),
-  testCount: z.coerce.number().int().min(0, 'تعداد تست نمی‌تواند منفی باشد.'),
-  correctCount: z.coerce.number().int().min(0, 'تعداد صحیح نمی‌تواند منفی باشد.'),
-  wrongCount: z.coerce.number().int().min(0, 'تعداد غلط نمی‌تواند منفی باشد.'),
-  testTime: z.coerce.number().min(0, 'زمان تست نمی‌تواند منفی باشد.'),
+  topic: z.string().optional().default(''),
+  studyTime: z.coerce.number().min(0, 'زمان مطالعه نمی‌تواند منفی باشد.').default(0),
+  testCount: z.coerce.number().int().min(0, 'تعداد تست نمی‌تواند منفی باشد.').default(0),
+  correctCount: z.coerce.number().int().min(0, 'تعداد صحیح نمی‌تواند منفی باشد.').default(0),
+  wrongCount: z.coerce.number().int().min(0, 'تعداد غلط نمی‌تواند منفی باشد.').default(0),
+  testTime: z.coerce.number().min(0, 'زمان تست نمی‌تواند منفی باشد.').default(0),
 });
 
 const formSchema = z.object({
-  date: z.date({ required_error: 'تاریخ الزامی است.' }).optional(),
-  wakeUpTime: z.string().optional(),
-  studyStartTime: z.string().optional(),
+  date: z.date({ required_error: 'تاریخ الزامی است.' }),
+  wakeUpTime: z.string().optional().default(''),
+  studyStartTime: z.string().optional().default(''),
   items: z.array(reportItemSchema),
-  sleepHours: z.array(z.number()).default([8]),
-  moodScore: z.array(z.number()).default([7]),
-  mobileHours: z.array(z.number()).default([2]),
+  sleepHours: z.number().min(0).max(24).default(8),
+  moodScore: z.number().min(1).max(10).default(7),
+  mobileHours: z.number().min(0).max(24).default(2),
 });
 
 type FormValues = z.infer<typeof formSchema>;
 
 export function DailyReportForm() {
-    const { toast } = useToast();
+  const { toast } = useToast();
+  const { user, firestore } = useFirebase();
+  const [isLoading, setIsLoading] = React.useState(false);
+  const [studentData, setStudentData] = React.useState<{ id: string; teacherId: string } | null>(null);
+
+  useEffect(() => {
+    if (!user || !firestore) return;
+
+    const findStudentData = async () => {
+      const studentQuery = query(collectionGroup(firestore, 'students'), where('id', '==', user.uid));
+      const studentSnapshot = await getDocs(studentQuery);
+      if (!studentSnapshot.empty) {
+        const studentDoc = studentSnapshot.docs[0];
+        const data = studentDoc.data() as Student;
+        setStudentData({ id: data.id, teacherId: (data as any).teacherId });
+      }
+    };
+    findStudentData();
+  }, [user, firestore]);
+
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
+      date: new Date(),
       items: [
         { subject: '', topic: '', studyTime: 0, testCount: 0, correctCount: 0, wrongCount: 0, testTime: 0 },
       ],
-      sleepHours: [8],
-      moodScore: [7],
-      mobileHours: [2],
+      sleepHours: 8,
+      moodScore: 7,
+      mobileHours: 2,
     },
   });
-
-  useEffect(() => {
-    // Set the date only on the client-side to avoid hydration mismatch
-    form.setValue('date', new Date());
-  }, [form.setValue]);
-
 
   const { fields, append, remove } = useFieldArray({
     control: form.control,
     name: 'items',
   });
 
-  function onSubmit(data: FormValues) {
-    console.log(data);
-    toast({
-        title: "گزارش ثبت شد",
-        description: "گزارش روزانه شما با موفقیت در سیستم ذخیره شد.",
-        className: 'font-body',
-      })
+  async function onSubmit(data: FormValues) {
+    if (!user || !studentData) {
+      toast({
+        title: 'خطا',
+        description: 'اطلاعات کاربری برای ثبت گزارش یافت نشد.',
+        variant: 'destructive',
+      });
+      return;
+    }
+    setIsLoading(true);
+
+    const reportId = format(data.date, 'yyyy-MM-dd');
+    const reportRef = doc(firestore, 'teachers', studentData.teacherId, 'students', user.uid, 'dailyReports', reportId);
+    
+    // Calculate total study time
+    const totalStudyMinutes = data.items.reduce((sum, item) => sum + item.studyTime, 0);
+
+    const reportData = {
+        id: reportId,
+        studentId: user.uid,
+        teacherId: studentData.teacherId,
+        date: data.date,
+        wakeUpTime: data.wakeUpTime,
+        studyStartTime: data.studyStartTime,
+        studyEndTime: '', // This can be added later if needed
+        totalStudyMinutes: totalStudyMinutes,
+        minutesOfClasses: 0, // Placeholder
+        sleepAmount: data.sleepHours,
+        disasterLevel: data.moodScore,
+        minutesOfMobileUsage: data.mobileHours * 60,
+        createdAt: serverTimestamp(),
+    };
+
+    // Prepare subject items for subcollection
+    const subjectItems = data.items.map((item, index) => {
+        const testCount = item.testCount || 0;
+        const correctCount = item.correctCount || 0;
+        const wrongCount = item.wrongCount || 0;
+        
+        const testPercentage = testCount > 0 ? (correctCount / testCount) * 100 : 0;
+        
+        return {
+            ...item,
+            dailyReportId: reportId,
+            incorrectTestQuestions: wrongCount,
+            testPercentage: parseFloat(testPercentage.toFixed(2)),
+            totalTestQuestions: testCount,
+            // id will be auto-generated by Firestore
+        }
+    });
+
+    try {
+        // Set the main report document
+        setDocumentNonBlocking(reportRef, reportData, { merge: true });
+
+        // Batch write for subject items
+        const subjectItemsCollection = collection(reportRef, 'subjectItems');
+        for (const item of subjectItems) {
+            if (item.subject) { // Only add items that have a subject
+                const subjectItemRef = doc(subjectItemsCollection); // Auto-generate ID
+                setDocumentNonBlocking(subjectItemRef, {...item, id: subjectItemRef.id }, {});
+            }
+        }
+
+        toast({
+            title: "گزارش ثبت شد",
+            description: "گزارش روزانه شما با موفقیت در سیستم ذخیره شد.",
+            className: 'font-body',
+        });
+        form.reset();
+
+    } catch (error) {
+        console.error("Error saving report: ", error);
+        toast({
+            title: "خطا در ثبت گزارش",
+            description: "مشکلی در هنگام ذخیره اطلاعات پیش آمد.",
+            variant: "destructive",
+        });
+    } finally {
+        setIsLoading(false);
+    }
   }
 
   return (
@@ -231,7 +316,7 @@ export function DailyReportForm() {
                     <FormItem>
                         <FormLabel>میزان خواب: {field.value} ساعت</FormLabel>
                         <FormControl>
-                            <Slider dir="ltr" defaultValue={field.value} onValueChange={field.onChange} max={12} step={0.5} />
+                            <Slider dir="ltr" value={[field.value]} onValueChange={(value) => field.onChange(value[0])} max={12} step={0.5} />
                         </FormControl>
                     </FormItem>
                 )} />
@@ -239,7 +324,7 @@ export function DailyReportForm() {
                     <FormItem>
                         <FormLabel>ارزیابی روانی (فاجعه!): {field.value} از ۱۰</FormLabel>
                         <FormControl>
-                            <Slider dir="ltr" defaultValue={field.value} onValueChange={field.onChange} max={10} step={1} />
+                            <Slider dir="ltr" value={[field.value]} onValueChange={(value) => field.onChange(value[0])} max={10} step={1} />
                         </FormControl>
                     </FormItem>
                 )} />
@@ -247,7 +332,7 @@ export function DailyReportForm() {
                     <FormItem>
                         <FormLabel>میزان موبایل: {field.value} ساعت</FormLabel>
                         <FormControl>
-                            <Slider dir="ltr" defaultValue={field.value} onValueChange={field.onChange} max={10} step={0.5} />
+                            <Slider dir="ltr" value={[field.value]} onValueChange={(value) => field.onChange(value[0])} max={10} step={0.5} />
                         </FormControl>
                     </FormItem>
                 )} />
@@ -269,8 +354,8 @@ export function DailyReportForm() {
 
           </CardContent>
           <CardFooter>
-            <Button type="submit" size="lg">
-              <Save className="ml-2 h-4 w-4" />
+            <Button type="submit" size="lg" disabled={isLoading || !studentData}>
+              {isLoading ? <Loader2 className="ml-2 h-4 w-4 animate-spin" /> : <Save className="ml-2 h-4 w-4" />}
               ثبت گزارش
             </Button>
           </CardFooter>

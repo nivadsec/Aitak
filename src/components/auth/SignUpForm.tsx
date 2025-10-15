@@ -26,7 +26,7 @@ import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth, useFirebase } from '@/firebase/provider';
 import { setDocumentNonBlocking } from '@/firebase/non-blocking-updates';
-import { doc, getDoc, doc as firestoreDoc, collection, getDocs } from 'firebase/firestore';
+import { doc, getDoc, doc as firestoreDoc, collection, getDocs, where, query } from 'firebase/firestore';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 
@@ -45,7 +45,7 @@ const formSchema = z.object({
   major: z.enum(['انسانی', 'تجربی', 'ریاضی'], {
     required_error: 'انتخاب رشته تحصیلی الزامی است.',
   }),
-  teacherCode: z.string().optional(),
+  teacherCode: z.string().min(1, "کد معلم الزامی است."),
 });
 
 type FormValues = z.infer<typeof formSchema>;
@@ -70,27 +70,25 @@ export function SignUpForm() {
   });
 
   async function onSubmit(data: FormValues) {
-    if (!firestore) return;
+    if (!firestore || !auth) return;
     setIsLoading(true);
-    try {
-      // Find teacher by code. For simplicity, we assume teacher code is their UID.
-      // In a real app, you'd have a separate collection to look up codes.
-      let teacherId = data.teacherCode || 'default-teacher'; // Fallback for now
-      if (data.teacherCode) {
-        const teacherRef = firestoreDoc(firestore, 'teachers', data.teacherCode);
-        const teacherSnap = await getDoc(teacherRef);
-        if (!teacherSnap.exists()) {
-          toast({
-            title: 'کد معلم نامعتبر',
-            description: 'معلمی با این کد یافت نشد. لطفاً کد را بررسی کنید یا فیلد را خالی بگذارید.',
-            variant: 'destructive',
-          });
-          setIsLoading(false);
-          return;
-        }
-        teacherId = teacherSnap.id;
-      }
+    let teacherId = '';
 
+    try {
+      // Find teacher by code. We assume the teacher's UID is their code.
+      const teacherRef = firestoreDoc(firestore, 'teachers', data.teacherCode);
+      const teacherSnap = await getDoc(teacherRef);
+      
+      if (!teacherSnap.exists()) {
+        toast({
+          title: 'کد معلم نامعتبر',
+          description: 'معلمی با این کد یافت نشد. لطفاً کد را بررسی کنید.',
+          variant: 'destructive',
+        });
+        setIsLoading(false);
+        return;
+      }
+      teacherId = teacherSnap.id;
 
       const userCredential = await createUserWithEmailAndPassword(
         auth,
@@ -133,6 +131,8 @@ export function SignUpForm() {
       let description = 'مشکلی در هنگام ثبت‌نام پیش آمد. لطفاً دوباره تلاش کنید.';
       if (error.code === 'auth/email-already-in-use') {
         description = 'این ایمیل قبلاً در سیستم ثبت شده است.';
+      } else if (error.code === 'auth/invalid-email') {
+        description = 'فرمت ایمیل وارد شده صحیح نیست.';
       }
       toast({
         title: 'خطا در ثبت‌نام',
@@ -265,9 +265,9 @@ export function SignUpForm() {
           name="teacherCode"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>کد معلم (اختیاری)</FormLabel>
+              <FormLabel>کد معلم</FormLabel>
               <FormControl>
-                <Input placeholder="در صورت وجود، کد را وارد کنید" {...field} />
+                <Input placeholder="کد معلم خود را وارد کنید" {...field} />
               </FormControl>
               <FormDescription>
                 با وارد کردن این کد، به لیست دانش‌آموزان معلم خود اضافه می‌شوید.
