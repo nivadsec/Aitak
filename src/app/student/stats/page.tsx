@@ -1,5 +1,6 @@
 'use client'
 
+import React from "react";
 import { useCollection, useFirebase, useMemoFirebase } from "@/firebase";
 import { collection, limit, query, orderBy } from "firebase/firestore";
 import type { StudentReport } from "@/lib/types";
