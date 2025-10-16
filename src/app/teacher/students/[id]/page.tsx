@@ -285,7 +285,7 @@ export default function StudentDetailPage({ params }: { params: { id: string } }
                       </CardTitle>
                   </CardHeader>
                   <CardContent>
-                      <RecommendationForm studentId={student.id} />
+                      <RecommendationForm students={[student]} />
                   </CardContent>
               </Card>
               <Card>

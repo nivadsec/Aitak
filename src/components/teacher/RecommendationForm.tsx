@@ -18,6 +18,9 @@ import { Label } from '../ui/label';
 import { Input } from '../ui/input';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '../ui/accordion';
 import { RadioGroup, RadioGroupItem } from '../ui/radio-group';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
+import type { Student } from '@/lib/types';
+
 
 const quizQuestionSchema = z.object({
     questionText: z.string().min(1, 'متن سوال الزامی است.'),
@@ -26,6 +29,7 @@ const quizQuestionSchema = z.object({
 });
 
 const formSchema = z.object({
+  studentId: z.string().min(1, "انتخاب دانش‌آموز الزامی است."),
   content: z.string().min(10, 'متن توصیه باید حداقل ۱۰ کاراکتر باشد.'),
   isBlocking: z.boolean().default(false),
   hasQuiz: z.boolean().default(false),
@@ -38,10 +42,10 @@ const formSchema = z.object({
 type FormValues = z.infer<typeof formSchema>;
 
 interface RecommendationFormProps {
-  studentId: string;
+  students: Student[];
 }
 
-export function RecommendationForm({ studentId }: RecommendationFormProps) {
+export function RecommendationForm({ students }: RecommendationFormProps) {
   const { toast } = useToast();
   const { firestore, user } = useFirebase();
   const [isLoading, setIsLoading] = React.useState(false);
@@ -49,6 +53,7 @@ export function RecommendationForm({ studentId }: RecommendationFormProps) {
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
+      studentId: '',
       content: '',
       isBlocking: false,
       hasQuiz: false,
@@ -80,12 +85,12 @@ export function RecommendationForm({ studentId }: RecommendationFormProps) {
     setIsLoading(true);
 
     try {
-      const recommendationsCol = collection(firestore, 'teachers', user.uid, 'students', studentId, 'recommendations');
+      const recommendationsCol = collection(firestore, 'teachers', user.uid, 'students', data.studentId, 'recommendations');
       const newDocRef = doc(recommendationsCol);
 
       const recommendationData: any = {
         id: newDocRef.id,
-        studentId,
+        studentId: data.studentId,
         teacherId: user.uid,
         content: data.content,
         isBlocking: data.isBlocking,
@@ -98,7 +103,6 @@ export function RecommendationForm({ studentId }: RecommendationFormProps) {
             ...data.quiz,
             questions: data.quiz.questions.map(q => ({
                 ...q,
-                // Ensure correctAnswerIndex is a number
                 correctAnswerIndex: Number(q.correctAnswerIndex)
             }))
           };
@@ -108,7 +112,7 @@ export function RecommendationForm({ studentId }: RecommendationFormProps) {
       
       toast({ title: 'توصیه ارسال شد', description: 'توصیه شما با موفقیت برای دانش‌آموز ارسال شد.' });
       
-      form.reset({ content: '', isBlocking: false, hasQuiz: false, quiz: { title: '', questions: [] } });
+      form.reset({ studentId: data.studentId, content: '', isBlocking: false, hasQuiz: false, quiz: { title: '', questions: [] } });
 
     } catch (error: any) {
       console.error('Error sending recommendation:', error);
@@ -121,9 +125,34 @@ export function RecommendationForm({ studentId }: RecommendationFormProps) {
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+        <FormField
+            control={form.control}
+            name="studentId"
+            render={({ field }) => (
+                <FormItem>
+                    <FormLabel>ارسال به دانش‌آموز</FormLabel>
+                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <FormControl>
+                            <SelectTrigger>
+                                <SelectValue placeholder="دانش‌آموز مورد نظر را انتخاب کنید" />
+                            </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                            {students.map(student => (
+                                <SelectItem key={student.id} value={student.id}>
+                                    {student.firstName} {student.lastName}
+                                </SelectItem>
+                            ))}
+                        </SelectContent>
+                    </Select>
+                    <FormMessage />
+                </FormItem>
+            )}
+        />
+        
         <FormField control={form.control} name="content" render={({ field }) => (
             <FormItem>
-              <FormLabel className="sr-only">متن توصیه</FormLabel>
+              <FormLabel>متن توصیه</FormLabel>
               <FormControl>
                 <Textarea placeholder="توصیه خود را در اینجا بنویسید..." className="min-h-[100px]" {...field} />
               </FormControl>
