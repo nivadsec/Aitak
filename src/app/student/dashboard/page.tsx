@@ -152,6 +152,9 @@ export default function StudentDashboardPage() {
   return (
     <div className="grid gap-6 lg:grid-cols-5">
       <div className="lg:col-span-3 space-y-6">
+        {unreadRecommendation && (
+            <StudentRecommendationCard recommendation={unreadRecommendation} />
+        )}
         <Card className="bg-primary/5">
             <CardHeader>
                 <CardTitle className="font-headline text-xl">گزارش کار امروز</CardTitle>
@@ -166,9 +169,6 @@ export default function StudentDashboardPage() {
                 </Button>
             </CardContent>
         </Card>
-        {unreadRecommendation && (
-            <StudentRecommendationCard recommendation={unreadRecommendation} />
-        )}
       </div>
       <div className="lg:col-span-2 space-y-6">
         <PersonalStats report={latestReport} isLoading={isReportLoading || isRecommendationLoading}>

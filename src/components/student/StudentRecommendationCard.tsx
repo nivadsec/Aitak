@@ -120,7 +120,7 @@ export function StudentRecommendationCard({ recommendation }: StudentRecommendat
             <div className="flex-1">
                 <CardTitle className="font-headline text-lg">توصیه جدید از طرف مشاور</CardTitle>
                  <CardDescription>
-                    تاریخ ارسال: {new Date(recommendation.createdAt?.seconds * 1000).toLocaleDateString('fa-IR')}
+                    تاریخ ارسال: {new Date((recommendation.createdAt?.seconds || Date.now() / 1000) * 1000).toLocaleDateString('fa-IR')}
                 </CardDescription>
             </div>
         </div>

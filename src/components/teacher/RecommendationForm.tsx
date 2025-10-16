@@ -94,7 +94,14 @@ export function RecommendationForm({ studentId }: RecommendationFormProps) {
       };
 
       if (data.hasQuiz && data.quiz && data.quiz.questions && data.quiz.questions.length > 0) {
-          recommendationData.quiz = data.quiz;
+          recommendationData.quiz = {
+            ...data.quiz,
+            questions: data.quiz.questions.map(q => ({
+                ...q,
+                // Ensure correctAnswerIndex is a number
+                correctAnswerIndex: Number(q.correctAnswerIndex)
+            }))
+          };
       }
       
       setDocumentNonBlocking(newDocRef, recommendationData, {});
@@ -171,7 +178,7 @@ export function RecommendationForm({ studentId }: RecommendationFormProps) {
                                 <FormItem className="space-y-3">
                                 <FormLabel>گزینه‌ها (گزینه صحیح را انتخاب کنید)</FormLabel>
                                 <FormControl>
-                                    <RadioGroup onValueChange={(val) => radioField.onChange(parseInt(val))} defaultValue={String(radioField.value)} className="space-y-2">
+                                    <RadioGroup onValueChange={(val) => radioField.onChange(parseInt(val, 10))} defaultValue={String(radioField.value)} className="space-y-2">
                                         {[0, 1, 2, 3].map((optIndex) => (
                                             <FormField key={optIndex} control={form.control} name={`quiz.questions.${index}.options.${optIndex}`} render={({ field }) => (
                                                 <FormItem className="flex items-center space-x-3 space-y-0 gap-2">

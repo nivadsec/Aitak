@@ -192,7 +192,7 @@ export function DailyReportForm({ isBlocked = false }: DailyReportFormProps) {
                     </AlertDescription>
                 </Alert>
             )}
-            <fieldset disabled={isBlocked} className="space-y-6">
+            <fieldset disabled={isBlocked || isLoading} className="space-y-6">
                 <div className="grid gap-4 md:grid-cols-3">
                 <FormField
                     control={form.control}
