@@ -1,3 +1,4 @@
+
 'use client';
 import { SidebarProvider, SidebarInset } from '@/components/ui/sidebar';
 import { AppHeader } from '@/components/layout/AppHeader';
@@ -17,6 +18,7 @@ const featureMap: Record<string, keyof Student> = {
     '/student/exam-analysis': 'canSubmitExamAnalysis',
     '/student/focus': 'canSubmitFocusLadder',
     '/student/topic-investment': 'canSubmitTopicInvestment',
+    '/student/strategic-plans': 'canViewStrategicPlans',
 };
 
 
@@ -42,7 +44,7 @@ export default function StudentLayout({
       const requiredFeature = Object.keys(featureMap).find(path => pathname.startsWith(path));
       if (requiredFeature) {
         const featureFlag = featureMap[requiredFeature];
-        if (!student[featureFlag]) {
+        if (student[featureFlag] === false) { // Explicitly check for false
           router.push('/student/dashboard');
         }
       }

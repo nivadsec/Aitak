@@ -22,7 +22,8 @@
         "canSubmitWeeklyReport": { "type": "boolean", "description": "Controls access to the weekly progress report form." },
         "canSubmitExamAnalysis": { "type": "boolean", "description": "Controls access to the exam analysis form." },
         "canSubmitFocusLadder": { "type": "boolean", "description": "Controls access to the focus ladder form." },
-        "canSubmitTopicInvestment": { "type": "boolean", "description": "Controls access to the topic investment form." }
+        "canSubmitTopicInvestment": { "type": "boolean", "description": "Controls access to the topic investment form." },
+        "canViewStrategicPlans": { "type": "boolean", "description": "Controls access to the strategic plans page." }
       },
       "required": ["id", "firstName", "lastName", "email", "gradeLevel", "major", "isActive"]
     },
@@ -250,6 +251,21 @@
             "submittedAt": { "type": "string", "format": "date-time" }
         },
         "required": ["id", "quizId", "studentId", "answers", "score", "submittedAt"]
+    },
+    "StrategicPlan": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "StrategicPlan",
+      "type": "object",
+      "description": "Represents a strategic test plan or syllabus provided by the teacher.",
+      "properties": {
+        "id": { "type": "string", "description": "Unique identifier for the plan." },
+        "teacherId": { "type": "string" },
+        "title": { "type": "string", "description": "The title of the strategic plan (e.g., 'برنامه راهبردی آزمون قلمچی ۲۴ فروردین')." },
+        "description": { "type": "string", "description": "A brief description of the plan." },
+        "fileUrl": { "type": "string", "description": "URL to the attached plan file (e.g., PDF).", "format": "uri" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "teacherId", "title", "createdAt"]
     }
   },
   "auth": {
@@ -270,7 +286,8 @@
       { "path": "/teachers/{teacherId}/students/{studentId}/recommendations/{recommendationId}", "definition": { "entityName": "Recommendation", "schema": { "$ref": "#/backend/entities/Recommendation" }, "description": "Stores recommendations from a teacher to a specific student." } },
       { "path": "/teachers/{teacherId}/students/{studentId}/focusIntervals/{intervalId}", "definition": { "entityName": "FocusInterval", "schema": { "$ref": "#/backend/entities/FocusInterval" }, "description": "Stores focus intervals recorded by a student." } },
       { "path": "/teachers/{teacherId}/quizzes/{quizId}", "definition": { "entityName": "Quiz", "schema": { "$ref": "#/backend/entities/Quiz" }, "description": "Stores quizzes created by a teacher." } },
-      { "path": "/teachers/{teacherId}/quizzes/{quizId}/submissions/{submissionId}", "definition": { "entityName": "QuizSubmission", "schema": { "$ref": "#/backend/entities/QuizSubmission" }, "description": "Stores student submissions for a specific quiz." } }
+      { "path": "/teachers/{teacherId}/quizzes/{quizId}/submissions/{submissionId}", "definition": { "entityName": "QuizSubmission", "schema": { "$ref": "#/backend/entities/QuizSubmission" }, "description": "Stores student submissions for a specific quiz." } },
+      { "path": "/teachers/{teacherId}/strategicPlans/{planId}", "definition": { "entityName": "StrategicPlan", "schema": { "$ref": "#/backend/entities/StrategicPlan" }, "description": "Stores strategic test plans and syllabi." } }
     ]
   }
 }

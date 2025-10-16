@@ -1,7 +1,8 @@
+
 'use client';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { BookCopy, Home, Users, BarChart3, MessageSquare, Megaphone, ClipboardPen, ClipboardEdit, BrainCircuit, Settings, Lightbulb, Bot, FileText, Calendar, BookOpen } from 'lucide-react';
+import { BookCopy, Home, Users, BarChart3, MessageSquare, Megaphone, ClipboardPen, ClipboardEdit, BrainCircuit, Settings, Lightbulb, Bot, FileText, Calendar, BookOpen, Map } from 'lucide-react';
 import React from 'react';
 import {
   Sidebar,
@@ -29,6 +30,7 @@ const allStudentNav = [
   { href: '/student/exam-analysis', label: 'تحلیل آزمون', icon: ClipboardPen, feature: 'canSubmitExamAnalysis' },
   { href: '/student/topic-investment', label: 'سرمایه‌گذاری زمانی', icon: BarChart3, feature: 'canSubmitTopicInvestment' },
   { href: '/student/focus', label: 'نردبان تمرکز', icon: BrainCircuit, feature: 'canSubmitFocusLadder' },
+  { href: '/student/strategic-plans', label: 'برنامه راهبردی', icon: Map, feature: 'canViewStrategicPlans' },
   { href: '/student/quizzes', label: 'آزمون‌ها', icon: FileText, feature: 'canViewQuizzes' },
   { href: '/student/schedule', label: 'برنامه کلاسی', icon: Calendar, feature: 'canViewSchedule' },
   { href: '/student/stats', label: 'آمار عملکرد', icon: BarChart3, feature: 'canViewStats' },
@@ -38,6 +40,7 @@ const allStudentNav = [
 const teacherNav = [
   { href: '/teacher/dashboard', label: 'داشبورد', icon: Home },
   { href: '/teacher/students', label: 'دانش‌آموزان', icon: Users },
+  { href: '/teacher/strategic-plans', label: 'برنامه راهبردی', icon: Map },
   { href: '/teacher/quizzes', label: 'آزمون‌ها', icon: FileText },
   { href: '/teacher/recommendations', label: 'توصیه‌ها', icon: Lightbulb },
   { href: '/teacher/messages', label: 'پیام‌ها', icon: MessageSquare },
@@ -61,11 +64,15 @@ function StudentSidebarNav() {
     const { data: student } = useDoc<Student>(studentRef);
 
     const availableNavs = React.useMemo(() => {
-        if (!student) return allStudentNav.filter(item => item.feature === 'core');
+        if (!student) {
+            // While loading or if student doc doesn't exist, only show core items
+            return allStudentNav.filter(item => item.feature === 'core');
+        }
 
         return allStudentNav.filter(item => {
             if (item.feature === 'core') return true;
-            return student[item.feature as keyof Student];
+            // The feature flag can be undefined, so we check for explicit false
+            return student[item.feature as keyof Student] !== false;
         });
     }, [student]);
 

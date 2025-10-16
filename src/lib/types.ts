@@ -1,3 +1,4 @@
+
 export interface Student {
   id: string; // This will be the Firebase Auth UID
   teacherId: string;
@@ -18,6 +19,7 @@ export interface Student {
   canSubmitExamAnalysis?: boolean;
   canSubmitFocusLadder?: boolean;
   canSubmitTopicInvestment?: boolean;
+  canViewStrategicPlans?: boolean;
 }
 
 
@@ -180,4 +182,13 @@ export interface QuizSubmission {
     score: number; // Percentage score
     submittedAt: any; // Firestore Timestamp
 }
-    
+
+export interface StrategicPlan {
+    id: string;
+    teacherId: string;
+    title: string;
+    description?: string;
+    fileUrl?: string;
+    createdAt: any; // Firestore Timestamp
+    updatedAt?: any; // Firestore Timestamp
+}
