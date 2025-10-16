@@ -3,6 +3,7 @@ import type { Metadata } from 'next';
 import './globals.css';
 import { Toaster } from "@/components/ui/toaster"
 import { FirebaseClientProvider } from '@/firebase';
+import { StudyAssistant } from '@/components/assistant/StudyAssistant';
 
 export const metadata: Metadata = {
   title: 'آی‌تاب',
@@ -26,6 +27,7 @@ export default function RootLayout({
         <FirebaseClientProvider>
           <main className="flex-1 flex flex-col">{children}</main>
           <Toaster />
+           <StudyAssistant />
           <footer className="bg-muted/50 border-t">
             <div className="container mx-auto py-6 px-4 md:px-6">
               <div className="flex flex-col md:flex-row items-center justify-between gap-4">

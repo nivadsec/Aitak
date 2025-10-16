@@ -2,14 +2,13 @@
 
 import React from "react";
 import { useCollection, useFirebase, useMemoFirebase } from "@/firebase";
-import { collection, limit, query, orderBy, where } from "firebase/firestore";
-import type { FocusInterval, StudentReport } from "@/lib/types";
+import { collection, limit, query, orderBy } from "firebase/firestore";
+import type { StudentReport } from "@/lib/types";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { BarChart, Clock, Smartphone, Smile, TrendingUp, BookOpen, CheckCircle2, BrainCircuit } from "lucide-react";
+import { BarChart, Clock, Smartphone, Smile, TrendingUp, BookOpen, CheckCircle2 } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { LineChart as RechartsLineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, BarChart as RechartsBarChart, Bar } from 'recharts';
 import { format } from "date-fns-jalali";
-import { FocusLadder } from "@/components/student/FocusLadder";
 
 
 const StatCard = ({ icon: Icon, title, value, footer, colorClass }) => (
@@ -80,19 +79,6 @@ function processReportsForStats(reports: StudentReport[]) {
     };
 }
 
-function processFocusIntervals(intervals: FocusInterval[]) {
-    if (!intervals || intervals.length === 0) {
-        return [];
-    }
-
-    return intervals
-        .map(interval => ({
-            ...interval,
-            time: format(new Date(interval.timestamp.seconds * 1000), 'HH:mm'),
-        }))
-        .sort((a, b) => a.timestamp.seconds - b.timestamp.seconds);
-}
-
 
 export default function StudentStatsPage() {
     const { firestore, user, role } = useFirebase();
@@ -107,25 +93,11 @@ export default function StudentStatsPage() {
         );
     }, [firestore, user, teacherId]);
 
-    const focusIntervalsQuery = useMemoFirebase(() => {
-        if (!user || !firestore || !teacherId) return null;
-        // Fetch intervals from the last 24 hours for simplicity
-        const yesterday = new Date();
-        yesterday.setDate(yesterday.getDate() - 1);
-        return query(
-            collection(firestore, 'teachers', teacherId, 'students', user.uid, 'focusIntervals'),
-            where('timestamp', '>=', yesterday),
-            orderBy('timestamp', 'asc')
-        );
-    }, [firestore, user, teacherId]);
-
     const { data: reports, isLoading: areReportsLoading } = useCollection<StudentReport>(reportsQuery);
-    const { data: focusIntervals, isLoading: areIntervalsLoading } = useCollection<FocusInterval>(focusIntervalsQuery);
     
     const statsData = React.useMemo(() => processReportsForStats(reports || []), [reports]);
-    const focusData = React.useMemo(() => processFocusIntervals(focusIntervals || []), [focusIntervals]);
     
-    const isLoading = areReportsLoading || areIntervalsLoading;
+    const isLoading = areReportsLoading;
 
     if (isLoading) {
         return (
@@ -143,28 +115,24 @@ export default function StudentStatsPage() {
                     <Skeleton className="h-[350px] w-full" />
                     <Skeleton className="h-[350px] w-full" />
                 </div>
-                 <div className="grid gap-6 md:grid-cols-1">
-                    <Skeleton className="h-[350px] w-full" />
-                </div>
             </div>
         )
     }
 
-    if (!statsData && focusData.length === 0) {
+    if (!statsData) {
         return (
              <div className="space-y-6">
                 <Card className="bg-muted/30 border-none shadow-none">
                     <CardHeader>
                         <CardTitle className="font-headline text-2xl flex items-center gap-3">
                             <BarChart className="h-7 w-7 text-primary" />
-                            آمار و تمرکز
+                            آمار عملکرد
                         </CardTitle>
                         <CardDescription>
-                            تحلیل جامع عملکرد و روند تمرکز شما بر اساس گزارش‌های ثبت‌شده.
+                            تحلیل جامع عملکرد درسی شما بر اساس گزارش‌های ثبت‌شده.
                         </CardDescription>
                     </CardHeader>
                 </Card>
-                <FocusLadder />
                 <Card>
                     <CardHeader>
                         <CardTitle className="font-headline text-xl flex items-center gap-2">
@@ -187,52 +155,14 @@ export default function StudentStatsPage() {
                 <CardHeader>
                     <CardTitle className="font-headline text-2xl flex items-center gap-3">
                         <BarChart className="h-7 w-7 text-primary" />
-                        آمار و تمرکز
+                        آمار عملکرد
                     </CardTitle>
                     <CardDescription>
-                        تحلیل جامع عملکرد و روند تمرکز شما بر اساس گزارش‌های ثبت‌شده.
+                        تحلیل جامع عملکرد درسی شما بر اساس گزارش‌های ثبت‌شده.
                     </CardDescription>
                 </CardHeader>
             </Card>
 
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                <div className="lg:col-span-1">
-                    <FocusLadder />
-                </div>
-                <div className="lg:col-span-2">
-                    <Card>
-                        <CardHeader>
-                            <CardTitle className="font-headline flex items-center gap-2 text-lg">
-                                    <BrainCircuit className="h-5 w-5 text-primary" />
-                                روند تمرکز
-                            </CardTitle>
-                            <CardDescription>نمودار امتیاز تمرکز شما در بازه‌های مطالعه ثبت شده در ۲۴ ساعت گذشته</CardDescription>
-                        </CardHeader>
-                        <CardContent>
-                            {focusData.length > 0 ? (
-                                <ResponsiveContainer width="100%" height={250}>
-                                    <RechartsLineChart data={focusData}>
-                                        <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                                        <XAxis dataKey="time" fontSize={12} tickLine={false} axisLine={false} />
-                                        <YAxis domain={[0, 10]} fontSize={12} tickLine={false} axisLine={false} />
-                                        <Tooltip
-                                            contentStyle={{ fontFamily: 'Vazirmatn, sans-serif' }}
-                                            formatter={(value, name, props) => [`${value} از ۱۰`, `امتیاز (${props.payload.intervalName})`]}
-                                        />
-                                        <Line type="monotone" dataKey="score" stroke="hsl(var(--primary))" strokeWidth={2} name="امتیاز تمرکز" />
-                                    </RechartsLineChart>
-                                </ResponsiveContainer>
-                            ) : (
-                                <div className="text-center text-muted-foreground py-10 h-[250px] flex flex-col justify-center items-center">
-                                    <p>هنوز بازه تمرکزی برای نمایش نمودار ثبت نشده است.</p>
-                                    <p className="text-sm mt-2">از ماژول "نردبان تمرکز" برای ثبت امتیاز استفاده کنید.</p>
-                                </div>
-                            )}
-                        </CardContent>
-                    </Card>
-                </div>
-            </div>
-            
            {statsData && (
              <>
                 <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">

@@ -7,3 +7,4 @@ import '@/ai/flows/generate-personal-stats-dashboard.ts';
 import '@/ai/flows/analyze-student-performance.ts';
 import '@/ai/flows/analyze-focus-intervals.ts';
 import '@/ai/flows/analyze-weekly-progress.ts';
+import '@/ai/flows/study-assistant-flow.ts';

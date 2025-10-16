@@ -25,7 +25,8 @@ const studentNav = [
   { href: '/student/weekly-progress', label: 'گزارش هفتگی', icon: BookCopy },
   { href: '/student/exam-analysis', label: 'تحلیل آزمون', icon: ClipboardPen },
   { href: '/student/topic-investment', label: 'سرمایه‌گذاری زمانی', icon: BarChart3 },
-  { href: '/student/stats', label: 'آمار و تمرکز', icon: BrainCircuit },
+  { href: '/student/stats', label: 'آمار عملکرد', icon: BarChart3 },
+  { href: '/student/focus', label: 'نردبان تمرکز', icon: BrainCircuit },
 ];
 
 const teacherNav = [
