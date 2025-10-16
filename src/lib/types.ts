@@ -1,4 +1,5 @@
 
+
 export interface Student {
   id: string; // This will be the Firebase Auth UID
   teacherId: string;
@@ -20,6 +21,7 @@ export interface Student {
   canSubmitFocusLadder?: boolean;
   canSubmitTopicInvestment?: boolean;
   canViewStrategicPlans?: boolean;
+  canViewConsultingContent?: boolean;
 }
 
 
@@ -192,3 +194,26 @@ export interface StrategicPlan {
     createdAt: any; // Firestore Timestamp
     updatedAt?: any; // Firestore Timestamp
 }
+
+export interface ScheduleItem {
+    id: string;
+    teacherId: string;
+    title: string;
+    description?: string;
+    dateTime: any; // Firestore Timestamp
+    link?: string;
+    createdAt: any;
+    updatedAt: any;
+}
+
+export interface ConsultingContent {
+    id: string;
+    teacherId: string;
+    title: string;
+    content: string;
+    videoUrl?: string;
+    createdAt: any;
+    updatedAt: any;
+}
+
+    

@@ -23,7 +23,8 @@
         "canSubmitExamAnalysis": { "type": "boolean", "description": "Controls access to the exam analysis form." },
         "canSubmitFocusLadder": { "type": "boolean", "description": "Controls access to the focus ladder form." },
         "canSubmitTopicInvestment": { "type": "boolean", "description": "Controls access to the topic investment form." },
-        "canViewStrategicPlans": { "type": "boolean", "description": "Controls access to the strategic plans page." }
+        "canViewStrategicPlans": { "type": "boolean", "description": "Controls access to the strategic plans page." },
+        "canViewConsultingContent": { "type": "boolean", "description": "Controls access to the consulting content page." }
       },
       "required": ["id", "firstName", "lastName", "email", "gradeLevel", "major", "isActive"]
     },
@@ -266,6 +267,39 @@
         "createdAt": { "type": "string", "format": "date-time" }
       },
       "required": ["id", "teacherId", "title", "createdAt"]
+    },
+    "ScheduleItem": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "ScheduleItem",
+      "type": "object",
+      "description": "Represents a class or meeting in the schedule.",
+      "properties": {
+        "id": { "type": "string" },
+        "teacherId": { "type": "string" },
+        "title": { "type": "string" },
+        "description": { "type": "string" },
+        "dateTime": { "type": "string", "format": "date-time" },
+        "link": { "type": "string", "format": "uri" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "teacherId", "title", "dateTime"]
+    },
+    "ConsultingContent": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "ConsultingContent",
+      "type": "object",
+      "description": "Represents a piece of consulting content (article, video, etc.).",
+      "properties": {
+        "id": { "type": "string" },
+        "teacherId": { "type": "string" },
+        "title": { "type": "string" },
+        "content": { "type": "string" },
+        "videoUrl": { "type": "string", "format": "uri" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "teacherId", "title", "content"]
     }
   },
   "auth": {
@@ -287,7 +321,11 @@
       { "path": "/teachers/{teacherId}/students/{studentId}/focusIntervals/{intervalId}", "definition": { "entityName": "FocusInterval", "schema": { "$ref": "#/backend/entities/FocusInterval" }, "description": "Stores focus intervals recorded by a student." } },
       { "path": "/teachers/{teacherId}/quizzes/{quizId}", "definition": { "entityName": "Quiz", "schema": { "$ref": "#/backend/entities/Quiz" }, "description": "Stores quizzes created by a teacher." } },
       { "path": "/teachers/{teacherId}/quizzes/{quizId}/submissions/{submissionId}", "definition": { "entityName": "QuizSubmission", "schema": { "$ref": "#/backend/entities/QuizSubmission" }, "description": "Stores student submissions for a specific quiz." } },
-      { "path": "/teachers/{teacherId}/strategicPlans/{planId}", "definition": { "entityName": "StrategicPlan", "schema": { "$ref": "#/backend/entities/StrategicPlan" }, "description": "Stores strategic test plans and syllabi." } }
+      { "path": "/teachers/{teacherId}/strategicPlans/{planId}", "definition": { "entityName": "StrategicPlan", "schema": { "$ref": "#/backend/entities/StrategicPlan" }, "description": "Stores strategic test plans and syllabi." } },
+      { "path": "/teachers/{teacherId}/schedule/{scheduleItemId}", "definition": { "entityName": "ScheduleItem", "schema": { "$ref": "#/backend/entities/ScheduleItem" }, "description": "Stores class and meeting schedule items." } },
+      { "path": "/teachers/{teacherId}/consultingContent/{contentId}", "definition": { "entityName": "ConsultingContent", "schema": { "$ref": "#/backend/entities/ConsultingContent" }, "description": "Stores consulting content created by the teacher." } }
     ]
   }
 }
+
+    
