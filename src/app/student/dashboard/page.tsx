@@ -12,7 +12,6 @@ import type { StudentRecommendation, StudentReport } from '@/lib/types';
 import React from 'react';
 import Link from 'next/link';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { FocusLadder } from '@/components/student/FocusLadder';
 
 // Helper function to create a simple trend description
 const createTrendDescription = (reports: StudentReport[]): string => {
@@ -170,7 +169,6 @@ export default function StudentDashboardPage() {
                 </Button>
             </CardContent>
         </Card>
-        <FocusLadder />
       </div>
       <div className="lg:col-span-2 space-y-6">
         <PersonalStats report={latestReport} isLoading={isReportLoading || isRecommendationLoading}>
@@ -189,5 +187,3 @@ export default function StudentDashboardPage() {
     </div>
   );
 }
-
-    

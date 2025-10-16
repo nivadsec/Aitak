@@ -2,13 +2,14 @@
 
 import React from "react";
 import { useCollection, useFirebase, useMemoFirebase } from "@/firebase";
-import { collection, limit, query, orderBy } from "firebase/firestore";
+import { collection, limit, query, orderBy, where } from "firebase/firestore";
 import type { FocusInterval, StudentReport } from "@/lib/types";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { BarChart, Clock, Smartphone, Smile, TrendingUp, BookOpen, CheckCircle2, BrainCircuit } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { LineChart as RechartsLineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, BarChart as RechartsBarChart, Bar } from 'recharts';
-import { format } from "date-fns";
+import { format } from "date-fns-jalali";
+import { FocusLadder } from "@/components/student/FocusLadder";
 
 
 const StatCard = ({ icon: Icon, title, value, footer, colorClass }) => (
@@ -151,18 +152,32 @@ export default function StudentStatsPage() {
 
     if (!statsData && focusData.length === 0) {
         return (
-            <Card>
-                <CardHeader>
-                    <CardTitle className="font-headline text-xl flex items-center gap-2">
-                        <BarChart className="h-6 w-6 text-primary" />
-                        آمار عملکرد فردی
-                    </CardTitle>
-                </CardHeader>
-                <CardContent className="text-center text-muted-foreground py-16">
-                    <p>هنوز گزارشی برای نمایش آمار ثبت نشده است.</p>
-                    <p className="text-sm mt-2">پس از ثبت اولین گزارش روزانه، آمارهای شما در این صفحه نمایش داده خواهد شد.</p>
-                </CardContent>
-            </Card>
+             <div className="space-y-6">
+                <Card className="bg-muted/30 border-none shadow-none">
+                    <CardHeader>
+                        <CardTitle className="font-headline text-2xl flex items-center gap-3">
+                            <BarChart className="h-7 w-7 text-primary" />
+                            آمار و تمرکز
+                        </CardTitle>
+                        <CardDescription>
+                            تحلیل جامع عملکرد و روند تمرکز شما بر اساس گزارش‌های ثبت‌شده.
+                        </CardDescription>
+                    </CardHeader>
+                </Card>
+                <FocusLadder />
+                <Card>
+                    <CardHeader>
+                        <CardTitle className="font-headline text-xl flex items-center gap-2">
+                            <BarChart className="h-6 w-6 text-primary" />
+                            آمار عملکرد فردی
+                        </CardTitle>
+                    </CardHeader>
+                    <CardContent className="text-center text-muted-foreground py-16">
+                        <p>هنوز گزارشی برای نمایش آمار ثبت نشده است.</p>
+                        <p className="text-sm mt-2">پس از ثبت اولین گزارش روزانه، آمارهای شما در این صفحه نمایش داده خواهد شد.</p>
+                    </CardContent>
+                </Card>
+            </div>
         )
     }
 
@@ -172,13 +187,51 @@ export default function StudentStatsPage() {
                 <CardHeader>
                     <CardTitle className="font-headline text-2xl flex items-center gap-3">
                         <BarChart className="h-7 w-7 text-primary" />
-                        آمار عملکرد فردی
+                        آمار و تمرکز
                     </CardTitle>
                     <CardDescription>
-                        تحلیل جامع عملکرد شما بر اساس گزارش‌های ثبت‌شده.
+                        تحلیل جامع عملکرد و روند تمرکز شما بر اساس گزارش‌های ثبت‌شده.
                     </CardDescription>
                 </CardHeader>
             </Card>
+
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <div className="lg:col-span-1">
+                    <FocusLadder />
+                </div>
+                <div className="lg:col-span-2">
+                    <Card>
+                        <CardHeader>
+                            <CardTitle className="font-headline flex items-center gap-2 text-lg">
+                                    <BrainCircuit className="h-5 w-5 text-primary" />
+                                روند تمرکز
+                            </CardTitle>
+                            <CardDescription>نمودار امتیاز تمرکز شما در بازه‌های مطالعه ثبت شده در ۲۴ ساعت گذشته</CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                            {focusData.length > 0 ? (
+                                <ResponsiveContainer width="100%" height={250}>
+                                    <RechartsLineChart data={focusData}>
+                                        <CartesianGrid strokeDasharray="3 3" vertical={false} />
+                                        <XAxis dataKey="time" fontSize={12} tickLine={false} axisLine={false} />
+                                        <YAxis domain={[0, 10]} fontSize={12} tickLine={false} axisLine={false} />
+                                        <Tooltip
+                                            contentStyle={{ fontFamily: 'Vazirmatn, sans-serif' }}
+                                            formatter={(value, name, props) => [`${value} از ۱۰`, `امتیاز (${props.payload.intervalName})`]}
+                                        />
+                                        <Line type="monotone" dataKey="score" stroke="hsl(var(--primary))" strokeWidth={2} name="امتیاز تمرکز" />
+                                    </RechartsLineChart>
+                                </ResponsiveContainer>
+                            ) : (
+                                <div className="text-center text-muted-foreground py-10 h-[250px] flex flex-col justify-center items-center">
+                                    <p>هنوز بازه تمرکزی برای نمایش نمودار ثبت نشده است.</p>
+                                    <p className="text-sm mt-2">از ماژول "نردبان تمرکز" برای ثبت امتیاز استفاده کنید.</p>
+                                </div>
+                            )}
+                        </CardContent>
+                    </Card>
+                </div>
+            </div>
             
            {statsData && (
              <>
@@ -236,39 +289,6 @@ export default function StudentStatsPage() {
                 </div>
             </>
            )}
-
-            <Card>
-                <CardHeader>
-                    <CardTitle className="font-headline flex items-center gap-2 text-lg">
-                            <BrainCircuit className="h-5 w-5 text-primary" />
-                        روند تمرکز
-                    </CardTitle>
-                    <CardDescription>نمودار امتیاز تمرکز شما در بازه‌های مطالعه ثبت شده در ۲۴ ساعت گذشته</CardDescription>
-                </CardHeader>
-                <CardContent>
-                    {focusData.length > 0 ? (
-                        <ResponsiveContainer width="100%" height={250}>
-                            <RechartsLineChart data={focusData}>
-                                <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                                <XAxis dataKey="time" fontSize={12} tickLine={false} axisLine={false} />
-                                <YAxis domain={[0, 10]} fontSize={12} tickLine={false} axisLine={false} />
-                                <Tooltip
-                                    contentStyle={{ fontFamily: 'Vazirmatn, sans-serif' }}
-                                    formatter={(value, name, props) => [`${value} از ۱۰`, `امتیاز (${props.payload.intervalName})`]}
-                                />
-                                <Line type="monotone" dataKey="score" stroke="hsl(var(--primary))" strokeWidth={2} name="امتیاز تمرکز" />
-                            </RechartsLineChart>
-                        </ResponsiveContainer>
-                    ) : (
-                        <div className="text-center text-muted-foreground py-10">
-                            <p>هنوز بازه تمرکزی برای نمایش نمودار ثبت نشده است.</p>
-                            <p className="text-sm mt-2">از ماژول "نردبان تمرکز" در داشبورد برای ثبت امتیاز استفاده کنید.</p>
-                        </div>
-                    )}
-                </CardContent>
-            </Card>
         </div>
     )
 }
-
-    
