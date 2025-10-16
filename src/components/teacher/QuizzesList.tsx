@@ -1,4 +1,3 @@
-
 'use client';
 
 import * as React from 'react';
@@ -33,10 +32,9 @@ import Link from 'next/link';
 
 interface QuizzesListProps {
   quizzes: Quiz[];
-  setEditingQuiz: (quiz: Quiz) => void;
 }
 
-export function QuizzesList({ quizzes, setEditingQuiz }: QuizzesListProps) {
+export function QuizzesList({ quizzes }: QuizzesListProps) {
   const { firestore, user } = useFirebase();
   const { toast } = useToast();
   const [deletingQuiz, setDeletingQuiz] = React.useState<Quiz | null>(null);
@@ -94,9 +92,11 @@ export function QuizzesList({ quizzes, setEditingQuiz }: QuizzesListProps) {
                         مشاهده نتایج
                     </Link>
                   </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => setEditingQuiz(quiz)}>
-                    <Edit className="ml-2 h-4 w-4" />
-                    ویرایش
+                  <DropdownMenuItem asChild>
+                    <Link href={`/teacher/quizzes/edit/${quiz.id}`}>
+                      <Edit className="ml-2 h-4 w-4" />
+                      ویرایش
+                    </Link>
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem
@@ -138,5 +138,3 @@ export function QuizzesList({ quizzes, setEditingQuiz }: QuizzesListProps) {
     </>
   );
 }
-
-    
