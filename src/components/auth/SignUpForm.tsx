@@ -44,7 +44,7 @@ const formSchema = z.object({
   major: z.enum(['انسانی', 'تجربی', 'ریاضی'], {
     required_error: 'انتخاب رشته تحصیلی الزامی است.',
   }),
-  teacherCode: z.string().min(1, "کد معلم الزامی است."),
+  teacherCode: z.string().optional(),
 });
 
 type FormValues = z.infer<typeof formSchema>;
@@ -67,96 +67,114 @@ export function SignUpForm() {
     },
   });
 
-  async function onSubmit(data: FormValues) {
-    if (!firestore || !auth) return;
-    setIsLoading(true);
+  const handleUserCreation = async (data: FormValues, teacherId?: string) => {
+    if (!auth) return;
 
-    // Find teacher by code. We assume the teacher's UID is their code.
-    const teacherRef = firestoreDoc(firestore, 'teachers', data.teacherCode);
-    
-    getDoc(teacherRef)
-      .then(async (teacherSnap) => {
-        if (!teacherSnap.exists()) {
-          toast({
-            title: 'کد معلم نامعتبر',
-            description: 'معلمی با این کد یافت نشد. لطفاً کد را بررسی کنید.',
-            variant: 'destructive',
-          });
-          setIsLoading(false);
-          return;
-        }
-        const teacherId = teacherSnap.id;
-
-        try {
-          const userCredential = await createUserWithEmailAndPassword(
+    try {
+        const userCredential = await createUserWithEmailAndPassword(
             auth,
             data.email,
             data.password
-          );
-          const user = userCredential.user;
+        );
+        const user = userCredential.user;
 
-          // Update user profile (displayName and role/teacherId in photoURL)
-          await updateProfile(user, {
+        // Construct role info for photoURL
+        const roleInfo = teacherId ? `${ROLES.STUDENT}:${teacherId}` : ROLES.STUDENT;
+
+        await updateProfile(user, {
             displayName: `${data.firstName} ${data.lastName}`,
-            photoURL: `${ROLES.STUDENT}:${teacherId}`,
-          });
+            photoURL: roleInfo,
+        });
 
-          // Send verification email
-          await sendEmailVerification(user);
+        await sendEmailVerification(user);
+        
+        // If a teacherId is present, create the student record under that teacher
+        if (teacherId) {
+            const studentRef = doc(firestore, 'teachers', teacherId, 'students', user.uid);
+            const studentData = {
+                id: user.uid,
+                teacherId: teacherId,
+                firstName: data.firstName,
+                lastName: data.lastName,
+                email: data.email,
+                gradeLevel: data.gradeLevel,
+                major: data.major,
+                isActive: true,
+            };
+            setDocumentNonBlocking(studentRef, studentData, {});
+        } else {
+            // If no teacherId, we could create a student record in a general 'students' collection
+            // For now, we will just create the user and they can be assigned later.
+            // This part of logic can be expanded if needed.
+        }
 
-          const studentRef = doc(firestore, 'teachers', teacherId, 'students', user.uid);
-          const studentData = {
-            id: user.uid,
-            teacherId: teacherId,
-            firstName: data.firstName,
-            lastName: data.lastName,
-            email: data.email,
-            gradeLevel: data.gradeLevel,
-            major: data.major,
-            isActive: true,
-          };
-          setDocumentNonBlocking(studentRef, studentData, {});
-
-          toast({
+        toast({
             title: 'ثبت‌نام موفق',
             description: 'ایمیل تأیید برای شما ارسال شد. لطفاً صندوق ورودی خود را بررسی کنید.',
             className: 'font-body',
-          });
+        });
 
-          setIsSuccess(true);
-
-        } catch (error: any) {
-          console.error('Error signing up:', error);
-          let description = 'مشکلی در هنگام ثبت‌نام پیش آمد. لطفاً دوباره تلاش کنید.';
-          if (error.code === 'auth/email-already-in-use') {
+        setIsSuccess(true);
+    } catch (error: any) {
+        console.error('Error signing up:', error);
+        let description = 'مشکلی در هنگام ثبت‌نام پیش آمد. لطفاً دوباره تلاش کنید.';
+        if (error.code === 'auth/email-already-in-use') {
             description = 'این ایمیل قبلاً در سیستم ثبت شده است.';
-          } else if (error.code === 'auth/invalid-email') {
+        } else if (error.code === 'auth/invalid-email') {
             description = 'فرمت ایمیل وارد شده صحیح نیست.';
-          }
-          toast({
+        }
+        toast({
             title: 'خطا در ثبت‌نام',
             description,
             variant: 'destructive',
             className: 'font-body',
-          });
-        } finally {
-          setIsLoading(false);
-        }
-      })
-      .catch((serverError) => {
-        const permissionError = new FirestorePermissionError({
-          path: teacherRef.path,
-          operation: 'get',
         });
-        errorEmitter.emit('permission-error', permissionError);
-        
-        toast({
-          title: 'خطای دسترسی',
-          description: 'امکان تایید کد معلم به دلیل مشکل در مجوزهای دسترسی وجود ندارد.',
-          variant: 'destructive',
-        });
+    } finally {
         setIsLoading(false);
-      });
+    }
+  }
+
+
+  async function onSubmit(data: FormValues) {
+    if (!firestore || !auth) return;
+    setIsLoading(true);
+
+    if (data.teacherCode) {
+        // Find teacher by code. We assume the teacher's UID is their code.
+        const teacherRef = firestoreDoc(firestore, 'teachers', data.teacherCode);
+        
+        try {
+            const teacherSnap = await getDoc(teacherRef);
+            if (!teacherSnap.exists()) {
+                toast({
+                    title: 'کد معلم نامعتبر',
+                    description: 'معلمی با این کد یافت نشد. لطفاً کد را بررسی کنید یا فیلد را خالی بگذارید.',
+                    variant: 'destructive',
+                });
+                setIsLoading(false);
+                return;
+            }
+            const teacherId = teacherSnap.id;
+            await handleUserCreation(data, teacherId);
+
+        } catch (serverError) {
+             const permissionError = new FirestorePermissionError({
+                path: teacherRef.path,
+                operation: 'get',
+            });
+            errorEmitter.emit('permission-error', permissionError);
+            
+            toast({
+                title: 'خطای دسترسی',
+                description: 'امکان تایید کد معلم به دلیل مشکل در مجوزهای دسترسی وجود ندارد.',
+                variant: 'destructive',
+            });
+            setIsLoading(false);
+        }
+    } else {
+        // If no teacher code is provided, create the user without associating them with a teacher.
+        await handleUserCreation(data);
+    }
   }
 
   if (isSuccess) {
@@ -279,12 +297,12 @@ export function SignUpForm() {
           name="teacherCode"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>کد معلم</FormLabel>
+              <FormLabel>کد معلم (اختیاری)</FormLabel>
               <FormControl>
                 <Input placeholder="کد معلم خود را وارد کنید" {...field} />
               </FormControl>
               <FormDescription>
-                با وارد کردن این کد، به لیست دانش‌آموزان معلم خود اضافه می‌شوید.
+                اگر کد معلم دارید، با وارد کردن آن به لیست دانش‌آموزان او اضافه می‌شوید.
               </FormDescription>
               <FormMessage />
             </FormItem>

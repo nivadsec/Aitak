@@ -8,6 +8,7 @@
       "description": "Represents a student in the آی‌تاب system.",
       "properties": {
         "id": { "type": "string", "description": "Unique identifier for the Student entity." },
+        "teacherId": { "type": "string", "description": "Optional reference to the Teacher this student is managed by." },
         "firstName": { "type": "string", "description": "The first name of the student." },
         "lastName": { "type": "string", "description": "The last name of the student." },
         "email": { "type": "string", "description": "The email address of the student.", "format": "email" },
