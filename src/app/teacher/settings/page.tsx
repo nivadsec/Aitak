@@ -6,11 +6,29 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Settings, User, KeyRound } from 'lucide-react';
+import { Settings, User, KeyRound, Copy, Check } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
+import { useToast } from '@/hooks/use-toast';
+import React from 'react';
+import { copyToClipboard } from '@/lib/utils';
 
 export default function TeacherSettingsPage() {
   const { user, isUserLoading } = useFirebase();
+  const { toast } = useToast();
+  const [hasCopied, setHasCopied] = React.useState(false);
+
+  const handleCopy = () => {
+    if (user?.uid) {
+        copyToClipboard(user.uid).then((success) => {
+            if (success) {
+                setHasCopied(true);
+                toast({ title: 'کد معلم کپی شد!' });
+                setTimeout(() => setHasCopied(false), 2000);
+            }
+        });
+    }
+  };
+
 
   if (isUserLoading) {
     return (
@@ -74,6 +92,23 @@ export default function TeacherSettingsPage() {
               <p className="text-muted-foreground">{user.email}</p>
             </div>
           </div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="font-headline text-lg flex items-center gap-2">
+            کد دعوت دانش‌آموز
+          </CardTitle>
+          <CardDescription>
+            این کد را در اختیار دانش‌آموزان جدید قرار دهید تا هنگام ثبت‌نام به پنل شما متصل شوند.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="flex items-center gap-2">
+            <Input readOnly value={user.uid} className="font-mono bg-muted" />
+            <Button variant="outline" size="icon" onClick={handleCopy}>
+                {hasCopied ? <Check className="h-4 w-4 text-green-600" /> : <Copy className="h-4 w-4" />}
+            </Button>
         </CardContent>
       </Card>
 

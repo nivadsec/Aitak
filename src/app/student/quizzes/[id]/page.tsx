@@ -1,19 +1,20 @@
 'use client';
 
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { useDoc, useFirebase, useMemoFirebase } from '@/firebase';
 import { doc, serverTimestamp } from 'firebase/firestore';
 import type { Quiz, QuizSubmission } from '@/lib/types';
-import { notFound } from 'next/navigation';
+import { notFound, useRouter } from 'next/navigation';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
-import { useForm, FormProvider, Controller } from 'react-hook-form';
+import { useForm, FormProvider, Controller, useFormState } from 'react-hook-form';
 import { Button } from '@/components/ui/button';
-import { CheckCircle, Loader2, Percent, RefreshCcw } from 'lucide-react';
+import { CheckCircle, Loader2, Percent, RefreshCcw, Timer, AlertTriangle } from 'lucide-react';
 import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { useToast } from '@/hooks/use-toast';
 import { setDocumentNonBlocking } from '@/firebase/non-blocking-updates';
+import { Progress } from '@/components/ui/progress';
 
 function QuizTaker({ quiz }: { quiz: Quiz }) {
     const { toast } = useToast();
@@ -22,12 +23,18 @@ function QuizTaker({ quiz }: { quiz: Quiz }) {
     const [isLoading, setIsLoading] = React.useState(false);
     const [result, setResult] = React.useState<{ score: number; correct: number; total: number } | null>(null);
 
+    // Timer state
+    const [timeLeft, setTimeLeft] = useState(quiz.duration ? quiz.duration * 60 : null);
+    const router = useRouter();
+
+
     const defaultValues = quiz.questions.reduce((acc, _, index) => {
         acc[`question_${index}`] = '';
         return acc;
     }, {} as Record<string, string>);
 
     const methods = useForm({ defaultValues });
+    const { control, handleSubmit, formState: { isSubmitting } } = methods;
 
     const onSubmit = (data: Record<string, string>) => {
         if (!user || !teacherId) return;
@@ -63,10 +70,40 @@ function QuizTaker({ quiz }: { quiz: Quiz }) {
         toast({ title: "آزمون ثبت شد!", description: `شما به ${correctAnswers} سوال از ${totalQuestions} پاسخ صحیح دادید.` });
     };
 
+     // Timer effect
+    useEffect(() => {
+        if (timeLeft === null || result) return; // No timer or quiz finished
+
+        if (timeLeft === 0) {
+            toast({
+                title: "وقت تمام شد!",
+                description: "آزمون شما به صورت خودکار ثبت می‌شود.",
+                variant: 'destructive'
+            });
+            handleSubmit(onSubmit)();
+            return;
+        }
+
+        const timerId = setInterval(() => {
+            setTimeLeft(prev => (prev ? prev - 1 : 0));
+        }, 1000);
+
+        return () => clearInterval(timerId);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [timeLeft, result]);
+
+
     const handleRetry = () => {
         setResult(null);
+        setTimeLeft(quiz.duration ? quiz.duration * 60 : null);
         methods.reset(defaultValues);
     }
+    
+    const formatTime = (seconds: number) => {
+        const mins = Math.floor(seconds / 60);
+        const secs = seconds % 60;
+        return `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+    };
 
     if (result) {
         return (
@@ -83,10 +120,13 @@ function QuizTaker({ quiz }: { quiz: Quiz }) {
                         شما به {result.correct} سوال از {result.total} سوال پاسخ صحیح دادید.
                     </p>
                 </CardContent>
-                <CardFooter>
+                <CardFooter className="flex-col sm:flex-row gap-2">
                     <Button onClick={handleRetry} variant="outline">
                         <RefreshCcw className="ml-2 h-4 w-4" />
                         شرکت مجدد در آزمون
+                    </Button>
+                     <Button onClick={() => router.push('/student/quizzes')}>
+                        بازگشت به لیست آزمون‌ها
                     </Button>
                 </CardFooter>
             </Card>
@@ -95,11 +135,24 @@ function QuizTaker({ quiz }: { quiz: Quiz }) {
 
     return (
         <FormProvider {...methods}>
-            <form onSubmit={methods.handleSubmit(onSubmit)}>
+            <form onSubmit={handleSubmit(onSubmit)}>
                 <Card>
                     <CardHeader>
-                        <CardTitle className="font-headline text-2xl">{quiz.title}</CardTitle>
-                        <CardDescription>به سوالات زیر با دقت پاسخ دهید.</CardDescription>
+                        <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-4">
+                            <div>
+                                <CardTitle className="font-headline text-2xl">{quiz.title}</CardTitle>
+                                <CardDescription>به سوالات زیر با دقت پاسخ دهید.</CardDescription>
+                            </div>
+                             {timeLeft !== null && quiz.duration && (
+                                <div className="w-full sm:w-48 space-y-2 text-center">
+                                    <div className="flex items-center justify-center gap-2 text-lg font-mono font-semibold rounded-md border p-2 bg-muted">
+                                        <Timer className="h-5 w-5 text-primary"/>
+                                        <span>{formatTime(timeLeft)}</span>
+                                    </div>
+                                    <Progress value={(timeLeft / (quiz.duration * 60)) * 100} className="h-2" />
+                                </div>
+                            )}
+                        </div>
                     </CardHeader>
                     <CardContent className="space-y-8">
                         {quiz.questions.map((q, qIndex) => (
@@ -127,8 +180,8 @@ function QuizTaker({ quiz }: { quiz: Quiz }) {
                         ))}
                     </CardContent>
                     <CardFooter>
-                        <Button type="submit" size="lg" disabled={isLoading}>
-                            {isLoading ? <Loader2 className="ml-2 h-4 w-4 animate-spin" /> : <CheckCircle className="ml-2 h-4 w-4" />}
+                        <Button type="submit" size="lg" disabled={isSubmitting}>
+                            {isSubmitting ? <Loader2 className="ml-2 h-4 w-4 animate-spin" /> : <CheckCircle className="ml-2 h-4 w-4" />}
                             پایان و ثبت آزمون
                         </Button>
                     </CardFooter>

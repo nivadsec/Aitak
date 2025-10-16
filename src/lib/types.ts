@@ -172,6 +172,7 @@ export interface Quiz {
     teacherId: string;
     title: string;
     questions: QuizQuestion[];
+    duration?: number; // Optional: duration in minutes
     createdAt: any; // Firestore Timestamp
     updatedAt: any; // Firestore Timestamp
 }

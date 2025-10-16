@@ -3,11 +3,11 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useFieldArray, useForm } from 'react-hook-form';
 import * as z from 'zod';
-import { Loader2, Save, PlusCircle, Trash2 } from 'lucide-react';
+import { Loader2, Save, PlusCircle, Trash2, Timer } from 'lucide-react';
 import React from 'react';
 
 import { Button } from '@/components/ui/button';
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
+import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { useToast } from '@/hooks/use-toast';
 import { useFirebase } from '@/firebase/provider';
 import { collection, doc, serverTimestamp } from 'firebase/firestore';
@@ -26,6 +26,7 @@ const quizQuestionSchema = z.object({
 
 const formSchema = z.object({
   title: z.string().min(3, "عنوان آزمون باید حداقل ۳ کاراکتر باشد."),
+  duration: z.coerce.number().min(0).optional(),
   questions: z.array(quizQuestionSchema).min(1, 'آزمون باید حداقل یک سوال داشته باشد.'),
 });
 
@@ -46,12 +47,14 @@ export function QuizForm({ quiz, onSuccess }: QuizFormProps) {
     resolver: zodResolver(formSchema),
     defaultValues: isEditMode ? {
         title: quiz.title,
+        duration: quiz.duration,
         questions: quiz.questions.map(q => ({
             ...q,
             correctAnswerIndex: Number(q.correctAnswerIndex)
         }))
     } : {
       title: '',
+      duration: 0,
       questions: [{ questionText: '', options: ['', '', '', ''], correctAnswerIndex: 0 }],
     },
   });
@@ -71,6 +74,7 @@ export function QuizForm({ quiz, onSuccess }: QuizFormProps) {
     const quizData = {
         teacherId: user.uid,
         title: data.title,
+        duration: data.duration,
         questions: data.questions.map(q => ({
             ...q,
             correctAnswerIndex: Number(q.correctAnswerIndex)
@@ -102,13 +106,26 @@ export function QuizForm({ quiz, onSuccess }: QuizFormProps) {
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-         <FormField control={form.control} name="title" render={({ field }) => (
-            <FormItem>
-                <FormLabel>عنوان آزمون</FormLabel>
-                <FormControl><Input placeholder="مثال: آزمون فصل اول فیزیک دهم" {...field} /></FormControl>
-                <FormMessage />
-            </FormItem>
-        )} />
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <FormField control={form.control} name="title" render={({ field }) => (
+              <FormItem>
+                  <FormLabel>عنوان آزمون</FormLabel>
+                  <FormControl><Input placeholder="مثال: آزمون فصل اول فیزیک دهم" {...field} /></FormControl>
+                  <FormMessage />
+              </FormItem>
+            )} />
+             <FormField control={form.control} name="duration" render={({ field }) => (
+                <FormItem>
+                    <FormLabel className="flex items-center gap-2">
+                      <Timer className="h-4 w-4"/>
+                      زمان آزمون (دقیقه)
+                    </FormLabel>
+                    <FormControl><Input type="number" placeholder="مثال: 25" {...field} /></FormControl>
+                    <FormDescription className="text-xs">برای آزمون بدون زمان، این فیلد را خالی یا 0 بگذارید.</FormDescription>
+                    <FormMessage />
+                </FormItem>
+            )} />
+        </div>
         
         <div className="space-y-4">
             <FormLabel>سوالات آزمون</FormLabel>
