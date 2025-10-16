@@ -180,6 +180,20 @@
         }
       },
       "required": ["id", "studentId", "teacherId", "content", "isBlocking", "createdAt"]
+    },
+    "FocusInterval": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "FocusInterval",
+      "type": "object",
+      "description": "Represents a single focus interval recorded by a student.",
+      "properties": {
+        "id": { "type": "string", "description": "Unique identifier for the focus interval." },
+        "studentId": { "type": "string" },
+        "intervalName": { "type": "string", "description": "The name of the study interval (e.g., 'Physics - Part 1')." },
+        "score": { "type": "number", "description": "The focus score from 0 to 10." },
+        "timestamp": { "type": "string", "format": "date-time", "description": "The time the interval was recorded." }
+      },
+      "required": ["id", "studentId", "intervalName", "score", "timestamp"]
     }
   },
   "auth": {
@@ -197,7 +211,10 @@
       { "path": "/teachers/{teacherId}/students/{studentId}/examReports/{reportId}", "definition": { "entityName": "ExamReport", "schema": { "$ref": "#/backend/entities/ExamReport" }, "description": "Stores exam analysis reports for a student." } },
       { "path": "/teachers/{teacherId}/students/{studentId}/weeklyProgress/{reportId}", "definition": { "entityName": "WeeklyProgressReport", "schema": { "$ref": "#/backend/entities/WeeklyProgressReport" }, "description": "Stores weekly progress reports for a student." } },
       { "path": "/teachers/{teacherId}/students/{studentId}/topicInvestments/{reportId}", "definition": { "entityName": "TopicInvestmentReport", "schema": { "$ref": "#/backend/entities/TopicInvestmentReport" }, "description": "Stores topic-based time investment plans for a student." } },
-      { "path": "/teachers/{teacherId}/students/{studentId}/recommendations/{recommendationId}", "definition": { "entityName": "Recommendation", "schema": { "$ref": "#/backend/entities/Recommendation" }, "description": "Stores recommendations from a teacher to a specific student." } }
+      { "path": "/teachers/{teacherId}/students/{studentId}/recommendations/{recommendationId}", "definition": { "entityName": "Recommendation", "schema": { "$ref": "#/backend/entities/Recommendation" }, "description": "Stores recommendations from a teacher to a specific student." } },
+      { "path": "/teachers/{teacherId}/students/{studentId}/focusIntervals/{intervalId}", "definition": { "entityName": "FocusInterval", "schema": { "$ref": "#/backend/entities/FocusInterval" }, "description": "Stores focus intervals recorded by a student." } }
     ]
   }
 }
+
+    

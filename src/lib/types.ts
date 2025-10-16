@@ -135,3 +135,13 @@ export interface StudentRecommendation {
         questions: RecommendationQuizQuestion[];
     };
 }
+
+export interface FocusInterval {
+    id: string;
+    studentId: string;
+    intervalName: string;
+    score: number;
+    timestamp: any; // Firestore Timestamp
+}
+
+    
