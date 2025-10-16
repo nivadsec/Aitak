@@ -33,7 +33,8 @@ const studentNav = [
 const teacherNav = [
   { href: '/teacher/dashboard', label: 'داشبورد', icon: Home },
   { href: '/teacher/students', label: 'دانش‌آموزان', icon: Users },
-  { href: '/teacher/communication', label: 'ارتباطات', icon: Lightbulb },
+  { href: '/teacher/recommendations', label: 'توصیه‌ها', icon: Lightbulb },
+  { href: '/teacher/messages', label: 'پیام‌ها', icon: MessageSquare },
   { href: '/teacher/announcements', label: 'اطلاعیه‌ها', icon: Megaphone },
   { href: '/teacher/settings', label: 'تنظیمات', icon: Settings },
 ];
