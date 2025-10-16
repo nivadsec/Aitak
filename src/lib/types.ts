@@ -115,6 +115,12 @@ export interface TopicInvestmentReport {
     }>;
 }
 
+export interface RecommendationQuizQuestion {
+    questionText: string;
+    options: string[];
+    correctAnswerIndex: number;
+}
+
 export interface StudentRecommendation {
     id: string;
     studentId: string;
@@ -124,6 +130,8 @@ export interface StudentRecommendation {
     isBlocking: boolean;
     createdAt: any; // Firestore Timestamp
     readAt?: any; // Firestore Timestamp
+    quiz?: {
+        title: string;
+        questions: RecommendationQuizQuestion[];
+    };
 }
-
-    

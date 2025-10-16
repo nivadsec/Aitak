@@ -145,20 +145,39 @@
       },
       "required": ["id", "studentId", "lessonName", "topics"]
     },
-     "Recommendation": {
+    "Recommendation": {
       "$schema": "http://json-schema.org/draft-07/schema#",
       "title": "Recommendation",
       "type": "object",
-      "description": "Represents a recommendation from a teacher to a student.",
+      "description": "Represents a recommendation from a teacher to a student, optionally with a quiz.",
       "properties": {
-        "id": { "type": "string", "description": "Unique identifier for the recommendation." },
-        "studentId": { "type": "string", "description": "Reference to the student." },
-        "teacherId": { "type": "string", "description": "Reference to the teacher who gave the recommendation." },
-        "content": { "type": "string", "description": "The text of the recommendation." },
-        "isRead": { "type": "boolean", "description": "Indicates if the student has read the recommendation.", "default": false },
-        "isBlocking": { "type": "boolean", "description": "If true, blocks the student from submitting daily reports until read.", "default": false },
-        "createdAt": { "type": "string", "format": "date-time", "description": "Timestamp of when the recommendation was created." },
-        "readAt": { "type": "string", "format": "date-time", "description": "Timestamp of when the student read the recommendation." }
+        "id": { "type": "string" },
+        "studentId": { "type": "string" },
+        "teacherId": { "type": "string" },
+        "content": { "type": "string" },
+        "isRead": { "type": "boolean", "default": false },
+        "isBlocking": { "type": "boolean", "default": false },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "readAt": { "type": "string", "format": "date-time" },
+        "quiz": {
+          "type": "object",
+          "properties": {
+            "title": { "type": "string" },
+            "questions": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "questionText": { "type": "string" },
+                  "options": { "type": "array", "items": { "type": "string" } },
+                  "correctAnswerIndex": { "type": "number" }
+                },
+                "required": ["questionText", "options", "correctAnswerIndex"]
+              }
+            }
+          },
+          "required": ["title", "questions"]
+        }
       },
       "required": ["id", "studentId", "teacherId", "content", "isBlocking", "createdAt"]
     }
@@ -182,5 +201,3 @@
     ]
   }
 }
-
-    
