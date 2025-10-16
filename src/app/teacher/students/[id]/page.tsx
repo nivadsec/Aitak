@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import StudentPerformanceAnalysis from '@/components/teacher/StudentPerformanceAnalysis';
 import { useDoc, useFirebase, useMemoFirebase, useCollection, errorEmitter, FirestorePermissionError } from '@/firebase';
-import { doc, collection, query, orderBy, getDocs, limit } from 'firebase/firestore';
+import { doc, collection, query, orderBy, getDocs, limit, where } from 'firebase/firestore';
 import { getDailyReportsForGenkit } from '@/lib/data';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
@@ -13,8 +13,9 @@ import { Download, Lightbulb } from 'lucide-react';
 import { downloadJson } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
 import { RecommendationForm } from '@/components/teacher/RecommendationForm';
-import { StudentRecommendation } from '@/lib/types';
+import type { StudentRecommendation, FocusInterval } from '@/lib/types';
 import { RecommendationsList } from '@/components/teacher/RecommendationsList';
+import { FocusIntervalsChart } from '@/components/teacher/FocusIntervalsChart';
 
 export default function StudentDetailPage({ params }: { params: { id: string } }) {
   const { firestore, user } = useFirebase();
@@ -42,12 +43,24 @@ export default function StudentDetailPage({ params }: { params: { id: string } }
     );
   }, [firestore, user, params.id]);
 
+  const focusIntervalsQuery = useMemoFirebase(() => {
+    if (!user) return null;
+    const oneWeekAgo = new Date();
+    oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
+    return query(
+        collection(firestore, 'teachers', user.uid, 'students', params.id, 'focusIntervals'),
+        where('timestamp', '>=', oneWeekAgo),
+        orderBy('timestamp', 'desc')
+    );
+  }, [firestore, user, params.id]);
+
   const { data: student, isLoading: isStudentLoading } = useDoc(studentRef);
   const { data: reports, isLoading: areReportsLoading } = useCollection(reportsQuery);
   const { data: recommendations, isLoading: areRecommendationsLoading } = useCollection<StudentRecommendation>(recommendationsQuery);
+  const { data: focusIntervals, isLoading: areIntervalsLoading } = useCollection<FocusInterval>(focusIntervalsQuery);
 
 
-  const isLoading = isStudentLoading || areReportsLoading || areRecommendationsLoading;
+  const isLoading = isStudentLoading || areReportsLoading || areRecommendationsLoading || areIntervalsLoading;
   
   const handleExportStudentData = async () => {
     if (!user || !firestore || !student || !reports) {
@@ -119,6 +132,14 @@ export default function StudentDetailPage({ params }: { params: { id: string } }
                         <Skeleton className="h-16 w-full" />
                     </CardContent>
                 </Card>
+                 <Card>
+                    <CardHeader>
+                        <Skeleton className="h-8 w-64" />
+                    </CardHeader>
+                     <CardContent>
+                        <Skeleton className="h-32 w-full" />
+                    </CardContent>
+                </Card>
             </div>
              <div className="space-y-6">
                 <Card>
@@ -164,6 +185,9 @@ export default function StudentDetailPage({ params }: { params: { id: string } }
         </Card>
         
         <StudentPerformanceAnalysis studentId={student.id} dailyReports={dailyReportsForGenkit} />
+
+        <FocusIntervalsChart intervals={focusIntervals || []} />
+
       </div>
 
        <div className="lg:col-span-2 space-y-6">
