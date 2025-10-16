@@ -70,6 +70,8 @@ function AnnouncementCard() {
 function LoginPageContent() {
   const { user, isUserLoading } = useUser();
   const [isLoading, setIsLoading] = useState(true);
+  const [progressValue, setProgressValue] = useState(0);
+
 
   useEffect(() => {
     // The loading screen should only be shown while the user state is being determined.
@@ -89,6 +91,11 @@ function LoginPageContent() {
     }
   }, [isUserLoading, user])
 
+  // This effect ensures Math.random is only called on the client after mount, preventing hydration errors.
+  useEffect(() => {
+    setProgressValue(Math.floor(Math.random() * 100));
+  }, []);
+
 
   if (isLoading) {
     return (
@@ -104,7 +111,7 @@ function LoginPageContent() {
             <p className="text-sm text-muted-foreground animate-pulse flex items-center justify-center gap-2">
                 در حال بارگذاری...
             </p>
-            <Progress value={Math.floor(Math.random() * 100)} className="h-2" />
+            <Progress value={progressValue} className="h-2" />
           </div>
         </div>
     );
