@@ -86,7 +86,6 @@ export function SignUpForm() {
             photoURL: roleInfo,
         });
 
-        await sendEmailVerification(user);
         
         // If a teacherId is present, create the student record under that teacher
         if (teacherId) {
@@ -104,6 +103,8 @@ export function SignUpForm() {
                 canViewStats: true,
                 canViewSchedule: true,
                 canViewQuizzes: true,
+                canViewStrategicPlans: true,
+                canViewConsultingContent: true,
                 canSubmitWeeklyReport: true,
                 canSubmitExamAnalysis: true,
                 canSubmitFocusLadder: true,
@@ -113,6 +114,9 @@ export function SignUpForm() {
         } else {
             // This logic can be expanded if unassigned students need to be stored elsewhere.
         }
+
+        // Send verification email only after all backend setup is confirmed to be on track
+        await sendEmailVerification(user);
 
         toast({
             title: 'ثبت‌نام موفق',
@@ -156,8 +160,8 @@ export function SignUpForm() {
             description: 'معلمی با این کد یافت نشد. لطفاً کد را بررسی کنید یا فیلد را خالی بگذارید.',
             variant: 'destructive',
           });
-          // Do not proceed with user creation if teacher code is invalid
-          return;
+          setIsLoading(false); // Stop loading
+          return; // Stop execution
         }
         teacherId = teacherSnap.id;
       }

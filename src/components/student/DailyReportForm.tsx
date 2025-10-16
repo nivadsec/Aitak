@@ -6,7 +6,7 @@ import * as z from 'zod';
 import { CalendarIcon, FileUp, PlusCircle, Trash2, Save, Loader2, Lock } from 'lucide-react';
 import { format } from 'date-fns-jalali';
 import React from 'react';
-import { collection, doc, serverTimestamp } from 'firebase/firestore';
+import { collection, doc, serverTimestamp, writeBatch } from 'firebase/firestore';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -113,17 +113,17 @@ export function DailyReportForm({ isBlocked = false }: DailyReportFormProps) {
     const reportData = {
         id: reportId,
         studentId: user.uid,
-        teacherId: teacherId,
         date: data.date,
         wakeUpTime: data.wakeUpTime,
         studyStartTime: data.studyStartTime,
-        studyEndTime: '',
+        studyEndTime: '', // This should be captured or derived if needed
         totalStudyMinutes: totalStudyMinutes,
-        minutesOfClasses: 0,
+        minutesOfClasses: 0, // This should be captured if needed
         sleepAmount: data.sleepHours,
         disasterLevel: data.moodScore,
         minutesOfMobileUsage: data.mobileHours * 60,
         createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp(),
     };
 
     const subjectItems = data.items.map((item) => {
@@ -139,19 +139,27 @@ export function DailyReportForm({ isBlocked = false }: DailyReportFormProps) {
             incorrectTestQuestions: wrongCount,
             testPercentage: parseFloat(testPercentage.toFixed(2)),
             totalTestQuestions: testCount,
+            correctTestQuestions: correctCount,
         }
     });
 
     try {
-        setDocumentNonBlocking(reportRef, reportData, { merge: true });
+        const batch = writeBatch(firestore);
+        
+        batch.set(reportRef, reportData, { merge: true });
 
         const subjectItemsCollection = collection(reportRef, 'subjectItems');
+        // This is a simplified approach. For a robust solution, you'd query existing items and decide to update/delete/add.
+        // For now, we will add them all as new, which can lead to duplicates if the form is submitted multiple times for the same day.
+        // A better approach would be to manage this within a transaction or a cloud function.
         for (const item of subjectItems) {
             if (item.subject) {
                 const subjectItemRef = doc(subjectItemsCollection);
-                setDocumentNonBlocking(subjectItemRef, {...item, id: subjectItemRef.id }, {});
+                batch.set(subjectItemRef, {...item, id: subjectItemRef.id });
             }
         }
+
+        await batch.commit();
 
         toast({
             title: "گزارش ثبت شد",
