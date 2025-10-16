@@ -11,7 +11,7 @@ import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, For
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 import { useFirebase } from '@/firebase/provider';
-import { collection, doc, serverTimestamp } from 'firebase/firestore';
+import { collection, doc, serverTimestamp, writeBatch } from 'firebase/firestore';
 import { setDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 import { Switch } from '../ui/switch';
 import { Label } from '../ui/label';
@@ -85,32 +85,53 @@ export function RecommendationForm({ students }: RecommendationFormProps) {
     setIsLoading(true);
 
     try {
-      const recommendationsCol = collection(firestore, 'teachers', user.uid, 'students', data.studentId, 'recommendations');
-      const newDocRef = doc(recommendationsCol);
+        const getRecommendationData = () => {
+            const baseData: any = {
+                teacherId: user.uid,
+                content: data.content,
+                isBlocking: data.isBlocking,
+                isRead: false,
+                createdAt: serverTimestamp(),
+            };
 
-      const recommendationData: any = {
-        id: newDocRef.id,
-        studentId: data.studentId,
-        teacherId: user.uid,
-        content: data.content,
-        isBlocking: data.isBlocking,
-        isRead: false,
-        createdAt: serverTimestamp(),
-      };
+            if (data.hasQuiz && data.quiz && data.quiz.questions && data.quiz.questions.length > 0) {
+                baseData.quiz = {
+                    ...data.quiz,
+                    questions: data.quiz.questions.map(q => ({
+                        ...q,
+                        correctAnswerIndex: Number(q.correctAnswerIndex)
+                    }))
+                };
+            }
+            return baseData;
+        };
 
-      if (data.hasQuiz && data.quiz && data.quiz.questions && data.quiz.questions.length > 0) {
-          recommendationData.quiz = {
-            ...data.quiz,
-            questions: data.quiz.questions.map(q => ({
-                ...q,
-                correctAnswerIndex: Number(q.correctAnswerIndex)
-            }))
-          };
-      }
-      
-      setDocumentNonBlocking(newDocRef, recommendationData, {});
-      
-      toast({ title: 'توصیه ارسال شد', description: 'توصیه شما با موفقیت برای دانش‌آموز ارسال شد.' });
+        if (data.studentId === 'all') {
+            // Send to all students
+            const batch = writeBatch(firestore);
+            students.forEach(student => {
+                const recommendationRef = doc(collection(firestore, 'teachers', user.uid, 'students', student.id, 'recommendations'));
+                const recommendationData = {
+                    ...getRecommendationData(),
+                    id: recommendationRef.id,
+                    studentId: student.id,
+                };
+                batch.set(recommendationRef, recommendationData);
+            });
+            await batch.commit();
+             toast({ title: 'توصیه گروهی ارسال شد', description: 'توصیه شما با موفقیت برای تمام دانش‌آموزان ارسال شد.' });
+        } else {
+            // Send to a single student
+            const recommendationsCol = collection(firestore, 'teachers', user.uid, 'students', data.studentId, 'recommendations');
+            const newDocRef = doc(recommendationsCol);
+            const recommendationData = {
+                ...getRecommendationData(),
+                id: newDocRef.id,
+                studentId: data.studentId,
+            };
+            setDocumentNonBlocking(newDocRef, recommendationData, {});
+            toast({ title: 'توصیه ارسال شد', description: 'توصیه شما با موفقیت برای دانش‌آموز ارسال شد.' });
+        }
       
       form.reset({ studentId: data.studentId, content: '', isBlocking: false, hasQuiz: false, quiz: { title: '', questions: [] } });
 
@@ -130,14 +151,15 @@ export function RecommendationForm({ students }: RecommendationFormProps) {
             name="studentId"
             render={({ field }) => (
                 <FormItem>
-                    <FormLabel>ارسال به دانش‌آموز</FormLabel>
+                    <FormLabel>ارسال به</FormLabel>
                     <Select onValueChange={field.onChange} defaultValue={field.value}>
                         <FormControl>
                             <SelectTrigger>
-                                <SelectValue placeholder="دانش‌آموز مورد نظر را انتخاب کنید" />
+                                <SelectValue placeholder="گیرنده را انتخاب کنید" />
                             </SelectTrigger>
                         </FormControl>
                         <SelectContent>
+                             <SelectItem value="all">تمام دانش‌آموزان</SelectItem>
                             {students.map(student => (
                                 <SelectItem key={student.id} value={student.id}>
                                     {student.firstName} {student.lastName}
