@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { useCollection, useFirebase, useMemoFirebase, FirestorePermissionError, errorEmitter } from '@/firebase';
 import { downloadJson } from '@/lib/utils';
 import { collection, doc, getDocs, query, orderBy, limit, getDoc, where } from 'firebase/firestore';
-import { Download, ClipboardEdit } from 'lucide-react';
+import { Download, ClipboardEdit, BrainCircuit, ClipboardPen, BookCopy } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import type { StudentRecommendation, StudentReport } from '@/lib/types';
 import React from 'react';
@@ -42,6 +42,30 @@ const createTrendDescription = (reports: StudentReport[]): string => {
 
     return trend + ".";
 };
+
+function ActionCard({ title, description, icon: Icon, href, buttonText }) {
+    return (
+        <Card className="hover:shadow-lg transition-shadow duration-300 h-full flex flex-col">
+            <CardHeader className="flex-row items-start gap-4">
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                    <Icon className="h-6 w-6" />
+                </div>
+                <div>
+                    <CardTitle className="font-headline text-lg">{title}</CardTitle>
+                    <CardDescription className="text-xs mt-1">{description}</CardDescription>
+                </div>
+            </CardHeader>
+            <CardContent className="flex-grow"></CardContent>
+            <CardContent>
+                 <Button asChild className="w-full">
+                    <Link href={href}>
+                        {buttonText}
+                    </Link>
+                </Button>
+            </CardContent>
+        </Card>
+    );
+}
 
 
 export default function StudentDashboardPage() {
@@ -156,21 +180,36 @@ export default function StudentDashboardPage() {
         {unreadRecommendation && (
             <StudentRecommendationCard recommendation={unreadRecommendation} />
         )}
-        <Card className="bg-primary/5">
-            <CardHeader>
-                <CardTitle className="font-headline text-xl">گزارش کار امروز</CardTitle>
-                <CardDescription>برای ثبت فعالیت‌های درسی امروز خود، روی دکمه زیر کلیک کنید.</CardDescription>
-            </CardHeader>
-            <CardContent>
-                 <Button asChild size="lg">
-                    <Link href="/student/daily-report">
-                        <ClipboardEdit className="ml-2 h-5 w-5" />
-                        ثبت گزارش کار امروز
-                    </Link>
-                </Button>
-            </CardContent>
-        </Card>
-        <FocusLadder />
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+           <ActionCard 
+                title="ثبت گزارش روزانه"
+                description="فعالیت‌های درسی امروز خود را ثبت کنید."
+                icon={ClipboardEdit}
+                href="/student/daily-report"
+                buttonText="شروع ثبت"
+            />
+            <ActionCard 
+                title="نردبان تمرکز"
+                description="امتیاز تمرکز خود را در هر بازه ثبت کنید."
+                icon={BrainCircuit}
+                href="/student/focus"
+                buttonText="ورود به نردبان"
+            />
+            <ActionCard 
+                title="تحلیل آزمون"
+                description="عملکرد خود را در آزمون‌ها تحلیل کنید."
+                icon={ClipboardPen}
+                href="/student/exam-analysis"
+                buttonText="شروع تحلیل"
+            />
+             <ActionCard 
+                title="گزارش هفتگی"
+                description="پیشرفت هفتگی خود را ارزیابی کنید."
+                icon={BookCopy}
+                href="/student/weekly-progress"
+                buttonText="ثبت گزارش هفتگی"
+            />
+        </div>
       </div>
       <div className="lg:col-span-2 space-y-6">
         <PersonalStats report={latestReport} isLoading={isReportLoading || isRecommendationLoading}>

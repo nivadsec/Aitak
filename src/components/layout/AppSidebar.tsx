@@ -1,7 +1,7 @@
 'use client';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { BookCopy, Home, Users, BarChart3, MessageSquare, Megaphone, ClipboardPen, ClipboardEdit } from 'lucide-react';
+import { BookCopy, Home, Users, BarChart3, MessageSquare, Megaphone, ClipboardPen, ClipboardEdit, BrainCircuit } from 'lucide-react';
 
 import {
   Sidebar,
@@ -21,10 +21,11 @@ type AppSidebarProps = {
 
 const studentNav = [
   { href: '/student/dashboard', label: 'داشبورد', icon: Home },
-  { href: '/student/daily-report', label: 'ثبت گزارش روزانه', icon: ClipboardEdit },
+  { href: '/student/daily-report', label: 'گزارش روزانه', icon: ClipboardEdit },
   { href: '/student/weekly-progress', label: 'گزارش هفتگی', icon: BookCopy },
   { href: '/student/exam-analysis', label: 'تحلیل آزمون', icon: ClipboardPen },
   { href: '/student/topic-investment', label: 'سرمایه‌گذاری زمانی', icon: BarChart3 },
+  { href: '/student/focus', label: 'نردبان تمرکز', icon: BrainCircuit },
   { href: '/student/stats', label: 'آمار عملکرد', icon: BarChart3 },
 ];
 
