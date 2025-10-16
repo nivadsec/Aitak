@@ -1,7 +1,8 @@
+
 'use client';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { BookCopy, Home, Users, BarChart3, MessageSquare, Megaphone, ClipboardPen, ClipboardEdit, BrainCircuit } from 'lucide-react';
+import { BookCopy, Home, Users, BarChart3, MessageSquare, Megaphone, ClipboardPen, ClipboardEdit, BrainCircuit, Settings } from 'lucide-react';
 
 import {
   Sidebar,
@@ -27,6 +28,7 @@ const studentNav = [
   { href: '/student/topic-investment', label: 'سرمایه‌گذاری زمانی', icon: BarChart3 },
   { href: '/student/focus', label: 'نردبان تمرکز', icon: BrainCircuit },
   { href: '/student/stats', label: 'آمار عملکرد', icon: BarChart3 },
+  { href: '/student/settings', label: 'تنظیمات', icon: Settings },
 ];
 
 const teacherNav = [

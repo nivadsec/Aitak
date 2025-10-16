@@ -24,6 +24,8 @@ type AppHeaderProps = {
 export function AppHeader({ role }: AppHeaderProps) {
   const { user } = useFirebase();
   const auth = useAuth();
+  const settingsPath = role === 'teacher' ? '/teacher/settings' : '/student/settings';
+
 
   const handleSignOut = () => {
     if (auth) {
@@ -38,7 +40,7 @@ export function AppHeader({ role }: AppHeaderProps) {
       </div>
       <div className="flex-1">
         <h1 className="font-headline text-xl font-bold text-foreground">
-          {role === 'teacher' ? 'پنل معلم' : 'پنل دانش‌آموز'}
+          {user?.displayName ? `خوش آمدید، ${user.displayName.split(' ')[0]}`: (role === 'teacher' ? 'پنل معلم' : 'پنل دانش‌آموز')}
         </h1>
       </div>
       <div className="flex items-center gap-4">
@@ -62,13 +64,17 @@ export function AppHeader({ role }: AppHeaderProps) {
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
             <DropdownMenuGroup>
-              <DropdownMenuItem>
-                <User className="ml-2 h-4 w-4" />
-                <span>پروفایل</span>
+               <DropdownMenuItem asChild>
+                <Link href={settingsPath}>
+                  <User className="ml-2 h-4 w-4" />
+                  <span>پروفایل</span>
+                </Link>
               </DropdownMenuItem>
-              <DropdownMenuItem>
-                <Settings className="ml-2 h-4 w-4" />
-                <span>تنظیمات</span>
+              <DropdownMenuItem asChild>
+                 <Link href={settingsPath}>
+                  <Settings className="ml-2 h-4 w-4" />
+                  <span>تنظیمات</span>
+                </Link>
               </DropdownMenuItem>
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
