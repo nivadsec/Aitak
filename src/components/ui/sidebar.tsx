@@ -1,3 +1,4 @@
+
 "use client"
 
 import * as React from "react"
@@ -70,8 +71,6 @@ const SidebarProvider = React.forwardRef<
     const isMobile = useIsMobile()
     const [openMobile, setOpenMobile] = React.useState(false)
 
-    // This is the internal state of the sidebar.
-    // We use openProp and setOpenProp for control from outside the component.
     const [_open, _setOpen] = React.useState(defaultOpen)
     const open = openProp ?? _open
     const setOpen = React.useCallback(
@@ -82,21 +81,17 @@ const SidebarProvider = React.forwardRef<
         } else {
           _setOpen(openState)
         }
-
-        // This sets the cookie to keep the sidebar state.
         document.cookie = `${SIDEBAR_COOKIE_NAME}=${openState}; path=/; max-age=${SIDEBAR_COOKIE_MAX_AGE}`
       },
       [setOpenProp, open]
     )
 
-    // Helper to toggle the sidebar.
     const toggleSidebar = React.useCallback(() => {
       return isMobile
         ? setOpenMobile((open) => !open)
         : setOpen((open) => !open)
     }, [isMobile, setOpen, setOpenMobile])
 
-    // Adds a keyboard shortcut to toggle the sidebar.
     React.useEffect(() => {
       const handleKeyDown = (event: KeyboardEvent) => {
         if (
@@ -112,8 +107,6 @@ const SidebarProvider = React.forwardRef<
       return () => window.removeEventListener("keydown", handleKeyDown)
     }, [toggleSidebar])
 
-    // We add a state so that we can do data-state="expanded" or "collapsed".
-    // This makes it easier to style the sidebar with Tailwind classes.
     const state = open ? "expanded" : "collapsed"
 
     const contextValue = React.useMemo<SidebarContext>(
@@ -141,7 +134,7 @@ const SidebarProvider = React.forwardRef<
               } as React.CSSProperties
             }
             className={cn(
-              "group/sidebar-wrapper flex min-h-svh w-full has-[[data-variant=inset]]:bg-muted/50",
+              "group/sidebar-wrapper flex min-h-svh w-full",
               className
             )}
             ref={ref}
@@ -192,7 +185,6 @@ const Sidebar = React.forwardRef<
       )
     }
     
-    // The mobile sidebar is a sheet
     if (isMobile) {
       return (
          <Sheet open={openMobile} onOpenChange={setOpenMobile} {...props}>
@@ -222,7 +214,6 @@ const Sidebar = React.forwardRef<
           ref={ref}
           className={cn(
             "group peer text-sidebar-foreground",
-            // "hidden md:block" // This was causing the issue, removing it.
              "md:block"
           )}
           data-state={state}
@@ -230,7 +221,6 @@ const Sidebar = React.forwardRef<
           data-variant={variant}
           data-side={side}
         >
-          {/* This is what handles the sidebar gap on desktop */}
           <div
             className={cn(
               "duration-200 relative h-svh w-[--sidebar-width] bg-transparent transition-[width] ease-linear",
@@ -247,7 +237,6 @@ const Sidebar = React.forwardRef<
               side === "left"
                 ? "left-0 group-data-[collapsible=offcanvas]:-left-[--sidebar-width]"
                 : "right-0 group-data-[collapsible=offcanvas]:-right-[--sidebar-width]",
-              // Adjust the padding for floating and inset variants.
               variant === "floating" || variant === "inset"
                 ? "p-2 group-data-[collapsible=icon]:w-[calc(var(--sidebar-width-icon)_+_theme(spacing.4)_+2px)]"
                 : "group-data-[collapsible=icon]:w-[--sidebar-width-icon] group-data-[side=left]:border-r group-data-[side=right]:border-l",
@@ -771,5 +760,3 @@ export {
   SidebarTrigger,
   useSidebar,
 }
-
-    

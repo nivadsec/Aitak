@@ -20,7 +20,7 @@ export default function RootLayout({
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;500;700&display=swap" rel="stylesheet" />
-        <link href="https://fonts.googleapis.com/css2?family=Yekan+Bakh:wght@700;800&display=swap" rel="stylesheet" />
+        <link href="https://cdn.font-tour.com/api/font/YekanBakh-VF.css" rel="stylesheet" />
       </head>
       <body className="font-body antialiased flex-1 flex flex-col">
         <FirebaseClientProvider>

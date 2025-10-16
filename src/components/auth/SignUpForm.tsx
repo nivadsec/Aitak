@@ -26,7 +26,7 @@ import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth, useFirebase, FirestorePermissionError, errorEmitter } from '@/firebase';
 import { setDocumentNonBlocking } from '@/firebase/non-blocking-updates';
-import { doc, getDoc, doc as firestoreDoc } from 'firebase/firestore';
+import { doc, getDoc } from 'firebase/firestore';
 import Link from 'next/link';
 
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
@@ -68,7 +68,7 @@ export function SignUpForm() {
   });
 
   const handleUserCreation = async (data: FormValues, teacherId?: string) => {
-    if (!auth) return;
+    if (!auth || !firestore) return;
 
     try {
         const userCredential = await createUserWithEmailAndPassword(
@@ -103,9 +103,7 @@ export function SignUpForm() {
             };
             setDocumentNonBlocking(studentRef, studentData, {});
         } else {
-            // If no teacherId, we could create a student record in a general 'students' collection
-            // For now, we will just create the user and they can be assigned later.
-            // This part of logic can be expanded if needed.
+            // This logic can be expanded if unassigned students need to be stored elsewhere.
         }
 
         toast({
@@ -129,51 +127,56 @@ export function SignUpForm() {
             variant: 'destructive',
             className: 'font-body',
         });
-    } finally {
-        setIsLoading(false);
     }
-  }
+  };
 
 
   async function onSubmit(data: FormValues) {
     if (!firestore || !auth) return;
     setIsLoading(true);
 
-    if (data.teacherCode) {
-        // Find teacher by code. We assume the teacher's UID is their code.
-        const teacherRef = firestoreDoc(firestore, 'teachers', data.teacherCode);
-        
-        try {
-            const teacherSnap = await getDoc(teacherRef);
-            if (!teacherSnap.exists()) {
-                toast({
-                    title: 'کد معلم نامعتبر',
-                    description: 'معلمی با این کد یافت نشد. لطفاً کد را بررسی کنید یا فیلد را خالی بگذارید.',
-                    variant: 'destructive',
-                });
-                setIsLoading(false);
-                return;
-            }
-            const teacherId = teacherSnap.id;
-            await handleUserCreation(data, teacherId);
+    try {
+      let teacherId: string | undefined = undefined;
 
-        } catch (serverError) {
-             const permissionError = new FirestorePermissionError({
-                path: teacherRef.path,
-                operation: 'get',
-            });
-            errorEmitter.emit('permission-error', permissionError);
-            
-            toast({
-                title: 'خطای دسترسی',
-                description: 'امکان تایید کد معلم به دلیل مشکل در مجوزهای دسترسی وجود ندارد.',
-                variant: 'destructive',
-            });
-            setIsLoading(false);
+      if (data.teacherCode) {
+        const teacherRef = doc(firestore, 'teachers', data.teacherCode);
+        const teacherSnap = await getDoc(teacherRef);
+
+        if (!teacherSnap.exists()) {
+          toast({
+            title: 'کد معلم نامعتبر',
+            description: 'معلمی با این کد یافت نشد. لطفاً کد را بررسی کنید یا فیلد را خالی بگذارید.',
+            variant: 'destructive',
+          });
+          // Do not proceed with user creation if teacher code is invalid
+          return;
         }
-    } else {
-        // If no teacher code is provided, create the user without associating them with a teacher.
-        await handleUserCreation(data);
+        teacherId = teacherSnap.id;
+      }
+      
+      // Proceed to create the user, with or without a teacherId
+      await handleUserCreation(data, teacherId);
+
+    } catch (error: any) {
+      // This will catch errors from getDoc (like permission errors) or any other unexpected error.
+      console.error('Error during sign up process:', error);
+      
+      // Check if it's a Firestore permission error we can identify
+      if(error.name === 'FirebaseError' && (error.code === 'permission-denied' || error.code === 'failed-precondition')) {
+          const permissionError = new FirestorePermissionError({
+              path: `teachers/${data.teacherCode}`, // Approximate path
+              operation: 'get',
+          });
+          errorEmitter.emit('permission-error', permissionError);
+      }
+      
+      toast({
+        title: 'خطای غیرمنتظره',
+        description: 'یک خطای غیرمنتظره در فرآیند ثبت‌نام رخ داد. لطفا دوباره تلاش کنید.',
+        variant: 'destructive',
+      });
+    } finally {
+        setIsLoading(false);
     }
   }
 

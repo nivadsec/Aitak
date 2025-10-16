@@ -7,7 +7,7 @@ import React, { useEffect, useState } from 'react';
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Logo } from '@/components/icons/logo';
-import { useAuth, useUser, useCollection, useFirebase, useMemoFirebase } from '@/firebase';
+import { useUser, useCollection, useFirebase, useMemoFirebase } from '@/firebase';
 import { Separator } from '@/components/ui/separator';
 import { collection, query, orderBy, limit } from 'firebase/firestore';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -75,8 +75,6 @@ function LoginPageContent() {
 
   useEffect(() => {
     // The loading screen should only be shown while the user state is being determined.
-    // Once isUserLoading is false, the user is either authenticated and will be redirected
-    // by the FirebaseProvider, or they are not authenticated and should see the login form.
     if (!isUserLoading) {
       setIsLoading(false);
     }

@@ -1,8 +1,9 @@
+
 'use client'
 
 import React, { useMemo } from 'react';
 import Link from 'next/link';
-import { collection, getDocs, query, doc, getDoc, where, writeBatch } from 'firebase/firestore';
+import { collection, getDocs, query, where, writeBatch } from 'firebase/firestore';
 import { ArrowLeft, Download, Megaphone, PlusCircle } from 'lucide-react';
 import { subDays, format, eachDayOfInterval, isSameDay } from 'date-fns';
 
@@ -253,41 +254,43 @@ export default function TeacherDashboardPage() {
           </CardContent>
         </Card>
         
-        <Card>
-            <CardHeader className="flex-row items-center justify-between">
-                <div>
-                    <CardTitle className="font-headline text-xl flex items-center gap-2">
-                        <Megaphone />
-                        ارسال اطلاعیه سریع
-                    </CardTitle>
-                    <CardDescription>
-                        این اطلاعیه در صفحه اصلی برای همه نمایش داده می‌شود.
-                    </CardDescription>
-                </div>
-                 <DialogTrigger asChild>
-                    <Button variant="outline">
-                        <PlusCircle className="ml-2 h-4 w-4" />
-                        اطلاعیه جدید
-                    </Button>
-                </DialogTrigger>
-            </CardHeader>
-            <CardContent>
-                <AnnouncementForm onSuccess={() => {}} announcement={null} />
-            </CardContent>
-        </Card>
+        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+            <Card>
+                <CardHeader className="flex-row items-center justify-between">
+                    <div>
+                        <CardTitle className="font-headline text-xl flex items-center gap-2">
+                            <Megaphone />
+                            ارسال اطلاعیه سریع
+                        </CardTitle>
+                        <CardDescription>
+                            این اطلاعیه در صفحه اصلی برای همه نمایش داده می‌شود.
+                        </CardDescription>
+                    </div>
+                    <DialogTrigger asChild>
+                        <Button variant="outline">
+                            <PlusCircle className="ml-2 h-4 w-4" />
+                            اطلاعیه جدید
+                        </Button>
+                    </DialogTrigger>
+                </CardHeader>
+                <CardContent>
+                    <AnnouncementForm onSuccess={() => {}} announcement={null} />
+                </CardContent>
+            </Card>
 
-        <DialogContent className="sm:max-w-[600px]">
-            <DialogHeader>
-            <DialogTitle className="font-headline flex items-center gap-2">
-                <Megaphone />
-                ارسال اطلاعیه عمومی
-            </DialogTitle>
-            <DialogDescription>
-                این اطلاعیه برای همه کاربران در صفحه اصلی نمایش داده می‌شود.
-            </DialogDescription>
-            </DialogHeader>
-            <AnnouncementForm onSuccess={() => setIsDialogOpen(false)} announcement={null} />
-        </DialogContent>
+            <DialogContent className="sm:max-w-[600px]">
+                <DialogHeader>
+                    <DialogTitle className="font-headline flex items-center gap-2">
+                        <Megaphone />
+                        ارسال اطلاعیه عمومی
+                    </DialogTitle>
+                    <DialogDescription>
+                        این اطلاعیه برای همه کاربران در صفحه اصلی نمایش داده می‌شود.
+                    </DialogDescription>
+                </DialogHeader>
+                <AnnouncementForm onSuccess={() => setIsDialogOpen(false)} announcement={null} />
+            </DialogContent>
+        </Dialog>
       </div>
     </Dialog>
   );
