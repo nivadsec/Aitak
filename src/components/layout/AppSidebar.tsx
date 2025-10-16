@@ -1,7 +1,7 @@
 'use client';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { BookCopy, Home, Users, BarChart3, MessageSquare, Megaphone, ClipboardPen, ClipboardEdit, BrainCircuit, Settings, Lightbulb, Bot, FileText } from 'lucide-react';
+import { BookCopy, Home, Users, BarChart3, MessageSquare, Megaphone, ClipboardPen, ClipboardEdit, BrainCircuit, Settings, Lightbulb, Bot, FileText, Calendar, BookOpen } from 'lucide-react';
 
 import {
   Sidebar,
@@ -27,6 +27,7 @@ const studentNav = [
   { href: '/student/topic-investment', label: 'سرمایه‌گذاری زمانی', icon: BarChart3 },
   { href: '/student/focus', label: 'نردبان تمرکز', icon: BrainCircuit },
   { href: '/student/quizzes', label: 'آزمون‌ها', icon: FileText },
+  { href: '/student/schedule', label: 'برنامه کلاسی', icon: Calendar },
   { href: '/student/stats', label: 'آمار عملکرد', icon: BarChart3 },
   { href: '/student/settings', label: 'تنظیمات', icon: Settings },
 ];
@@ -39,6 +40,8 @@ const teacherNav = [
   { href: '/teacher/messages', label: 'پیام‌ها', icon: MessageSquare },
   { href: '/teacher/announcements', label: 'اطلاعیه‌ها', icon: Megaphone },
   { href: '/teacher/assistant', label: 'ربات هوشمند', icon: Bot },
+  { href: '/teacher/schedule', label: 'برنامه کلاسی', icon: Calendar },
+  { href: '/teacher/consulting', label: 'مطالب مشاوره‌ای', icon: BookOpen },
   { href: '/teacher/settings', label: 'تنظیمات', icon: Settings },
 ];
 
