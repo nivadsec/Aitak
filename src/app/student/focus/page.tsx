@@ -7,23 +7,25 @@ import { FocusLadder } from '@/components/student/FocusLadder';
 import { FocusIntervalsChart } from '@/components/teacher/FocusIntervalsChart';
 import type { FocusInterval } from '@/lib/types';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { BrainCircuit, TrendingUp } from 'lucide-react';
+import { BrainCircuit } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
+import { FocusAnalysis } from '@/components/student/FocusAnalysis';
 
 
 export default function FocusPage() {
-    const { firestore, user } = useFirebase();
+    const { firestore, user, role } = useFirebase();
+    const teacherId = role?.split(':')[1];
 
     const focusIntervalsQuery = useMemoFirebase(() => {
-        if (!user) return null;
+        if (!user || !teacherId) return null;
         const oneWeekAgo = new Date();
         oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
         return query(
-            collection(firestore, 'teachers', 'Cbd2q1B5F5e2wB00HXV5', 'students', user.uid, 'focusIntervals'), // TODO: Dynamic teacherId
+            collection(firestore, 'teachers', teacherId, 'students', user.uid, 'focusIntervals'),
             where('timestamp', '>=', oneWeekAgo),
             orderBy('timestamp', 'desc')
         );
-    }, [firestore, user]);
+    }, [firestore, user, teacherId]);
 
     const { data: focusIntervals, isLoading: areIntervalsLoading } = useCollection<FocusInterval>(focusIntervalsQuery);
 
@@ -54,7 +56,10 @@ export default function FocusPage() {
                     </CardContent>
                 </Card>
             ) : (
-                <FocusIntervalsChart intervals={focusIntervals || []} />
+                <>
+                    <FocusIntervalsChart intervals={focusIntervals || []} />
+                    <FocusAnalysis intervals={focusIntervals || []} studentId={user?.uid || ''} />
+                </>
             )}
         </div>
     );
