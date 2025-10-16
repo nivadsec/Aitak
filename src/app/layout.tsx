@@ -31,11 +31,8 @@ export default function RootLayout({
           <footer className="bg-muted/50 border-t">
             <div className="container mx-auto py-6 px-4 md:px-6">
               <div className="flex flex-col md:flex-row items-center justify-between gap-4">
-                  <p className="text-sm text-muted-foreground text-center md:text-right">
-                      © 1404 آی‌تاب. تمام حقوق محفوظ است.
-                  </p>
                   <p className="text-sm text-muted-foreground text-center md:text-left">
-                      طراحی و توسعه توسط <span className="font-semibold text-foreground">حسین طاهری</span>
+                      © 1404 آی‌تاب. تمام حقوق محفوظ است. | طراحی و توسعه توسط <span className="font-semibold text-foreground">حسین طاهری</span>
                   </p>
               </div>
             </div>
