@@ -93,7 +93,7 @@ export function RecommendationForm({ studentId }: RecommendationFormProps) {
         createdAt: serverTimestamp(),
       };
 
-      if (data.hasQuiz) {
+      if (data.hasQuiz && data.quiz && data.quiz.questions && data.quiz.questions.length > 0) {
           recommendationData.quiz = data.quiz;
       }
       
