@@ -2,7 +2,7 @@
 'use client';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { BookCopy, Home, Users, BarChart3, MessageSquare, Megaphone, ClipboardPen, ClipboardEdit, BrainCircuit, Settings, Lightbulb, Bot, FileText, Calendar, BookOpen, Map } from 'lucide-react';
+import { BookCopy, Home, Users, BarChart3, MessageSquare, Megaphone, ClipboardPen, ClipboardEdit, BrainCircuit, Settings, Lightbulb, Bot, FileText, Calendar, BookOpen, Map, History } from 'lucide-react';
 import React from 'react';
 import {
   Sidebar,
@@ -48,6 +48,7 @@ const teacherNav = [
   { href: '/teacher/assistant', label: 'ربات هوشمند', icon: Bot },
   { href: '/teacher/schedule', label: 'برنامه کلاسی', icon: Calendar },
   { href: '/teacher/consulting', label: 'مطالب مشاوره‌ای', icon: BookOpen },
+  { href: '/teacher/history', label: 'تاریخچه ورود', icon: History },
   { href: '/teacher/settings', label: 'تنظیمات', icon: Settings },
 ];
 

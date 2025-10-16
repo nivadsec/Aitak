@@ -1,5 +1,6 @@
 
 
+
 export interface Student {
   id: string; // This will be the Firebase Auth UID
   teacherId: string;
@@ -217,4 +218,14 @@ export interface ConsultingContent {
     updatedAt: any;
 }
 
-    
+export interface LoginHistory {
+    id: string;
+    studentId: string;
+    studentName?: string;
+    email: string;
+    timestamp: any; // Firestore Timestamp
+    type: 'login' | 'logout';
+    status: 'success' | 'failure';
+    failureReason?: string;
+}
+
