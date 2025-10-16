@@ -20,7 +20,7 @@ const AnalyzeFocusIntervalsInputSchema = z.object({
   studentId: z.string().describe('The ID of the student being analyzed.'),
   intervals: z.array(FocusIntervalInputSchema).describe('An array of focus intervals recorded by the student, sorted chronologically.'),
 });
-export type AnalyzeFocusIntervalsInput = z.infer<typeof AnalyzeFocusIntervalsInputSchema>;
+type AnalyzeFocusIntervalsInput = z.infer<typeof AnalyzeFocusIntervalsInputSchema>;
 
 
 const AnalyzeFocusIntervalsOutputSchema = z.object({
@@ -29,7 +29,7 @@ const AnalyzeFocusIntervalsOutputSchema = z.object({
   negativePatterns: z.array(z.string()).describe("A list of identified negative patterns. Example: 'Focus consistently drops after 60 minutes of study.'"),
   recommendations: z.array(z.string()).describe('A list of calm, actionable recommendations for the student or teacher to improve focus.'),
 });
-export type AnalyzeFocusIntervalsOutput = z.infer<typeof AnalyzeFocusIntervalsOutputSchema>;
+type AnalyzeFocusIntervalsOutput = z.infer<typeof AnalyzeFocusIntervalsOutputSchema>;
 
 
 export async function analyzeFocusIntervals(input: AnalyzeFocusIntervalsInput): Promise<AnalyzeFocusIntervalsOutput> {

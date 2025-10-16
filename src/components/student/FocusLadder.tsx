@@ -18,6 +18,9 @@ import { setDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 
 const formSchema = z.object({
   intervalName: z.string().min(1, 'نام بازه الزامی است.'),
+  startTime: z.string().min(1, 'زمان شروع الزامی است.'),
+  endTime: z.string().min(1, 'زمان پایان الزامی است.'),
+  duration: z.coerce.number().min(1, 'مدت زمان باید حداقل ۱ دقیقه باشد.'),
   score: z.number().min(0).max(10).default(7),
 });
 
@@ -35,6 +38,9 @@ export function FocusLadder() {
         resolver: zodResolver(formSchema),
         defaultValues: {
             intervalName: '',
+            startTime: '',
+            endTime: '',
+            duration: 15,
             score: 7,
         },
     });
@@ -56,14 +62,13 @@ export function FocusLadder() {
             const focusData = {
                 id: newDocRef.id,
                 studentId: user.uid,
-                intervalName: data.intervalName,
-                score: data.score,
+                ...data,
                 timestamp: serverTimestamp(),
             };
             setDocumentNonBlocking(newDocRef, focusData, {});
             
-            setLastSubmission(`بازه "${data.intervalName}" با تمرکز ${data.score} از ۱۰ ثبت شد.`);
-            form.reset({ intervalName: '', score: 7 });
+            setLastSubmission(`بازه «${data.intervalName}» با تمرکز ${data.score} از ۱۰ ثبت شد.`);
+            form.reset({ intervalName: '', startTime: '', endTime: '', duration: 15, score: 7 });
 
         } catch (error) {
             console.error("Error saving focus interval:", error);
@@ -102,6 +107,41 @@ export function FocusLadder() {
                                 </FormItem>
                             )}
                         />
+                        <div className="grid grid-cols-3 gap-4">
+                            <FormField
+                                control={form.control}
+                                name="startTime"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>شروع بازه</FormLabel>
+                                        <FormControl><Input type="time" {...field} /></FormControl>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+                             <FormField
+                                control={form.control}
+                                name="endTime"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>پایان بازه</FormLabel>
+                                        <FormControl><Input type="time" {...field} /></FormControl>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+                            <FormField
+                                control={form.control}
+                                name="duration"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>مدت (دقیقه)</FormLabel>
+                                        <FormControl><Input type="number" {...field} /></FormControl>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+                        </div>
                         <FormField
                             control={form.control}
                             name="score"
@@ -135,5 +175,3 @@ export function FocusLadder() {
         </Card>
     );
 }
-
-    

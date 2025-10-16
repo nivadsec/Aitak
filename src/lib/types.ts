@@ -142,6 +142,9 @@ export interface FocusInterval {
     intervalName: string;
     score: number;
     timestamp: any; // Firestore Timestamp
+    startTime: string;
+    endTime: string;
+    duration: number; // in minutes
 }
 
     

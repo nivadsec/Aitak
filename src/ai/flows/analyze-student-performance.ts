@@ -25,7 +25,7 @@ const AnalyzeStudentPerformanceInputSchema = z.object({
   studentId: z.string().describe('The ID of the student to analyze.'),
   dailyReports: z.array(DailyReportInputSchema).describe('An array of the student\'s daily reports from the last 1-2 weeks.'),
 });
-export type AnalyzeStudentPerformanceInput = z.infer<
+type AnalyzeStudentPerformanceInput = z.infer<
   typeof AnalyzeStudentPerformanceInputSchema
 >;
 
@@ -42,7 +42,7 @@ const AnalyzeStudentPerformanceOutputSchema = z.object({
     .describe('A recommendation for an incentive to motivate the student, based on their performance and mood.')
     .optional(),
 });
-export type AnalyzeStudentPerformanceOutput = z.infer<
+type AnalyzeStudentPerformanceOutput = z.infer<
   typeof AnalyzeStudentPerformanceOutputSchema
 >;
 

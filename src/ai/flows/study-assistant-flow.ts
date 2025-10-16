@@ -10,15 +10,15 @@
 import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
 
-export const StudyAssistantInputSchema = z.object({
+const StudyAssistantInputSchema = z.object({
   message: z.string().describe('The user\'s message or question to the assistant.'),
 });
-export type StudyAssistantInput = z.infer<typeof StudyAssistantInputSchema>;
+type StudyAssistantInput = z.infer<typeof StudyAssistantInputSchema>;
 
-export const StudyAssistantOutputSchema = z.object({
+const StudyAssistantOutputSchema = z.object({
   response: z.string().describe('The AI assistant\'s response to the user.'),
 });
-export type StudyAssistantOutput = z.infer<typeof StudyAssistantOutputSchema>;
+type StudyAssistantOutput = z.infer<typeof StudyAssistantOutputSchema>;
 
 export async function studyAssistant(input: StudyAssistantInput): Promise<StudyAssistantOutput> {
   return studyAssistantFlow(input);

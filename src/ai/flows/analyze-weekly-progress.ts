@@ -22,14 +22,14 @@ const AnalyzeWeeklyProgressInputSchema = z.object({
   whatCouldBeBetter: z.string().describe("The student's reflection on what could have been better."),
   nextWeekGoals: z.string().describe("The student's self-defined goals for the next week."),
 });
-export type AnalyzeWeeklyProgressInput = z.infer<typeof AnalyzeWeeklyProgressInputSchema>;
+type AnalyzeWeeklyProgressInput = z.infer<typeof AnalyzeWeeklyProgressInputSchema>;
 
 const AnalyzeWeeklyProgressOutputSchema = z.object({
   progressSummary: z.string().describe("A summary comparing this week's quantitative data (study time, test count) to last week's."),
   reflectionAnalysis: z.string().describe("An analysis of the student's self-reflection, connecting 'what went well' and 'what could be better' to the quantitative data."),
   goalSuggestions: z.array(z.string()).describe("A list of 2-3 specific, measurable, and encouraging suggestions to refine or add to the student's goals for the next week, based on the analysis."),
 });
-export type AnalyzeWeeklyProgressOutput = z.infer<typeof AnalyzeWeeklyProgressOutputSchema>;
+type AnalyzeWeeklyProgressOutput = z.infer<typeof AnalyzeWeeklyProgressOutputSchema>;
 
 
 export async function analyzeWeeklyProgress(input: AnalyzeWeeklyProgressInput): Promise<AnalyzeWeeklyProgressOutput> {

@@ -25,14 +25,14 @@ const PersonalStatsDashboardInputSchema = z.object({
     .number()
     .describe('The student current mood score on a scale of 1 to 10.'),
 });
-export type PersonalStatsDashboardInput = z.infer<typeof PersonalStatsDashboardInputSchema>;
+type PersonalStatsDashboardInput = z.infer<typeof PersonalStatsDashboardInputSchema>;
 
 const PersonalStatsDashboardOutputSchema = z.object({
   studyHabitsChart: z.string().describe('A chart displaying the student study habits.'),
   progressChart: z.string().describe('A chart displaying the student progress.'),
   motivationTip: z.string().describe('An automatically generated motivation tip.'),
 });
-export type PersonalStatsDashboardOutput = z.infer<typeof PersonalStatsDashboardOutputSchema>;
+type PersonalStatsDashboardOutput = z.infer<typeof PersonalStatsDashboardOutputSchema>;
 
 export async function generatePersonalStatsDashboard(
   input: PersonalStatsDashboardInput

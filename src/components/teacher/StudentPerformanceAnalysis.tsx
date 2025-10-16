@@ -3,10 +3,27 @@
 import { analyzeStudentPerformance } from '@/ai/flows/analyze-student-performance';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { BrainCircuit, MessageSquareWarning, Sparkles } from 'lucide-react';
-import type { AnalyzeStudentPerformanceInput } from '@/ai/flows/analyze-student-performance';
 import { useEffect, useState } from 'react';
-import type { AnalyzeStudentPerformanceOutput } from '@/ai/flows/analyze-student-performance';
 import { Skeleton } from '../ui/skeleton';
+
+type AnalyzeStudentPerformanceInput = {
+    studentId: string,
+    dailyReports: {
+        date: string;
+        studyHours: number;
+        testCorrectPercentage: number;
+        moodRating: number;
+        mobileUsageHours: number;
+    }[]
+}
+
+type AnalyzeStudentPerformanceOutput = {
+    performanceSummary: string;
+    alerts: string[];
+    recommendations: string[];
+    incentiveRecommendation?: string | undefined;
+}
+
 
 type StudentPerformanceAnalysisProps = AnalyzeStudentPerformanceInput;
 

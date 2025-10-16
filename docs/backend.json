@@ -191,9 +191,12 @@
         "studentId": { "type": "string" },
         "intervalName": { "type": "string", "description": "The name of the study interval (e.g., 'Physics - Part 1')." },
         "score": { "type": "number", "description": "The focus score from 0 to 10." },
-        "timestamp": { "type": "string", "format": "date-time", "description": "The time the interval was recorded." }
+        "timestamp": { "type": "string", "format": "date-time", "description": "The time the interval was recorded." },
+        "startTime": { "type": "string", "description": "The start time of the interval.", "format": "time" },
+        "endTime": { "type": "string", "description": "The end time of the interval.", "format": "time" },
+        "duration": { "type": "number", "description": "The duration of the interval in minutes." }
       },
-      "required": ["id", "studentId", "intervalName", "score", "timestamp"]
+      "required": ["id", "studentId", "intervalName", "score", "timestamp", "startTime", "endTime", "duration"]
     }
   },
   "auth": {

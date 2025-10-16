@@ -15,12 +15,12 @@ const GenerateMotivationalTipsInputSchema = z.object({
   studentName: z.string().describe('The name of the student.'),
   reportTrends: z.string().describe('The recent report trends of the student.'),
 });
-export type GenerateMotivationalTipsInput = z.infer<typeof GenerateMotivationalTipsInputSchema>;
+type GenerateMotivationalTipsInput = z.infer<typeof GenerateMotivationalTipsInputSchema>;
 
 const GenerateMotivationalTipsOutputSchema = z.object({
   motivationalTips: z.string().describe('The AI-generated motivational tips for the student.'),
 });
-export type GenerateMotivationalTipsOutput = z.infer<typeof GenerateMotivationalTipsOutputSchema>;
+type GenerateMotivationalTipsOutput = z.infer<typeof GenerateMotivationalTipsOutputSchema>;
 
 export async function generateMotivationalTips(
   input: GenerateMotivationalTipsInput
