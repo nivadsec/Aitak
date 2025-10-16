@@ -114,3 +114,14 @@ export interface TopicInvestmentReport {
         extraActions?: string;
     }>;
 }
+
+export interface StudentRecommendation {
+    id: string;
+    studentId: string;
+    teacherId: string;
+    content: string;
+    isRead: boolean;
+    isBlocking: boolean;
+    createdAt: any; // Firestore Timestamp
+    readAt?: any; // Firestore Timestamp
+}

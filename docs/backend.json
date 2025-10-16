@@ -144,6 +144,23 @@
         "topics": {"type": "array", "items": {"type": "object", "properties": {"topic": {"type": "string"}, "priority": {"type": "number"}, "studyHours": {"type": "number"}, "videoHours": {"type": "number"}, "testHours": {"type": "number"}, "extraActions": {"type": "string"}}, "required": ["topic", "priority"]}}
       },
       "required": ["id", "studentId", "lessonName", "topics"]
+    },
+     "Recommendation": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Recommendation",
+      "type": "object",
+      "description": "Represents a recommendation from a teacher to a student.",
+      "properties": {
+        "id": { "type": "string", "description": "Unique identifier for the recommendation." },
+        "studentId": { "type": "string", "description": "Reference to the student." },
+        "teacherId": { "type": "string", "description": "Reference to the teacher who gave the recommendation." },
+        "content": { "type": "string", "description": "The text of the recommendation." },
+        "isRead": { "type": "boolean", "description": "Indicates if the student has read the recommendation.", "default": false },
+        "isBlocking": { "type": "boolean", "description": "If true, blocks the student from submitting daily reports until read.", "default": false },
+        "createdAt": { "type": "string", "format": "date-time", "description": "Timestamp of when the recommendation was created." },
+        "readAt": { "type": "string", "format": "date-time", "description": "Timestamp of when the student read the recommendation." }
+      },
+      "required": ["id", "studentId", "teacherId", "content", "isBlocking", "createdAt"]
     }
   },
   "auth": {
@@ -160,7 +177,8 @@
       { "path": "/teachers/{teacherId}/students/{studentId}/messages/{messageId}", "definition": { "entityName": "Message", "schema": { "$ref": "#/backend/entities/Message" }, "description": "Stores messages sent by a teacher to a specific student." } },
       { "path": "/teachers/{teacherId}/students/{studentId}/examReports/{reportId}", "definition": { "entityName": "ExamReport", "schema": { "$ref": "#/backend/entities/ExamReport" }, "description": "Stores exam analysis reports for a student." } },
       { "path": "/teachers/{teacherId}/students/{studentId}/weeklyProgress/{reportId}", "definition": { "entityName": "WeeklyProgressReport", "schema": { "$ref": "#/backend/entities/WeeklyProgressReport" }, "description": "Stores weekly progress reports for a student." } },
-      { "path": "/teachers/{teacherId}/students/{studentId}/topicInvestments/{reportId}", "definition": { "entityName": "TopicInvestmentReport", "schema": { "$ref": "#/backend/entities/TopicInvestmentReport" }, "description": "Stores topic-based time investment plans for a student." } }
+      { "path": "/teachers/{teacherId}/students/{studentId}/topicInvestments/{reportId}", "definition": { "entityName": "TopicInvestmentReport", "schema": { "$ref": "#/backend/entities/TopicInvestmentReport" }, "description": "Stores topic-based time investment plans for a student." } },
+      { "path": "/teachers/{teacherId}/students/{studentId}/recommendations/{recommendationId}", "definition": { "entityName": "Recommendation", "schema": { "$ref": "#/backend/entities/Recommendation" }, "description": "Stores recommendations from a teacher to a specific student." } }
     ]
   }
 }

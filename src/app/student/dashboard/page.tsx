@@ -2,13 +2,14 @@
 import { DailyReportForm } from '@/components/student/DailyReportForm';
 import { MotivationTip } from '@/components/student/MotivationTip';
 import PersonalStats from '@/components/student/PersonalStats';
+import { StudentRecommendationCard } from '@/components/student/StudentRecommendationCard';
 import { Button } from '@/components/ui/button';
 import { useCollection, useFirebase, useMemoFirebase, FirestorePermissionError, errorEmitter } from '@/firebase';
 import { downloadJson } from '@/lib/utils';
-import { collection, doc, getDocs, query, orderBy, limit, getDoc } from 'firebase/firestore';
+import { collection, doc, getDocs, query, orderBy, limit, getDoc, where } from 'firebase/firestore';
 import { Download } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import type { StudentReport } from '@/lib/types';
+import type { StudentRecommendation, StudentReport } from '@/lib/types';
 import React from 'react';
 
 // Helper function to create a simple trend description
@@ -45,24 +46,37 @@ export default function StudentDashboardPage() {
   const { firestore, user, role } = useFirebase();
   const { toast } = useToast();
   
-  // The teacherId is now extracted from the role string "student:teacherId"
   const teacherId = role?.split(':')[1];
 
-  // Fetch the latest 2 reports for analytics and trend analysis
+  // Fetch the latest 2 reports for trend analysis
   const reportsQuery = useMemoFirebase(() => {
     if (!user || !firestore || !teacherId) return null;
     return query(
         collection(firestore, 'teachers', teacherId, 'students', user.uid, 'dailyReports'),
         orderBy('date', 'desc'),
-        limit(2) // Fetch last two reports for trend analysis
+        limit(2)
     );
   }, [firestore, user, teacherId]);
 
+  // Fetch the latest unread recommendation
+  const recommendationQuery = useMemoFirebase(() => {
+      if (!user || !firestore || !teacherId) return null;
+      return query(
+          collection(firestore, 'teachers', teacherId, 'students', user.uid, 'recommendations'),
+          where('isRead', '==', false),
+          orderBy('createdAt', 'desc'),
+          limit(1)
+      )
+  }, [firestore, user, teacherId]);
+
   const { data: reports, isLoading: isReportLoading } = useCollection<StudentReport>(reportsQuery);
+  const { data: recommendations, isLoading: isRecommendationLoading } = useCollection<StudentRecommendation>(recommendationQuery);
   
   const latestReport = reports?.[0];
+  const unreadRecommendation = recommendations?.[0];
   const trendDescription = React.useMemo(() => reports ? createTrendDescription(reports) : undefined, [reports]);
 
+  const isReportSubmissionBlocked = unreadRecommendation?.isBlocking && !unreadRecommendation?.isRead;
 
   const handleExportData = async () => {
      if (!user || !firestore || !teacherId) {
@@ -138,11 +152,14 @@ export default function StudentDashboardPage() {
 
   return (
     <div className="grid gap-6 lg:grid-cols-5">
-      <div className="lg:col-span-3">
-        <DailyReportForm />
+      <div className="lg:col-span-3 space-y-6">
+        {unreadRecommendation && (
+            <StudentRecommendationCard recommendation={unreadRecommendation} />
+        )}
+        <DailyReportForm isBlocked={isReportSubmissionBlocked} />
       </div>
       <div className="lg:col-span-2 space-y-6">
-        <PersonalStats report={latestReport} isLoading={isReportLoading}>
+        <PersonalStats report={latestReport} isLoading={isReportLoading || isRecommendationLoading}>
           <MotivationTip 
             reportTrends={trendDescription} 
             studentName={user?.displayName?.split(' ')[0]} 
