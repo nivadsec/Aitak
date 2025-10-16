@@ -148,4 +148,27 @@ export interface FocusInterval {
     duration: number; // in minutes
 }
 
+export interface QuizQuestion {
+    questionText: string;
+    options: string[];
+    correctAnswerIndex: number;
+}
+
+export interface Quiz {
+    id: string;
+    teacherId: string;
+    title: string;
+    questions: QuizQuestion[];
+    createdAt: any; // Firestore Timestamp
+    updatedAt: any; // Firestore Timestamp
+}
+
+export interface QuizSubmission {
+    id: string;
+    quizId: string;
+    studentId: string;
+    answers: number[]; // Array of selected option indices
+    score: number; // Percentage score
+    submittedAt: any; // Firestore Timestamp
+}
     

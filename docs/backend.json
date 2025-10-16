@@ -198,6 +198,51 @@
         "duration": { "type": "number", "description": "The duration of the interval in minutes." }
       },
       "required": ["id", "studentId", "intervalName", "score", "timestamp", "startTime", "endTime", "duration"]
+    },
+    "Quiz": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Quiz",
+      "type": "object",
+      "description": "Represents a quiz created by a teacher.",
+      "properties": {
+        "id": { "type": "string" },
+        "teacherId": { "type": "string" },
+        "title": { "type": "string" },
+        "questions": {
+          "type": "array",
+          "items": {
+            "$ref": "#/entities/QuizQuestion"
+          }
+        },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "teacherId", "title", "questions", "createdAt"]
+    },
+    "QuizQuestion": {
+        "title": "QuizQuestion",
+        "type": "object",
+        "description": "A single question within a quiz.",
+        "properties": {
+            "questionText": { "type": "string" },
+            "options": { "type": "array", "items": { "type": "string" }, "minItems": 4, "maxItems": 4 },
+            "correctAnswerIndex": { "type": "number" }
+        },
+        "required": ["questionText", "options", "correctAnswerIndex"]
+    },
+    "QuizSubmission": {
+        "title": "QuizSubmission",
+        "type": "object",
+        "description": "Represents a student's submission for a quiz.",
+        "properties": {
+            "id": { "type": "string" },
+            "quizId": { "type": "string" },
+            "studentId": { "type": "string" },
+            "answers": { "type": "array", "items": { "type": "number" } },
+            "score": { "type": "number" },
+            "submittedAt": { "type": "string", "format": "date-time" }
+        },
+        "required": ["id", "quizId", "studentId", "answers", "score", "submittedAt"]
     }
   },
   "auth": {
@@ -216,9 +261,9 @@
       { "path": "/teachers/{teacherId}/students/{studentId}/weeklyProgress/{reportId}", "definition": { "entityName": "WeeklyProgressReport", "schema": { "$ref": "#/backend/entities/WeeklyProgressReport" }, "description": "Stores weekly progress reports for a student." } },
       { "path": "/teachers/{teacherId}/students/{studentId}/topicInvestments/{reportId}", "definition": { "entityName": "TopicInvestmentReport", "schema": { "$ref": "#/backend/entities/TopicInvestmentReport" }, "description": "Stores topic-based time investment plans for a student." } },
       { "path": "/teachers/{teacherId}/students/{studentId}/recommendations/{recommendationId}", "definition": { "entityName": "Recommendation", "schema": { "$ref": "#/backend/entities/Recommendation" }, "description": "Stores recommendations from a teacher to a specific student." } },
-      { "path": "/teachers/{teacherId}/students/{studentId}/focusIntervals/{intervalId}", "definition": { "entityName": "FocusInterval", "schema": { "$ref": "#/backend/entities/FocusInterval" }, "description": "Stores focus intervals recorded by a student." } }
+      { "path": "/teachers/{teacherId}/students/{studentId}/focusIntervals/{intervalId}", "definition": { "entityName": "FocusInterval", "schema": { "$ref": "#/backend/entities/FocusInterval" }, "description": "Stores focus intervals recorded by a student." } },
+      { "path": "/teachers/{teacherId}/quizzes/{quizId}", "definition": { "entityName": "Quiz", "schema": { "$ref": "#/backend/entities/Quiz" }, "description": "Stores quizzes created by a teacher." } },
+      { "path": "/teachers/{teacherId}/quizzes/{quizId}/submissions/{submissionId}", "definition": { "entityName": "QuizSubmission", "schema": { "$ref": "#/backend/entities/QuizSubmission" }, "description": "Stores student submissions for a specific quiz." } }
     ]
   }
 }
-
-    
