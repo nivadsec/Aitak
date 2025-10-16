@@ -2,12 +2,12 @@
 'use client';
 
 import Link from 'next/link';
-import { UserPlus, Megaphone, Loader2, ShieldCheck } from 'lucide-react';
-import React, { useEffect } from 'react';
+import { UserPlus, Megaphone, ShieldCheck } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Logo } from '@/components/icons/logo';
-import { FirebaseClientProvider, useAuth, initiateAnonymousSignIn, useUser, useCollection, useFirebase, useMemoFirebase } from '@/firebase';
+import { useAuth, useUser, useCollection, useFirebase, useMemoFirebase } from '@/firebase';
 import { Separator } from '@/components/ui/separator';
 import { collection, query, orderBy, limit } from 'firebase/firestore';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -68,28 +68,29 @@ function AnnouncementCard() {
 }
 
 function LoginPageContent() {
-  const auth = useAuth();
   const { user, isUserLoading } = useUser();
-  const [showRedirecting, setShowRedirecting] = React.useState(true);
+  const [isLoading, setIsLoading] = useState(true);
 
-  // Initiate anonymous sign-in only if no user is logged in or loading.
   useEffect(() => {
-    if (!isUserLoading && !user) {
-      initiateAnonymousSignIn(auth);
-      setShowRedirecting(false); // Anonymous user is the "public" state
+    // The loading screen should only be shown while the user state is being determined.
+    // Once isUserLoading is false, the user is either authenticated and will be redirected
+    // by the FirebaseProvider, or they are not authenticated and should see the login form.
+    if (!isUserLoading) {
+      setIsLoading(false);
     }
-  }, [isUserLoading, user, auth]);
+  }, [isUserLoading]);
 
-  // Show loading indicator while user state is being determined or redirecting.
+  // This effect handles the case where a logged-in user lands on this page.
+  // The redirect logic is now primarily in FirebaseProvider, but this acts as
+  // an additional check and keeps the loading screen visible during the redirect.
   useEffect(() => {
-    if (isUserLoading || (user && !user.isAnonymous)) {
-      setShowRedirecting(true);
-    } else {
-      setShowRedirecting(false);
+    if (!isUserLoading && user) {
+        setIsLoading(true); // Keep loading screen on if user exists, provider will redirect.
     }
-  }, [isUserLoading, user]);
+  }, [isUserLoading, user])
 
-  if (showRedirecting) {
+
+  if (isLoading) {
     return (
         <div className="flex min-h-screen w-full flex-col items-center justify-center bg-background gap-6">
           <div className="flex items-center justify-center">
@@ -103,7 +104,7 @@ function LoginPageContent() {
             <p className="text-sm text-muted-foreground animate-pulse flex items-center justify-center gap-2">
                 در حال بارگذاری...
             </p>
-            <Progress value={Date.now() % 100} className="h-2 [&>div]:animate-progress-indeterminate" />
+            <Progress value={Math.floor(Math.random() * 100)} className="h-2" />
           </div>
         </div>
     );
@@ -154,8 +155,6 @@ function LoginPageContent() {
 
 export default function LoginPage() {
   return (
-    <FirebaseClientProvider>
       <LoginPageContent />
-    </FirebaseClientProvider>
   )
 }
