@@ -1,5 +1,4 @@
 'use client'
-import { DailyReportForm } from '@/components/student/DailyReportForm';
 import { MotivationTip } from '@/components/student/MotivationTip';
 import PersonalStats from '@/components/student/PersonalStats';
 import { StudentRecommendationCard } from '@/components/student/StudentRecommendationCard';
@@ -7,10 +6,12 @@ import { Button } from '@/components/ui/button';
 import { useCollection, useFirebase, useMemoFirebase, FirestorePermissionError, errorEmitter } from '@/firebase';
 import { downloadJson } from '@/lib/utils';
 import { collection, doc, getDocs, query, orderBy, limit, getDoc, where } from 'firebase/firestore';
-import { Download } from 'lucide-react';
+import { Download, ClipboardEdit } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import type { StudentRecommendation, StudentReport } from '@/lib/types';
 import React from 'react';
+import Link from 'next/link';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 
 // Helper function to create a simple trend description
 const createTrendDescription = (reports: StudentReport[]): string => {
@@ -75,8 +76,6 @@ export default function StudentDashboardPage() {
   const latestReport = reports?.[0];
   const unreadRecommendation = recommendations?.[0];
   const trendDescription = React.useMemo(() => reports ? createTrendDescription(reports) : undefined, [reports]);
-
-  const isReportSubmissionBlocked = unreadRecommendation?.isBlocking && !unreadRecommendation?.isRead;
 
   const handleExportData = async () => {
      if (!user || !firestore || !teacherId) {
@@ -153,10 +152,23 @@ export default function StudentDashboardPage() {
   return (
     <div className="grid gap-6 lg:grid-cols-5">
       <div className="lg:col-span-3 space-y-6">
+        <Card className="bg-primary/5">
+            <CardHeader>
+                <CardTitle className="font-headline text-xl">گزارش کار امروز</CardTitle>
+                <CardDescription>برای ثبت فعالیت‌های درسی امروز خود، روی دکمه زیر کلیک کنید.</CardDescription>
+            </CardHeader>
+            <CardContent>
+                 <Button asChild size="lg">
+                    <Link href="/student/daily-report">
+                        <ClipboardEdit className="ml-2 h-5 w-5" />
+                        ثبت گزارش کار امروز
+                    </Link>
+                </Button>
+            </CardContent>
+        </Card>
         {unreadRecommendation && (
             <StudentRecommendationCard recommendation={unreadRecommendation} />
         )}
-        <DailyReportForm isBlocked={isReportSubmissionBlocked} />
       </div>
       <div className="lg:col-span-2 space-y-6">
         <PersonalStats report={latestReport} isLoading={isReportLoading || isRecommendationLoading}>
