@@ -1,4 +1,3 @@
-
 'use client';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
@@ -36,6 +35,7 @@ const teacherNav = [
   { href: '/teacher/students', label: 'دانش‌آموزان', icon: Users },
   { href: '/teacher/messages', label: 'پیام‌ها', icon: MessageSquare },
   { href: '/teacher/announcements', label: 'اطلاعیه‌ها', icon: Megaphone },
+  { href: '/teacher/settings', label: 'تنظیمات', icon: Settings },
 ];
 
 export function AppSidebar({ role }: AppSidebarProps) {
