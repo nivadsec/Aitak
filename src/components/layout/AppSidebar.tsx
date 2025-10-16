@@ -1,7 +1,7 @@
 'use client';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { BookCopy, Home, Users, BarChart3, MessageSquare, Megaphone, ClipboardPen, ClipboardEdit, BrainCircuit, Settings, Lightbulb } from 'lucide-react';
+import { BookCopy, Home, Users, BarChart3, MessageSquare, Megaphone, ClipboardPen, ClipboardEdit, BrainCircuit, Settings, Lightbulb, Bot } from 'lucide-react';
 
 import {
   Sidebar,
@@ -36,6 +36,7 @@ const teacherNav = [
   { href: '/teacher/recommendations', label: 'توصیه‌ها', icon: Lightbulb },
   { href: '/teacher/messages', label: 'پیام‌ها', icon: MessageSquare },
   { href: '/teacher/announcements', label: 'اطلاعیه‌ها', icon: Megaphone },
+  { href: '/teacher/assistant', label: 'ربات هوشمند', icon: Bot },
   { href: '/teacher/settings', label: 'تنظیمات', icon: Settings },
 ];
 

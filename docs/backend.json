@@ -14,7 +14,8 @@
         "email": { "type": "string", "description": "The email address of the student.", "format": "email" },
         "gradeLevel": { "type": "string", "description": "The grade level of the student (e.g., '10th Grade')." },
         "major": { "type": "string", "description": "The major or field of study for the student, if applicable." },
-        "isActive": { "type": "boolean", "description": "Indicates whether the student's account is active." }
+        "isActive": { "type": "boolean", "description": "Indicates whether the student's account is active." },
+        "assistantEnabled": { "type": "boolean", "description": "Controls access to the AI study assistant." }
       },
       "required": ["id", "firstName", "lastName", "email", "gradeLevel", "major", "isActive"]
     },

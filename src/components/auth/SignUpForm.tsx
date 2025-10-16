@@ -100,6 +100,7 @@ export function SignUpForm() {
                 gradeLevel: data.gradeLevel,
                 major: data.major,
                 isActive: true,
+                assistantEnabled: false, // Default to false
             };
             setDocumentNonBlocking(studentRef, studentData, {});
         } else {

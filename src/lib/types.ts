@@ -7,6 +7,7 @@ export interface Student {
   gradeLevel: string;
   major: string;
   isActive: boolean;
+  assistantEnabled?: boolean; // Controls access to the AI study assistant
   avatarUrl?: string; // Optional avatar
 }
 
