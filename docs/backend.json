@@ -15,7 +15,14 @@
         "gradeLevel": { "type": "string", "description": "The grade level of the student (e.g., '10th Grade')." },
         "major": { "type": "string", "description": "The major or field of study for the student, if applicable." },
         "isActive": { "type": "boolean", "description": "Indicates whether the student's account is active." },
-        "assistantEnabled": { "type": "boolean", "description": "Controls access to the AI study assistant." }
+        "assistantEnabled": { "type": "boolean", "description": "Controls access to the AI study assistant." },
+        "canViewStats": { "type": "boolean", "description": "Controls access to the personal stats page." },
+        "canViewSchedule": { "type": "boolean", "description": "Controls access to the class schedule page." },
+        "canViewQuizzes": { "type": "boolean", "description": "Controls access to the quizzes page." },
+        "canSubmitWeeklyReport": { "type": "boolean", "description": "Controls access to the weekly progress report form." },
+        "canSubmitExamAnalysis": { "type": "boolean", "description": "Controls access to the exam analysis form." },
+        "canSubmitFocusLadder": { "type": "boolean", "description": "Controls access to the focus ladder form." },
+        "canSubmitTopicInvestment": { "type": "boolean", "description": "Controls access to the topic investment form." }
       },
       "required": ["id", "firstName", "lastName", "email", "gradeLevel", "major", "isActive"]
     },

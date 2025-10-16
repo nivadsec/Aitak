@@ -7,8 +7,17 @@ export interface Student {
   gradeLevel: string;
   major: string;
   isActive: boolean;
-  assistantEnabled?: boolean; // Controls access to the AI study assistant
   avatarUrl?: string; // Optional avatar
+  
+  // Feature flags
+  assistantEnabled?: boolean;
+  canViewStats?: boolean;
+  canViewSchedule?: boolean;
+  canViewQuizzes?: boolean;
+  canSubmitWeeklyReport?: boolean;
+  canSubmitExamAnalysis?: boolean;
+  canSubmitFocusLadder?: boolean;
+  canSubmitTopicInvestment?: boolean;
 }
 
 

@@ -2,7 +2,7 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { BookCopy, Home, Users, BarChart3, MessageSquare, Megaphone, ClipboardPen, ClipboardEdit, BrainCircuit, Settings, Lightbulb, Bot, FileText, Calendar, BookOpen } from 'lucide-react';
-
+import React from 'react';
 import {
   Sidebar,
   SidebarHeader,
@@ -14,22 +14,25 @@ import {
 } from '@/components/ui/sidebar';
 import { Logo } from '@/components/icons/logo';
 import { Separator } from '@/components/ui/separator';
+import { useDoc, useFirebase, useMemoFirebase } from '@/firebase';
+import type { Student } from '@/lib/types';
+import { doc } from 'firebase/firestore';
 
 type AppSidebarProps = {
   role: 'student' | 'teacher';
 };
 
-const studentNav = [
-  { href: '/student/dashboard', label: 'داشبورد', icon: Home },
-  { href: '/student/daily-report', label: 'گزارش روزانه', icon: ClipboardEdit },
-  { href: '/student/weekly-progress', label: 'گزارش هفتگی', icon: BookCopy },
-  { href: '/student/exam-analysis', label: 'تحلیل آزمون', icon: ClipboardPen },
-  { href: '/student/topic-investment', label: 'سرمایه‌گذاری زمانی', icon: BarChart3 },
-  { href: '/student/focus', label: 'نردبان تمرکز', icon: BrainCircuit },
-  { href: '/student/quizzes', label: 'آزمون‌ها', icon: FileText },
-  { href: '/student/schedule', label: 'برنامه کلاسی', icon: Calendar },
-  { href: '/student/stats', label: 'آمار عملکرد', icon: BarChart3 },
-  { href: '/student/settings', label: 'تنظیمات', icon: Settings },
+const allStudentNav = [
+  { href: '/student/dashboard', label: 'داشبورد', icon: Home, feature: 'core' },
+  { href: '/student/daily-report', label: 'گزارش روزانه', icon: ClipboardEdit, feature: 'core' },
+  { href: '/student/weekly-progress', label: 'گزارش هفتگی', icon: BookCopy, feature: 'canSubmitWeeklyReport' },
+  { href: '/student/exam-analysis', label: 'تحلیل آزمون', icon: ClipboardPen, feature: 'canSubmitExamAnalysis' },
+  { href: '/student/topic-investment', label: 'سرمایه‌گذاری زمانی', icon: BarChart3, feature: 'canSubmitTopicInvestment' },
+  { href: '/student/focus', label: 'نردبان تمرکز', icon: BrainCircuit, feature: 'canSubmitFocusLadder' },
+  { href: '/student/quizzes', label: 'آزمون‌ها', icon: FileText, feature: 'canViewQuizzes' },
+  { href: '/student/schedule', label: 'برنامه کلاسی', icon: Calendar, feature: 'canViewSchedule' },
+  { href: '/student/stats', label: 'آمار عملکرد', icon: BarChart3, feature: 'canViewStats' },
+  { href: '/student/settings', label: 'تنظیمات', icon: Settings, feature: 'core' },
 ];
 
 const teacherNav = [
@@ -45,21 +48,30 @@ const teacherNav = [
   { href: '/teacher/settings', label: 'تنظیمات', icon: Settings },
 ];
 
-export function AppSidebar({ role }: AppSidebarProps) {
-  const pathname = usePathname();
-  const navItems = role === 'student' ? studentNav : teacherNav;
+function StudentSidebarNav() {
+    const pathname = usePathname();
+    const { user, firestore, role } = useFirebase();
+    const teacherId = role?.split(':')[1];
 
-  return (
-    <Sidebar side="right" variant="inset" collapsible="icon">
-      <SidebarHeader className="items-center justify-center p-4">
-        <Link href="/">
-            <Logo className="h-8 w-8 text-primary" />
-        </Link>
-      </SidebarHeader>
-      <Separator />
-      <SidebarContent>
-        <SidebarMenu>
-          {navItems.map((item) => (
+    const studentRef = useMemoFirebase(() => {
+        if (!user || !teacherId) return null;
+        return doc(firestore, 'teachers', teacherId, 'students', user.uid);
+    }, [firestore, user, teacherId]);
+
+    const { data: student } = useDoc<Student>(studentRef);
+
+    const availableNavs = React.useMemo(() => {
+        if (!student) return allStudentNav.filter(item => item.feature === 'core');
+
+        return allStudentNav.filter(item => {
+            if (item.feature === 'core') return true;
+            return student[item.feature as keyof Student];
+        });
+    }, [student]);
+
+    return (
+         <SidebarMenu>
+          {availableNavs.map((item) => (
             <SidebarMenuItem key={item.href}>
               <SidebarMenuButton
                 asChild
@@ -74,6 +86,42 @@ export function AppSidebar({ role }: AppSidebarProps) {
             </SidebarMenuItem>
           ))}
         </SidebarMenu>
+    )
+}
+
+export function AppSidebar({ role }: AppSidebarProps) {
+  const pathname = usePathname();
+  const navItems = role === 'teacher' ? teacherNav : [];
+
+  return (
+    <Sidebar side="right" variant="inset" collapsible="icon">
+      <SidebarHeader className="items-center justify-center p-4">
+        <Link href="/">
+            <Logo className="h-8 w-8 text-primary" />
+        </Link>
+      </SidebarHeader>
+      <Separator />
+      <SidebarContent>
+        {role === 'student' ? (
+            <StudentSidebarNav />
+        ) : (
+            <SidebarMenu>
+            {navItems.map((item) => (
+                <SidebarMenuItem key={item.href}>
+                <SidebarMenuButton
+                    asChild
+                    isActive={pathname.startsWith(item.href)}
+                    tooltip={{ children: item.label, side: 'left', className: 'font-body' }}
+                >
+                    <Link href={item.href}>
+                    <item.icon />
+                    <span>{item.label}</span>
+                    </Link>
+                </SidebarMenuButton>
+                </SidebarMenuItem>
+            ))}
+            </SidebarMenu>
+        )}
       </SidebarContent>
       <SidebarFooter>
          {/* Can add footer items here if needed */}

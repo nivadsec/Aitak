@@ -9,7 +9,7 @@ import { doc, collection, query, orderBy, getDocs, limit, where } from 'firebase
 import { getDailyReportsForGenkit } from '@/lib/data';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
-import { Download, Lightbulb, FileDown, Loader2 } from 'lucide-react';
+import { Download, Lightbulb, FileDown, Loader2, Settings } from 'lucide-react';
 import { downloadJson } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
 import { RecommendationForm } from '@/components/teacher/RecommendationForm';
@@ -20,6 +20,7 @@ import React, { useState } from 'react';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
 import { StudentPdfReport } from '@/components/teacher/StudentPdfReport';
+import Link from 'next/link';
 
 
 export default function StudentDetailPage({ params }: { params: { id: string } }) {
@@ -257,7 +258,13 @@ export default function StudentDetailPage({ params }: { params: { id: string } }
                   <CardDescription>کلاس: {student.gradeLevel} - رشته: {student.major}</CardDescription>
                   </div>
               </div>
-              <div className='flex gap-2'>
+              <div className='flex gap-2 flex-wrap'>
+                 <Button asChild variant="outline">
+                    <Link href={`/teacher/students/${student.id}/settings`}>
+                        <Settings className="ml-2 h-4 w-4" />
+                        تنظیمات دانش‌آموز
+                    </Link>
+                </Button>
                 <Button variant="outline" onClick={handleExportStudentData}>
                     <Download className="ml-2 h-4 w-4" />
                     خروجی داده (JSON)

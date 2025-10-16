@@ -100,7 +100,14 @@ export function SignUpForm() {
                 gradeLevel: data.gradeLevel,
                 major: data.major,
                 isActive: true,
-                assistantEnabled: false, // Default to false
+                assistantEnabled: true,
+                canViewStats: true,
+                canViewSchedule: true,
+                canViewQuizzes: true,
+                canSubmitWeeklyReport: true,
+                canSubmitExamAnalysis: true,
+                canSubmitFocusLadder: true,
+                canSubmitTopicInvestment: true,
             };
             setDocumentNonBlocking(studentRef, studentData, {});
         } else {

@@ -13,7 +13,7 @@ import {
   getFilteredRowModel,
   ColumnFiltersState,
 } from '@tanstack/react-table';
-import { MoreHorizontal, Trash2, Edit, ToggleLeft, ToggleRight, AlertTriangle, LineChart } from 'lucide-react';
+import { MoreHorizontal, Trash2, Edit, ToggleLeft, ToggleRight, AlertTriangle, LineChart, Settings } from 'lucide-react';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -185,6 +185,12 @@ export default function StudentsDataTable({ students, reports }: StudentsDataTab
                   <Link href={`/teacher/students/${student.id}`}>
                     <LineChart className="ml-2 h-4 w-4" />
                     مشاهده جزئیات و تحلیل
+                  </Link>
+              </DropdownMenuItem>
+               <DropdownMenuItem asChild>
+                  <Link href={`/teacher/students/${student.id}/settings`}>
+                    <Settings className="ml-2 h-4 w-4" />
+                    تنظیمات دسترسی
                   </Link>
               </DropdownMenuItem>
               <DropdownMenuItem onClick={() => setEditingStudent(student)}>
