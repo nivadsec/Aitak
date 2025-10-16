@@ -192,71 +192,78 @@ export function RecommendationForm({ students }: RecommendationFormProps) {
             </FormItem>
         )} />
 
-        <Accordion type="single" collapsible className="w-full">
-          <AccordionItem value="item-1">
-             <FormField control={form.control} name="hasQuiz" render={({ field }) => (
-                <AccordionTrigger className="w-full rounded-lg border p-3 shadow-sm hover:no-underline">
-                     <div className="flex flex-row items-center justify-between w-full">
-                        <div className="space-y-0.5 text-right">
-                           <Label htmlFor="hasQuizSwitch">افزودن آزمون به توصیه</Label>
-                            <FormDescription className='text-xs'>برای اطمینان از درک مطلب، یک آزمون کوتاه اضافه کنید.</FormDescription>
+        <div className="space-y-4 rounded-lg border p-3 shadow-sm">
+            <FormField
+                control={form.control}
+                name="hasQuiz"
+                render={({ field }) => (
+                    <FormItem className="flex flex-row items-center justify-between">
+                        <div className="space-y-0.5">
+                            <Label htmlFor="hasQuizSwitch">افزودن آزمون به توصیه</Label>
+                            <FormDescription className="text-xs">
+                                برای اطمینان از درک مطلب، یک آزمون کوتاه اضافه کنید.
+                            </FormDescription>
                         </div>
-                        <FormControl><Switch id="hasQuizSwitch" checked={field.value} onCheckedChange={field.onChange} onClick={(e) => e.stopPropagation()} /></FormControl>
-                    </div>
-                </AccordionTrigger>
-              )} />
-            <AccordionContent className="pt-4">
-                {watchHasQuiz && (
-                    <div className="space-y-4 rounded-md border bg-muted/50 p-4">
-                         <FormField control={form.control} name="quiz.title" render={({ field }) => (
-                            <FormItem>
-                                <FormLabel>عنوان آزمون</FormLabel>
-                                <FormControl><Input placeholder="مثال: آزمون درک مطلب توصیه" {...field} /></FormControl>
-                                <FormMessage />
-                            </FormItem>
-                        )} />
-                        {fields.map((field, index) => (
-                          <div key={field.id} className="space-y-3 rounded-md border p-3 relative bg-background">
-                            <h4 className="font-semibold text-sm">سوال {index + 1}</h4>
-                            <Button type="button" variant="ghost" size="icon" className="absolute top-1 left-1 h-6 w-6" onClick={() => remove(index)}>
-                                <Trash2 className="h-4 w-4 text-destructive" />
-                            </Button>
-                            <FormField control={form.control} name={`quiz.questions.${index}.questionText`} render={({ field }) => (
-                                <FormItem><FormLabel>متن سوال</FormLabel><FormControl><Textarea {...field} /></FormControl><FormMessage /></FormItem>
-                            )} />
-                            
-                            <FormField control={form.control} name={`quiz.questions.${index}.correctAnswerIndex`} render={({ field: radioField }) => (
-                                <FormItem className="space-y-3">
-                                <FormLabel>گزینه‌ها (گزینه صحیح را انتخاب کنید)</FormLabel>
-                                <FormControl>
-                                    <RadioGroup onValueChange={(val) => radioField.onChange(parseInt(val, 10))} defaultValue={String(radioField.value)} className="space-y-2">
-                                        {[0, 1, 2, 3].map((optIndex) => (
-                                            <FormField key={optIndex} control={form.control} name={`quiz.questions.${index}.options.${optIndex}`} render={({ field }) => (
-                                                <FormItem className="flex items-center space-x-3 space-y-0 gap-2">
-                                                    <FormControl>
-                                                        <RadioGroupItem value={String(optIndex)} />
-                                                    </FormControl>
-                                                    <FormControl>
-                                                        <Input placeholder={`گزینه ${optIndex + 1}`} {...field} />
-                                                    </FormControl>
-                                                </FormItem>
-                                            )} />
-                                        ))}
-                                    </RadioGroup>
-                                </FormControl>
-                                <FormMessage />
-                                </FormItem>
-                            )} />
-                          </div>
-                        ))}
-                        <Button type="button" variant="outline" size="sm" onClick={() => append({ questionText: '', options: ['', '', '', ''], correctAnswerIndex: 0 })}>
-                            <PlusCircle className="ml-2 h-4 w-4" /> افزودن سوال
-                        </Button>
-                    </div>
+                        <FormControl>
+                            <Switch
+                                id="hasQuizSwitch"
+                                checked={field.value}
+                                onCheckedChange={field.onChange}
+                            />
+                        </FormControl>
+                    </FormItem>
                 )}
-            </AccordionContent>
-          </AccordionItem>
-        </Accordion>
+            />
+
+            {watchHasQuiz && (
+                 <div className="space-y-4 pt-4 border-t">
+                    <FormField control={form.control} name="quiz.title" render={({ field }) => (
+                       <FormItem>
+                           <FormLabel>عنوان آزمون</FormLabel>
+                           <FormControl><Input placeholder="مثال: آزمون درک مطلب توصیه" {...field} /></FormControl>
+                           <FormMessage />
+                       </FormItem>
+                   )} />
+                   {fields.map((field, index) => (
+                     <div key={field.id} className="space-y-3 rounded-md border p-3 relative bg-background">
+                       <h4 className="font-semibold text-sm">سوال {index + 1}</h4>
+                       <Button type="button" variant="ghost" size="icon" className="absolute top-1 left-1 h-6 w-6" onClick={() => remove(index)}>
+                           <Trash2 className="h-4 w-4 text-destructive" />
+                       </Button>
+                       <FormField control={form.control} name={`quiz.questions.${index}.questionText`} render={({ field }) => (
+                           <FormItem><FormLabel>متن سوال</FormLabel><FormControl><Textarea {...field} /></FormControl><FormMessage /></FormItem>
+                       )} />
+                       
+                       <FormField control={form.control} name={`quiz.questions.${index}.correctAnswerIndex`} render={({ field: radioField }) => (
+                           <FormItem className="space-y-3">
+                           <FormLabel>گزینه‌ها (گزینه صحیح را انتخاب کنید)</FormLabel>
+                           <FormControl>
+                               <RadioGroup onValueChange={(val) => radioField.onChange(parseInt(val, 10))} defaultValue={String(radioField.value)} className="space-y-2">
+                                   {[0, 1, 2, 3].map((optIndex) => (
+                                       <FormField key={optIndex} control={form.control} name={`quiz.questions.${index}.options.${optIndex}`} render={({ field }) => (
+                                           <FormItem className="flex items-center space-x-3 space-y-0 gap-2">
+                                               <FormControl>
+                                                   <RadioGroupItem value={String(optIndex)} />
+                                               </FormControl>
+                                               <FormControl>
+                                                   <Input placeholder={`گزینه ${optIndex + 1}`} {...field} />
+                                               </FormControl>
+                                           </FormItem>
+                                       )} />
+                                   ))}
+                               </RadioGroup>
+                           </FormControl>
+                           <FormMessage />
+                           </FormItem>
+                       )} />
+                     </div>
+                   ))}
+                   <Button type="button" variant="outline" size="sm" onClick={() => append({ questionText: '', options: ['', '', '', ''], correctAnswerIndex: 0 })}>
+                       <PlusCircle className="ml-2 h-4 w-4" /> افزودن سوال
+                   </Button>
+               </div>
+            )}
+        </div>
 
 
         <div className="flex justify-end gap-2">
