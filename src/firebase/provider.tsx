@@ -87,8 +87,6 @@ export const FirebaseProvider: React.FC<FirebaseProviderProps> = ({
       return;
     }
 
-    setUserAuthState({ user: null, isUserLoading: true, userError: null, role: null }); // Reset on auth instance change
-
     const unsubscribe = onAuthStateChanged(
       auth,
       async (firebaseUser) => { // Auth state determined
@@ -139,7 +137,11 @@ export const FirebaseProvider: React.FC<FirebaseProviderProps> = ({
       }
     );
     return () => unsubscribe(); // Cleanup
-  }, [auth, firestore, router, pathname]);
+    // IMPORTANT: router and pathname are intentionally excluded from the dependency array
+    // to prevent re-subscribing on every route change. The logic inside handles redirection
+    // based on the current auth state and path.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [auth, firestore]);
 
   // Memoize the context value
   const contextValue = useMemo((): FirebaseContextState => {
@@ -207,12 +209,28 @@ export const useFirebaseApp = (): FirebaseApp => {
 
 type MemoFirebase <T> = T & {__memo?: boolean};
 
+/**
+ * A wrapper around `React.useMemo` that adds a non-enumerable property
+ * to the memoized object. This helps `useCollection` and `useDoc` to verify
+ * that their inputs have been correctly memoized, preventing performance issues.
+ * @template T
+ * @param {() => T} factory The function to compute the memoized value.
+ * @param {DependencyList} deps An array of dependencies.
+ * @returns {T} The memoized value.
+ */
 export function useMemoFirebase<T>(factory: () => T, deps: DependencyList): T | (MemoFirebase<T>) {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const memoized = useMemo(factory, deps);
   
   if(typeof memoized !== 'object' || memoized === null) return memoized;
-  (memoized as MemoFirebase<T>).__memo = true;
+
+  // Add a non-enumerable property to mark this object as memoized
+  Object.defineProperty(memoized, '__memo', {
+      value: true,
+      writable: false,
+      configurable: true,
+      enumerable: false, 
+  });
   
   return memoized;
 }
