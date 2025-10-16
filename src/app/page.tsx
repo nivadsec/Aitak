@@ -67,7 +67,7 @@ function AnnouncementCard() {
   )
 }
 
-function LoginPageContent() {
+export default function LoginPage() {
   const { user, isUserLoading } = useUser();
   const [isLoading, setIsLoading] = useState(true);
   const [progressValue, setProgressValue] = useState(0);
@@ -154,12 +154,5 @@ function LoginPageContent() {
         <AnnouncementCard />
       </div>
     </main>
-  )
-}
-
-
-export default function LoginPage() {
-  return (
-      <LoginPageContent />
   )
 }
