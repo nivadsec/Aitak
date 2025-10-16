@@ -4,11 +4,9 @@
  * @fileOverview A flow that generates motivational tips based on a student's recent report trends.
  *
  * - generateMotivationalTips - A function that generates motivational tips.
- * - GenerateMotivationalTipsInput - The input type for the generateMotivationalTips function.
- * - GenerateMotivationalTipsOutput - The return type for the generateMotivationalTips function.
  */
 
-import {ai} from '@/ai/genkit';
+import {ai} from './genkit-motivational-tips';
 import {z} from 'genkit';
 
 const GenerateMotivationalTipsInputSchema = z.object({

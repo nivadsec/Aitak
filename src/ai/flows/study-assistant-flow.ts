@@ -3,11 +3,9 @@
  * @fileOverview A study assistant AI agent that can answer student's questions.
  *
  * - studyAssistant - A function that handles the conversation with the study assistant.
- * - StudyAssistantInput - The input type for the studyAssistant function.
- * - StudyAssistantOutput - The return type for the studyAssistant function.
  */
 
-import {ai} from '@/ai/genkit';
+import {ai} from './genkit-study-assistant';
 import {z} from 'genkit';
 
 const StudyAssistantInputSchema = z.object({

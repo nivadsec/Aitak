@@ -4,11 +4,9 @@
  * @fileOverview Generates a personal stats dashboard for students with study habits, progress charts, and motivation tips.
  *
  * - generatePersonalStatsDashboard - A function that generates a personal stats dashboard.
- * - PersonalStatsDashboardInput - The input type for the generatePersonalStatsDashboard function.
- * - PersonalStatsDashboardOutput - The return type for the generatePersonalStatsDashboard function.
  */
 
-import {ai} from '@/ai/genkit';
+import {ai} from './genkit-personal-stats';
 import {z} from 'genkit';
 
 const PersonalStatsDashboardInputSchema = z.object({

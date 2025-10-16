@@ -3,11 +3,9 @@
  * @fileOverview An AI agent for analyzing a student's focus intervals.
  *
  * - analyzeFocusIntervals - A function that handles the focus analysis process.
- * - AnalyzeFocusIntervalsInput - The input type for the analyzeFocusIntervals function.
- * - AnalyzeFocusIntervalsOutput - The return type for the analyzeFocusIntervals function.
  */
 
-import {ai} from '@/ai/genkit';
+import {ai} from './genkit-analyze-focus';
 import {z} from 'genkit';
 
 const FocusIntervalInputSchema = z.object({

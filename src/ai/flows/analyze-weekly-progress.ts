@@ -3,11 +3,9 @@
  * @fileOverview An AI agent for analyzing a student's weekly progress report.
  *
  * - analyzeWeeklyProgress - A function that handles the weekly progress analysis.
- * - AnalyzeWeeklyProgressInput - The input type for the analyzeWeeklyProgress function.
- * - AnalyzeWeeklyProgressOutput - The return type for the analyzeWeeklyProgress function.
  */
 
-import {ai} from '@/ai/genkit';
+import {ai} from './genkit-analyze-weekly';
 import {z} from 'genkit';
 
 const AnalyzeWeeklyProgressInputSchema = z.object({

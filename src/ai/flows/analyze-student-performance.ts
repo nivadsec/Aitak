@@ -4,11 +4,9 @@
  * @fileOverview A student performance analysis AI agent.
  *
  * - analyzeStudentPerformance - A function that handles the student performance analysis process.
- * - AnalyzeStudentPerformanceInput - The input type for the analyzeStudentPerformance function.
- * - AnalyzeStudentPerformanceOutput - The return type for the analyzeStudentPerformance function.
  */
 
-import {ai} from '@/ai/genkit';
+import {ai} from './genkit-analyze-student';
 import {z} from 'genkit';
 
 const DailyReportInputSchema = z.object({
