@@ -3,12 +3,14 @@
 
 import React, { DependencyList, createContext, useContext, ReactNode, useMemo, useState, useEffect } from 'react';
 import { FirebaseApp } from 'firebase/app';
-import { Firestore, doc, getDoc } from 'firebase/firestore';
+import { Firestore, doc, getDoc, collection, serverTimestamp } from 'firebase/firestore';
 import { Auth, User, onAuthStateChanged } from 'firebase/auth';
 import { useRouter, usePathname } from 'next/navigation';
 
 import { FirebaseErrorListener } from '@/components/FirebaseErrorListener';
 import { ROLES } from '@/lib/roles';
+import { setDocumentNonBlocking } from './non-blocking-updates';
+import type { LoginHistory } from '@/lib/types';
 
 interface FirebaseProviderProps {
   children: ReactNode;
@@ -87,6 +89,25 @@ export const FirebaseProvider: React.FC<FirebaseProviderProps> = ({
       return;
     }
 
+    const logLoginHistory = (user: User, roleInfo: string) => {
+        const role = roleInfo.split(':')[0];
+        const teacherId = roleInfo.split(':')[1];
+
+        if (role === ROLES.STUDENT && teacherId) {
+            const historyCol = collection(firestore, 'teachers', teacherId, 'loginHistory');
+            const newHistoryRef = doc(historyCol);
+            const historyData: Omit<LoginHistory, 'id'> = {
+                studentId: user.uid,
+                studentName: user.displayName || 'نامشخص',
+                email: user.email || 'نامشخص',
+                timestamp: serverTimestamp(),
+                type: 'login',
+                status: 'success',
+            };
+            setDocumentNonBlocking(newHistoryRef, { ...historyData, id: newHistoryRef.id }, {});
+        }
+    }
+
     const unsubscribe = onAuthStateChanged(
       auth,
       async (firebaseUser) => { // Auth state determined
@@ -107,6 +128,11 @@ export const FirebaseProvider: React.FC<FirebaseProviderProps> = ({
             role = roleInfo.split(':')[0];
           }
           
+          // Log login event if it's a student and not just a state refresh
+          if (userAuthState.user?.uid !== firebaseUser.uid) {
+              logLoginHistory(firebaseUser, roleInfo);
+          }
+
           setUserAuthState({ user: firebaseUser, isUserLoading: false, userError: null, role: roleInfo });
 
           // Centralized Redirect Logic
