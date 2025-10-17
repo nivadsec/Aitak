@@ -1,4 +1,3 @@
-
 'use client';
 import {
   Auth,
@@ -6,6 +5,7 @@ import {
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
   signOut,
+  updateProfile,
 } from 'firebase/auth';
 import { errorEmitter } from './error-emitter';
 
@@ -24,14 +24,33 @@ export async function initiateEmailSignUp(
   authInstance: Auth,
   email: string,
   password: string
-): Promise<void> {
+) {
   try {
-    await createUserWithEmailAndPassword(authInstance, email, password);
+    const userCredential = await createUserWithEmailAndPassword(authInstance, email, password);
+    return userCredential;
   } catch (error) {
     console.error('Email Sign-Up Error:', error);
     throw error; // Allow the form to handle the error
   }
 }
+
+/** Initiate email/password sign-up for teacher (non-blocking). */
+export async function initiateTeacherSignUp(
+  authInstance: Auth,
+  email: string,
+  password: string
+) {
+  try {
+    const userCredential = await createUserWithEmailAndPassword(authInstance, email, password);
+    // Set photoURL to 'teacher' to identify the role
+    await updateProfile(userCredential.user, { photoURL: 'teacher' });
+    return userCredential;
+  } catch (error) {
+    console.error('Teacher Sign-Up Error:', error);
+    throw error; // Allow the caller to handle the error
+  }
+}
+
 
 /** Initiate email/password sign-in (non-blocking + safe). */
 export async function initiateEmailSignIn(
