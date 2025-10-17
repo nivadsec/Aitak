@@ -3,7 +3,7 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import * as z from 'zod';
-import { Save, Loader2, Bot, BarChart3, Calendar, FileText, BookCopy, ClipboardPen, BrainCircuit, Map, ClipboardCheck, ClipboardEdit, ClipboardList } from 'lucide-react';
+import { Save, Loader2, Bot, BarChart3, Calendar, FileText, BookCopy, ClipboardPen, BrainCircuit, Map, ClipboardCheck, ClipboardEdit, ClipboardList, Brain } from 'lucide-react';
 import React from 'react';
 
 import { Button } from '@/components/ui/button';
@@ -36,6 +36,7 @@ const formSchema = z.object({
   isActive: z.boolean().default(true),
   // Feature flags
   assistantEnabled: z.boolean().default(true),
+  canViewDailyAnalysis: z.boolean().default(true),
   canViewStats: z.boolean().default(true),
   canViewSchedule: z.boolean().default(true),
   canSubmitDailyReport: z.boolean().default(true),
@@ -60,6 +61,7 @@ interface StudentFormProps {
 
 const permissionFields: { key: keyof FormValues, label: string, icon: React.ElementType }[] = [
     { key: 'assistantEnabled', label: 'ربات هوشمند', icon: Bot },
+    { key: 'canViewDailyAnalysis', label: 'پایش هوشمند روزانه', icon: Brain },
     { key: 'canViewStats', label: 'آمار عملکرد', icon: BarChart3 },
     { key: 'canViewSchedule', label: 'برنامه کلاسی', icon: Calendar },
     { key: 'canViewTests', label: 'آزمون‌های آنلاین', icon: ClipboardList },
@@ -93,6 +95,7 @@ export function StudentForm({ student, onSuccess, onCancel }: StudentFormProps) 
       password: '',
       isActive: student?.isActive ?? true,
       assistantEnabled: student?.assistantEnabled ?? true,
+      canViewDailyAnalysis: student?.canViewDailyAnalysis ?? true,
       canViewStats: student?.canViewStats ?? true,
       canViewSchedule: student?.canViewSchedule ?? true,
       canSubmitDailyReport: student?.canSubmitDailyReport ?? true,

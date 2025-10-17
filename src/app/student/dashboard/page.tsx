@@ -3,15 +3,19 @@ import { MotivationTip } from '@/components/student/MotivationTip';
 import PersonalStats from '@/components/student/PersonalStats';
 import { StudentRecommendationCard } from '@/components/student/StudentRecommendationCard';
 import { Button } from '@/components/ui/button';
-import { useCollection, useFirebase, useMemoFirebase, FirestorePermissionError, errorEmitter } from '@/firebase';
+import { useCollection, useFirebase, useMemoFirebase, FirestorePermissionError, errorEmitter, useDoc } from '@/firebase';
 import { downloadJson } from '@/lib/utils';
 import { collection, doc, getDocs, query, orderBy, limit, getDoc, where } from 'firebase/firestore';
-import { Download, ClipboardEdit, BrainCircuit, ClipboardPen, BookCopy, BarChart3, HelpCircle, FileText, Map, Calendar, BookOpen, ClipboardCheck, ClipboardList } from 'lucide-react';
+import { Download, ClipboardEdit, BrainCircuit, ClipboardPen, BookCopy, BarChart3, HelpCircle, FileText, Map, Calendar, BookOpen, ClipboardCheck, ClipboardList, LineChart } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import type { StudentRecommendation, DailyReport } from '@/lib/types';
-import React from 'react';
+import type { Student, StudentRecommendation, DailyReport } from '@/lib/types';
+import React, { useMemo } from 'react';
 import Link from 'next/link';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { getDailyReportsForGenkit } from '@/lib/data';
+import StudentPerformanceAnalysis from '@/components/teacher/StudentPerformanceAnalysis';
+import { DashboardStatsCard } from '@/components/student/DashboardStatsCard';
+
 
 // Helper function to create a simple trend description
 const createTrendDescription = (reports: DailyReport[]): string => {
@@ -153,13 +157,21 @@ export default function StudentDashboardPage() {
   
   const teacherId = role?.split(':')[1];
 
+  // Fetch student document for feature flags
+  const studentDocRef = useMemoFirebase(() => {
+    if (!user || !teacherId) return null;
+    return doc(firestore, 'teachers', teacherId, 'students', user.uid);
+  }, [firestore, user, teacherId]);
+
+  const { data: student, isLoading: isStudentLoading } = useDoc<Student>(studentDocRef);
+
   // Fetch the latest 2 reports for trend analysis
   const reportsQuery = useMemoFirebase(() => {
     if (!user || !firestore || !teacherId) return null;
     return query(
         collection(firestore, 'teachers', teacherId, 'students', user.uid, 'dailyReports'),
         orderBy('date', 'desc'),
-        limit(2)
+        limit(14)
     );
   }, [firestore, user, teacherId]);
 
@@ -177,9 +189,10 @@ export default function StudentDashboardPage() {
   const { data: reports, isLoading: isReportLoading } = useCollection<DailyReport>(reportsQuery);
   const { data: recommendations, isLoading: isRecommendationLoading } = useCollection<StudentRecommendation>(recommendationQuery);
   
+  const dailyReportsForGenkit = useMemo(() => getDailyReportsForGenkit(reports?.slice(0, 14) || []), [reports]);
   const latestReport = reports?.[0];
   const unreadRecommendation = recommendations?.[0];
-  const trendDescription = React.useMemo(() => reports ? createTrendDescription(reports) : undefined, [reports]);
+  const trendDescription = useMemo(() => reports ? createTrendDescription(reports) : undefined, [reports]);
 
   const handleExportData = async () => {
      if (!user || !firestore || !teacherId) {
@@ -254,31 +267,52 @@ export default function StudentDashboardPage() {
   };
 
   return (
-    <div className="grid gap-6 lg:grid-cols-5">
-      <div className="lg:col-span-3 space-y-6">
+    <div className="space-y-6">
         {unreadRecommendation && (
             <StudentRecommendationCard recommendation={unreadRecommendation} />
         )}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {actionCards.map(card => (
-                <ActionCard key={card.href} {...card} />
-            ))}
+        
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {student?.canViewDailyAnalysis && (
+                <StudentPerformanceAnalysis studentId={user?.uid || ''} dailyReports={dailyReportsForGenkit} />
+            )}
+            <DashboardStatsCard reports={reports || []} />
         </div>
-      </div>
-      <div className="lg:col-span-2 space-y-6">
-        <PersonalStats report={latestReport} isLoading={isReportLoading || isRecommendationLoading}>
-          <MotivationTip 
-            reportTrends={trendDescription} 
-            studentName={user?.displayName?.split(' ')[0]} 
-          />
-        </PersonalStats>
-         <div className="text-center">
-            <Button variant="outline" onClick={handleExportData} disabled={!user || !teacherId}>
-              <Download className="ml-2 h-4 w-4" />
-              پشتیبان‌گیری از اطلاعات من
-            </Button>
-          </div>
-      </div>
+        
+        <Card>
+            <CardHeader>
+                <CardTitle className="font-headline text-xl">دسترسی سریع</CardTitle>
+                <CardDescription>تمام ابزارهای شما برای یک مطالعه هدفمند</CardDescription>
+            </CardHeader>
+            <CardContent>
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                    {actionCards.map(card => (
+                        <ActionCard key={card.href} {...card} />
+                    ))}
+                </div>
+            </CardContent>
+        </Card>
+
+
+        <div className="grid gap-6 lg:grid-cols-5">
+            <div className="lg:col-span-3 space-y-6">
+                {/* This column is now for other potential items or can be removed */}
+            </div>
+            <div className="lg:col-span-2 space-y-6">
+                <PersonalStats report={latestReport} isLoading={isReportLoading || isRecommendationLoading || isStudentLoading}>
+                    <MotivationTip 
+                        reportTrends={trendDescription} 
+                        studentName={user?.displayName?.split(' ')[0]} 
+                    />
+                </PersonalStats>
+                <div className="text-center">
+                    <Button variant="outline" onClick={handleExportData} disabled={!user || !teacherId}>
+                        <Download className="ml-2 h-4 w-4" />
+                        پشتیبان‌گیری از اطلاعات من
+                    </Button>
+                </div>
+            </div>
+        </div>
     </div>
   );
 }

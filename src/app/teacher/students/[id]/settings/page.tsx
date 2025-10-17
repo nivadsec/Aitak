@@ -10,7 +10,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { useToast } from '@/hooks/use-toast';
-import { Settings, ArrowLeft, Bot, BarChart3, Calendar, FileText, BookCopy, ClipboardPen, BrainCircuit, Map, ClipboardCheck, ClipboardEdit, ClipboardList, BookOpen } from 'lucide-react';
+import { Settings, ArrowLeft, Bot, BarChart3, Calendar, FileText, BookCopy, ClipboardPen, BrainCircuit, Map, ClipboardCheck, ClipboardEdit, ClipboardList, BookOpen, Brain } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 interface FeatureToggleProps {
@@ -71,6 +71,7 @@ export default function StudentSettingsPage({ params }: { params: { id: string }
   
   const features: Omit<FeatureToggleProps, 'student'>[] = [
     { featureKey: 'assistantEnabled', label: 'ربات هوشمند', description: 'فعال‌سازی ربات مشاور هوشمند در پنل دانش‌آموز.', icon: Bot },
+    { featureKey: 'canViewDailyAnalysis', label: 'پایش هوشمند روزانه', description: 'نمایش کارت تحلیل AI در داشبورد اصلی.', icon: Brain },
     { featureKey: 'canViewStats', label: 'آمار عملکرد', description: 'نمایش صفحه آمار و نمودارهای عملکرد فردی.', icon: BarChart3 },
     { featureKey: 'canViewSchedule', label: 'برنامه کلاسی', description: 'نمایش صفحه برنامه کلاسی و جلسات مشاوره.', icon: Calendar },
     { featureKey: 'canViewStrategicPlans', label: 'برنامه راهبردی', description: 'امکان مشاهده و دانلود برنامه‌های راهبردی آزمون.', icon: Map },

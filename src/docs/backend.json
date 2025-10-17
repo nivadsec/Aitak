@@ -16,6 +16,7 @@
         "major": { "type": "string", "description": "The major or field of study for the student, if applicable." },
         "isActive": { "type": "boolean", "description": "Indicates whether the student's account is active." },
         "assistantEnabled": { "type": "boolean", "description": "Controls access to the AI study assistant." },
+        "canViewDailyAnalysis": { "type": "boolean", "description": "Controls access to the AI daily analysis." },
         "canViewStats": { "type": "boolean", "description": "Controls access to the personal stats page." },
         "canViewSchedule": { "type": "boolean", "description": "Controls access to the class schedule page." },
         "canSubmitDailyReport": { "type": "boolean", "description": "Controls access to the daily report form." },

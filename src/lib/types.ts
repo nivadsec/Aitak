@@ -13,6 +13,7 @@ export interface Student {
   
   // Feature flags
   assistantEnabled: boolean;
+  canViewDailyAnalysis: boolean;
   canViewStats: boolean;
   canViewSchedule: boolean;
   canSubmitDailyReport: boolean;
