@@ -1,30 +1,47 @@
 
 'use client';
 
-import React from 'react';
+import React, { useMemo, useState } from 'react';
 import { useCollection, useFirebase, useMemoFirebase } from '@/firebase';
-import { collection, query, where, orderBy, doc } from 'firebase/firestore';
+import { collection, query, where, orderBy, doc, serverTimestamp, updateDoc } from 'firebase/firestore';
 import type { QuestionAnswer, Student } from '@/lib/types';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
-import { Textarea } from '@/components/ui/textarea';
+import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
-import { HelpCircle, Send, CheckCircle, Clock } from 'lucide-react';
+import { HelpCircle, Send, Loader2, User } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { updateDocumentNonBlocking } from '@/firebase/non-blocking-updates';
-import { serverTimestamp } from 'firebase/firestore';
+import { cn } from '@/lib/utils';
+import { ScrollArea } from '@/components/ui/scroll-area';
 
-function AnswerForm({ question }: { question: QuestionAnswer }) {
+function ChatInterface({ student, questions, teacher }: { student: Student; questions: QuestionAnswer[], teacher: any }) {
     const { firestore, user } = useFirebase();
     const { toast } = useToast();
-    const [answer, setAnswer] = React.useState('');
-    const [isLoading, setIsLoading] = React.useState(false);
+    const [answer, setAnswer] = useState('');
+    const [isSending, setIsSending] = useState(false);
+    const scrollAreaRef = React.useRef<HTMLDivElement>(null);
 
-    const handleAnswer = () => {
+    const studentQuestions = useMemo(() => {
+        return questions
+            .filter(q => q.studentId === student.id)
+            .sort((a, b) => a.createdAt.seconds - b.createdAt.seconds);
+    }, [questions, student.id]);
+
+    React.useEffect(() => {
+        if (scrollAreaRef.current) {
+            const viewport = scrollAreaRef.current.querySelector('div[data-radix-scroll-area-viewport]');
+            if (viewport) {
+                viewport.scrollTop = viewport.scrollHeight;
+            }
+        }
+    }, [studentQuestions]);
+
+
+    const handleAnswer = (question: QuestionAnswer) => {
         if (!user || !answer.trim()) return;
-        setIsLoading(true);
+        setIsSending(true);
 
         const questionRef = doc(firestore, 'teachers', user.uid, 'questions', question.id);
         updateDocumentNonBlocking(questionRef, {
@@ -32,29 +49,88 @@ function AnswerForm({ question }: { question: QuestionAnswer }) {
             isAnswered: true,
             answeredAt: serverTimestamp()
         });
-
+        
         toast({ title: 'پاسخ ارسال شد' });
-        setIsLoading(false);
+        setIsSending(false);
         setAnswer('');
     };
+    
+    // The last unanswered question for this student
+    const lastUnansweredQuestion = [...studentQuestions].reverse().find(q => !q.isAnswered);
+
 
     return (
-        <div className="mt-4 space-y-2">
-            <Textarea 
-                value={answer}
-                onChange={(e) => setAnswer(e.target.value)}
-                placeholder="پاسخ خود را اینجا بنویسید..." 
-            />
-            <Button onClick={handleAnswer} disabled={isLoading || !answer.trim()}>
-                <Send className="ml-2 h-4 w-4" />
-                ارسال پاسخ
-            </Button>
-        </div>
+        <Card className="flex flex-col h-full">
+            <CardHeader className="flex-row items-center gap-3 border-b">
+                 <Avatar>
+                    <AvatarImage src={student.avatarUrl} />
+                    <AvatarFallback>{student.firstName?.[0]}{student.lastName?.[0]}</AvatarFallback>
+                </Avatar>
+                <div>
+                    <CardTitle className="text-base font-headline">{student.firstName} {student.lastName}</CardTitle>
+                </div>
+            </CardHeader>
+            <ScrollArea className="flex-1 p-6" ref={scrollAreaRef}>
+                 <div className="space-y-6">
+                    {studentQuestions.flatMap((q, index) => {
+                        const messages = [];
+                        // Question
+                        messages.push(
+                            <div key={`q-${index}`} className="flex items-end gap-3 justify-start">
+                                <Avatar className="h-9 w-9">
+                                    <AvatarImage src={student.avatarUrl} />
+                                    <AvatarFallback>{student.firstName?.[0]}</AvatarFallback>
+                                </Avatar>
+                                <div className="rounded-xl bg-muted p-3 max-w-lg">
+                                    <p className="text-sm">{q.question}</p>
+                                    <p className="text-xs text-muted-foreground mt-1 text-left">{new Date(q.createdAt?.seconds * 1000).toLocaleTimeString('fa-IR', { hour: '2-digit', minute: '2-digit' })}</p>
+                                </div>
+                            </div>
+                        );
+                        // Answer
+                        if (q.isAnswered && q.answer) {
+                            messages.push(
+                                <div key={`a-${index}`} className="flex items-end gap-3 justify-end">
+                                    <div className="rounded-xl bg-primary text-primary-foreground p-3 max-w-lg">
+                                        <p className="text-sm">{q.answer}</p>
+                                        <p className="text-xs text-primary-foreground/70 mt-1 text-left">{q.answeredAt ? new Date(q.answeredAt?.seconds * 1000).toLocaleTimeString('fa-IR', { hour: '2-digit', minute: '2-digit' }) : ''}</p>
+                                    </div>
+                                    <Avatar className="h-9 w-9">
+                                        <AvatarImage src={teacher?.photoURL} />
+                                        <AvatarFallback><User /></AvatarFallback>
+                                    </Avatar>
+                                </div>
+                            );
+                        }
+                        return messages;
+                    })}
+                 </div>
+            </ScrollArea>
+            {lastUnansweredQuestion && (
+                 <div className="p-4 border-t bg-background/95">
+                     <p className='text-xs text-muted-foreground mb-2'>پاسخ به آخرین سوال دانش‌آموز:</p>
+                     <div className="flex w-full items-center space-x-2 space-x-reverse">
+                        <Input
+                            placeholder="پاسخ خود را بنویسید..."
+                            value={answer}
+                            onChange={(e) => setAnswer(e.target.value)}
+                            onKeyPress={(e) => e.key === 'Enter' && handleAnswer(lastUnansweredQuestion)}
+                            disabled={isSending}
+                        />
+                        <Button onClick={() => handleAnswer(lastUnansweredQuestion)} disabled={isSending || !answer.trim()}>
+                            {isSending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
+                            <span className="sr-only">ارسال</span>
+                        </Button>
+                    </div>
+                </div>
+            )}
+        </Card>
     );
 }
 
 export default function TeacherQAPage() {
     const { firestore, user } = useFirebase();
+    const [selectedStudentId, setSelectedStudentId] = useState<string | null>(null);
 
     const questionsQuery = useMemoFirebase(() => {
         if (!user) return null;
@@ -69,109 +145,104 @@ export default function TeacherQAPage() {
     const { data: questions, isLoading: areQuestionsLoading } = useCollection<QuestionAnswer>(questionsQuery);
     const { data: students, isLoading: areStudentsLoading } = useCollection<Student>(studentsQuery);
 
-    const studentsMap = React.useMemo(() => {
-        if (!students) return new Map();
-        return new Map(students.map(s => [s.id, s]));
-    }, [students]);
+    const conversations = useMemo(() => {
+        if (!questions || !students) return [];
+        
+        const studentMap = new Map(students.map(s => [s.id, s]));
+        const convos = new Map<string, { student: Student, lastQuestion: QuestionAnswer, unreadCount: number }>();
 
-    const unansweredQuestions = React.useMemo(() => questions?.filter(q => !q.isAnswered) || [], [questions]);
-    const answeredQuestions = React.useMemo(() => questions?.filter(q => q.isAnswered) || [], [questions]);
+        for (const q of questions) {
+            if (!convos.has(q.studentId)) {
+                const student = studentMap.get(q.studentId);
+                if (student) {
+                    convos.set(q.studentId, {
+                        student,
+                        lastQuestion: q,
+                        unreadCount: 0
+                    });
+                }
+            }
+             const convo = convos.get(q.studentId);
+             if (convo && !q.isAnswered) {
+                 convo.unreadCount++;
+             }
+        }
+        return Array.from(convos.values());
+
+    }, [questions, students]);
+    
+    // Select the first student with an unread message on initial load
+    React.useEffect(() => {
+        if (!selectedStudentId && conversations.length > 0) {
+            const firstUnread = conversations.find(c => c.unreadCount > 0);
+            setSelectedStudentId(firstUnread ? firstUnread.student.id : conversations[0].student.id);
+        }
+    }, [conversations, selectedStudentId]);
+
+    const selectedStudent = useMemo(() => {
+        if (!selectedStudentId || !students) return null;
+        return students.find(s => s.id === selectedStudentId) || null;
+    }, [selectedStudentId, students]);
 
     const isLoading = areQuestionsLoading || areStudentsLoading;
 
     return (
-        <div className="space-y-6">
-            <Card>
-                <CardHeader>
-                    <CardTitle className="font-headline text-xl flex items-center gap-2">
-                        <HelpCircle />
-                        مدیریت پرسش و پاسخ
-                    </CardTitle>
-                    <CardDescription>
-                        به سوالات ارسال شده توسط دانش‌آموزان پاسخ دهید.
-                    </CardDescription>
-                </CardHeader>
-                <CardContent>
-                    {isLoading ? (
-                         <Skeleton className="h-48 w-full" />
-                    ) : (
-                         <Accordion type="multiple" defaultValue={['unanswered']} className="w-full">
-                            <AccordionItem value="unanswered">
-                                <AccordionTrigger className="font-headline text-lg">سوالات پاسخ داده نشده ({unansweredQuestions.length})</AccordionTrigger>
-                                <AccordionContent>
-                                    <div className="space-y-4">
-                                    {unansweredQuestions.length > 0 ? unansweredQuestions.map(q => {
-                                        const student = studentsMap.get(q.studentId);
-                                        return (
-                                            <Card key={q.id} className="bg-primary/5">
-                                                <CardHeader>
-                                                    <div className="flex items-center justify-between">
-                                                        <div className="flex items-center gap-3">
-                                                            <Avatar>
-                                                                <AvatarImage src={student?.avatarUrl} />
-                                                                <AvatarFallback>{student?.firstName?.[0]}</AvatarFallback>
-                                                            </Avatar>
-                                                            <div>
-                                                                <p className="font-semibold">{student?.firstName} {student?.lastName}</p>
-                                                                <p className="text-xs text-muted-foreground">
-                                                                    پرسیده شده در: {new Date(q.createdAt?.seconds * 1000).toLocaleString('fa-IR')}
-                                                                </p>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                </CardHeader>
-                                                <CardContent>
-                                                    <p className="font-medium mb-4">{q.question}</p>
-                                                    <AnswerForm question={q} />
-                                                </CardContent>
-                                            </Card>
-                                        )
-                                    }) : <p className="text-muted-foreground text-center p-4">سوالی برای پاسخ دادن وجود ندارد.</p>}
-                                    </div>
-                                </AccordionContent>
-                            </AccordionItem>
-                            <AccordionItem value="answered">
-                                <AccordionTrigger className="font-headline text-lg">سوالات پاسخ داده شده ({answeredQuestions.length})</AccordionTrigger>
-                                <AccordionContent>
-                                    <div className="space-y-4">
-                                     {answeredQuestions.length > 0 ? answeredQuestions.map(q => {
-                                        const student = studentsMap.get(q.studentId);
-                                        return (
-                                            <Card key={q.id} className="bg-muted/50">
-                                                 <CardHeader>
-                                                    <div className="flex items-center justify-between">
-                                                        <div className="flex items-center gap-3">
-                                                            <Avatar>
-                                                                <AvatarImage src={student?.avatarUrl} />
-                                                                <AvatarFallback>{student?.firstName?.[0]}</AvatarFallback>
-                                                            </Avatar>
-                                                            <div>
-                                                                <p className="font-semibold">{student?.firstName} {student?.lastName}</p>
-                                                                <p className="text-xs text-muted-foreground">
-                                                                    پرسیده شده در: {new Date(q.createdAt?.seconds * 1000).toLocaleString('fa-IR')}
-                                                                </p>
-                                                            </div>
-                                                        </div>
-                                                         <span className="text-xs text-green-600 flex items-center gap-1"><CheckCircle className="h-3 w-3" />پاسخ داده شده</span>
-                                                    </div>
-                                                </CardHeader>
-                                                <CardContent>
-                                                    <p className="font-medium">{q.question}</p>
-                                                    <div className="mt-4 p-3 rounded-md bg-background border">
-                                                        <p className="font-semibold text-sm">پاسخ شما:</p>
-                                                        <p className="text-sm text-muted-foreground">{q.answer}</p>
-                                                    </div>
-                                                </CardContent>
-                                            </Card>
-                                        )
-                                    }) : <p className="text-muted-foreground text-center p-4">هنوز به سوالی پاسخ داده نشده است.</p>}
-                                    </div>
-                                </AccordionContent>
-                            </AccordionItem>
-                        </Accordion>
-                    )}
-                </CardContent>
-            </Card>
+        <div className="h-[calc(100vh-6rem)]">
+            <div className="grid grid-cols-1 lg:grid-cols-4 h-full gap-6">
+                <Card className="lg:col-span-1 h-full flex flex-col">
+                    <CardHeader>
+                        <CardTitle className="font-headline text-lg flex items-center gap-2"><HelpCircle /> گفتگوها</CardTitle>
+                    </CardHeader>
+                    <ScrollArea className="flex-1">
+                        <CardContent className="p-2">
+                             {isLoading && <Skeleton className="h-64 w-full" />}
+                             {!isLoading && conversations.length === 0 && <p className="text-sm text-muted-foreground text-center p-4">هنوز گفتگویی وجود ندارد.</p>}
+                             <div className="space-y-2">
+                                {conversations.map(({ student, lastQuestion, unreadCount }) => (
+                                    <button
+                                        key={student.id}
+                                        onClick={() => setSelectedStudentId(student.id)}
+                                        className={cn(
+                                            "w-full text-right p-3 rounded-lg flex items-center gap-3 transition-colors",
+                                            selectedStudentId === student.id ? "bg-muted" : "hover:bg-muted/50"
+                                        )}
+                                    >
+                                        <Avatar className="h-10 w-10">
+                                            <AvatarImage src={student.avatarUrl} />
+                                            <AvatarFallback>{student.firstName?.[0]}{student.lastName?.[0]}</AvatarFallback>
+                                        </Avatar>
+                                        <div className="flex-1 overflow-hidden">
+                                            <p className="font-semibold truncate">{student.firstName} {student.lastName}</p>
+                                            <p className="text-xs text-muted-foreground truncate">{lastQuestion.isAnswered ? "شما: " : ""}{lastQuestion.question}</p>
+                                        </div>
+                                        {unreadCount > 0 && (
+                                            <div className="flex-shrink-0 bg-primary text-primary-foreground text-xs rounded-full h-5 w-5 flex items-center justify-center">
+                                                {unreadCount}
+                                            </div>
+                                        )}
+                                    </button>
+                                ))}
+                            </div>
+                        </CardContent>
+                    </ScrollArea>
+                </Card>
+
+                <div className="lg:col-span-3 h-full">
+                     {isLoading && <Skeleton className="h-full w-full" />}
+                     {!isLoading && !selectedStudent && (
+                         <div className="flex h-full items-center justify-center rounded-lg border-2 border-dashed">
+                             <p className="text-muted-foreground">یک گفتگو را از لیست انتخاب کنید</p>
+                         </div>
+                     )}
+                     {selectedStudent && (
+                         <ChatInterface 
+                            student={selectedStudent} 
+                            questions={questions || []} 
+                            teacher={user}
+                         />
+                     )}
+                </div>
+            </div>
         </div>
     );
 }
