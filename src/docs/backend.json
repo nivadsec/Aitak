@@ -1,0 +1,460 @@
+
+{
+  "entities": {
+    "Student": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Student",
+      "type": "object",
+      "description": "Represents a student in the آی‌تاب system.",
+      "properties": {
+        "id": { "type": "string", "description": "Unique identifier for the Student entity." },
+        "teacherId": { "type": "string", "description": "Optional reference to the Teacher this student is managed by." },
+        "firstName": { "type": "string", "description": "The first name of the student." },
+        "lastName": { "type": "string", "description": "The last name of the student." },
+        "email": { "type": "string", "description": "The email address of the student.", "format": "email" },
+        "gradeLevel": { "type": "string", "description": "The grade level of the student (e.g., '10th Grade')." },
+        "major": { "type": "string", "description": "The major or field of study for the student, if applicable." },
+        "isActive": { "type": "boolean", "description": "Indicates whether the student's account is active." },
+        "assistantEnabled": { "type": "boolean", "description": "Controls access to the AI study assistant." },
+        "canViewStats": { "type": "boolean", "description": "Controls access to the personal stats page." },
+        "canViewSchedule": { "type": "boolean", "description": "Controls access to the class schedule page." },
+        "canSubmitDailyReport": { "type": "boolean", "description": "Controls access to the daily report form." },
+        "canViewQuestionnaires": { "type": "boolean", "description": "Controls access to the questionnaires page." },
+        "canSubmitWeeklyReport": { "type": "boolean", "description": "Controls access to the weekly progress report form." },
+        "canSubmitExamAnalysis": { "type": "boolean", "description": "Controls access to the exam analysis form." },
+        "canSubmitFocusLadder": { "type": "boolean", "description": "Controls access to the focus ladder form." },
+        "canSubmitTopicInvestment": { "type": "boolean", "description": "Controls access to the topic investment form." },
+        "canViewStrategicPlans": { "type": "boolean", "description": "Controls access to the strategic plans page." },
+        "canViewConsultingContent": { "type": "boolean", "description": "Controls access to the consulting content page." },
+        "canSubmitOverallExamAnalysis": { "type": "boolean", "description": "Controls access to the overall exam analysis form." },
+        "canViewTests": { "type": "boolean", "description": "Controls access to the online tests page." }
+      },
+      "required": ["id", "firstName", "lastName", "email", "gradeLevel", "major", "isActive"]
+    },
+    "Teacher": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Teacher",
+      "type": "object",
+      "description": "Represents a teacher or admin in the آی‌تاب system.",
+      "properties": {
+        "id": { "type": "string", "description": "Unique identifier for the Teacher entity." },
+        "firstName": { "type": "string", "description": "The first name of the teacher." },
+        "lastName": { "type": "string", "description": "The last name of the teacher." },
+        "email": { "type": "string", "description": "The email address of the teacher.", "format": "email" }
+      },
+      "required": ["id", "firstName", "lastName", "email"]
+    },
+    "DailyReport": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "DailyReport",
+      "type": "object",
+      "description": "Represents a student's daily report.",
+      "properties": {
+        "id": { "type": "string", "description": "Unique identifier for the DailyReport entity." },
+        "studentId": { "type": "string", "description": "Reference to Student." },
+        "date": { "type": "string", "description": "The date for which the report is recorded.", "format": "date-time" },
+        "wakeUpTime": { "type": "string", "description": "The time the student woke up.", "format": "date-time" },
+        "studyStartTime": { "type": "string", "description": "The time the student started studying.", "format": "date-time" },
+        "studyEndTime": { "type": "string", "description": "The time the student finished studying.", "format": "date-time" },
+        "totalStudyMinutes": { "type": "number", "description": "Total minutes studied on the report date." },
+        "minutesOfClasses": { "type": "number", "description": "Minutes spent in classes" },
+        "sleepAmount": { "type": "number", "description": "Total amount of sleep student got" },
+        "disasterLevel": { "type": "number", "description": "Slider from 1-10 indicating the students current mental status" },
+        "minutesOfMobileUsage": { "type": "number", "description": "Amount of time spent of the students mobile device" }
+      },
+      "required": ["id", "studentId", "date", "wakeUpTime", "studyStartTime", "studyEndTime", "totalStudyMinutes", "minutesOfClasses", "sleepAmount", "disasterLevel", "minutesOfMobileUsage"]
+    },
+    "SubjectItem": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "SubjectItem",
+      "type": "object",
+      "description": "Represents each subject that the student will be submitting a report for",
+      "properties": {
+        "id": { "type": "string", "description": "Unique identifier for the SubjectItem entity." },
+        "dailyReportId": { "type": "string", "description": "Reference to DailyReport." },
+        "subject": { "type": "string", "description": "Name of the subject" },
+        "topic": { "type": "string", "description": "The specific topic that was studied" },
+        "studyTime": { "type": "number", "description": "Amount of time spent on the topic" },
+        "totalTestQuestions": { "type": "number", "description": "Total number of questions on the test" },
+        "correctTestQuestions": { "type": "number", "description": "Number of correct answers on the test" },
+        "incorrectTestQuestions": { "type": "number", "description": "Number of incorrect answers on the test" },
+        "testPercentage": { "type": "number", "description": "Students score on the test" },
+        "testTime": { "type": "number", "description": "Time spent on the test" }
+      },
+      "required": ["id", "dailyReportId", "subject", "topic", "studyTime", "totalTestQuestions", "correctTestQuestions", "incorrectTestQuestions", "testPercentage", "testTime"]
+    },
+    "Message": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Message",
+      "type": "object",
+      "description": "Represents a message sent from a teacher to a student or all students.",
+      "properties": {
+        "id": { "type": "string" }, "teacherId": { "type": "string" },
+        "studentId": { "type": "string", "description": "Can be a specific student ID or 'all'." },
+        "content": { "type": "string" }, "timestamp": { "type": "string", "format": "date-time" },
+        "sentByEmail": { "type": "boolean" }, "read": { "type": "boolean", "default": false }
+      },
+      "required": ["id", "teacherId", "studentId", "content", "timestamp"]
+    },
+    "Announcement": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Announcement",
+      "type": "object",
+      "description": "Represents a public announcement visible to everyone on the main page.",
+      "properties": {
+        "id": { "type": "string" }, "content": { "type": "string" },
+        "timestamp": { "type": "string", "format": "date-time" }, "teacherId": { "type": "string" }
+      },
+      "required": ["id", "content", "timestamp", "teacherId"]
+    },
+    "ExamReport": {
+        "title": "ExamReport", "type": "object", "description": "Represents a student's exam analysis report.",
+        "properties": {
+            "id": {"type": "string"}, "studentId": {"type": "string"},
+            "exam_date": {"type": "string", "format": "date-time"},
+            "total_score": {"type": "number"}, "rank_country": {"type": "number"},
+            "subjects_summary_correct": {"type": "number"}, "subjects_summary_wrong": {"type": "number"}, "subjects_summary_blank": {"type": "number"},
+            "exam_analysis": {"type": "array", "items": {"$ref": "#/entities/ExamAnalysisSubject"}},
+            "effort_compare": {"type": "array", "items": {"$ref": "#/entities/EffortCompare"}}
+        },
+        "required": ["id", "studentId", "exam_date", "exam_analysis", "effort_compare"]
+    },
+    "ExamAnalysisSubject": {
+        "title": "ExamAnalysisSubject", "type": "object",
+        "properties": {
+            "subject": {"type": "string"},
+            "before_exam": {"type": "object", "properties": {"previous_score": {"type": "number"}, "goal_first": {"type": "number"}}},
+            "execution": {"type": "object", "properties": {"correct": {"type": "number"}, "wrong": {"type": "number"}, "blank": {"type": "number"}, "time_spent": {"type": "number"}, "notes": {"type": "string"}}},
+            "after_exam": {"type": "object", "properties": {"score": {"type": "number"}}}
+        },
+        "required": ["subject", "execution"]
+    },
+    "EffortCompare": {
+        "title": "EffortCompare", "type": "object",
+        "properties": {
+            "subject": {"type": "string"}, "study_hours": {"type": "number"}, "test_hours": {"type": "number"},
+            "exam_score": {"type": "number"}, "teacher_opinion": {"type": "string"}, "reason": {"type": "string"}
+        },
+        "required": ["subject"]
+    },
+    "WeeklyProgressReport": {
+      "title": "WeeklyProgressReport", "type": "object", "description": "Represents a student's weekly progress report.",
+      "properties": {
+        "id": {"type": "string"}, "studentId": {"type": "string"}, "weekNumber": {"type": "number"}, "weekDateRange": {"type": "string"},
+        "studyTimeDetails": {"type": "array", "items": {"type": "object", "properties": {"subject": {"type": "string"}, "targetTime": {"type": "number"}, "actualTime": {"type": "number"}}, "required": ["subject"]}},
+        "testDetails": {"type": "array", "items": {"type": "object", "properties": {"subject": {"type": "string"}, "targetCount": {"type": "number"}, "actualCount": {"type": "number"}}, "required": ["subject"]}},
+        "lastWeekTotalStudy": {"type": "number"}, "thisWeekTotalStudy": {"type": "number"}, "lastWeekTotalTests": {"type": "number"}, "thisWeekTotalTests": {"type": "number"},
+        "keyAchievements": {"type": "string"}, "whatWentWell": {"type": "string"}, "whatCouldBeBetter": {"type": "string"}, "nextWeekGoals": {"type": "string"}
+      },
+      "required": ["id", "studentId", "weekNumber", "weekDateRange"]
+    },
+    "TopicInvestmentReport": {
+      "title": "TopicInvestmentReport", "type": "object", "description": "Represents a student's topic-based time investment plan (Ravadnama).",
+      "properties": {
+        "id": {"type": "string"}, "studentId": {"type": "string"}, "lessonName": {"type": "string"},
+        "averageScore": {"type": "number"}, "mostColor": {"type": "string"},
+        "holidayGoal": {"type": "string"}, "examGoal": {"type": "string"},
+        "lessonTimeInvestment": {"type": "number"}, "partCount": {"type": "number"}, "partTime": {"type": "number"},
+        "finalNotes": {"type": "string"},
+        "topics": {"type": "array", "items": {"type": "object", "properties": {
+              "topic": {"type": "string"}, "priority": {"type": "number"},
+              "studyHours": {"type": "number"}, "videoHours": {"type": "number"}, "testHours": {"type": "number"},
+              "extraActions": {"type": "string"}
+            }, "required": ["topic", "priority"]
+          }
+        }
+      },
+      "required": ["id", "studentId", "lessonName", "topics"]
+    },
+    "Recommendation": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Recommendation",
+      "type": "object",
+      "description": "Represents a recommendation from a teacher to a student, optionally with a quiz.",
+      "properties": {
+        "id": { "type": "string" },
+        "studentId": { "type": "string" },
+        "teacherId": { "type": "string" },
+        "content": { "type": "string" },
+        "isRead": { "type": "boolean", "default": false },
+        "isBlocking": { "type": "boolean", "default": false },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "readAt": { "type": "string", "format": "date-time" },
+        "quiz": {
+          "type": "object",
+          "properties": {
+            "title": { "type": "string" },
+            "questions": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "questionText": { "type": "string" },
+                  "options": { "type": "array", "items": { "type": "string" } },
+                  "correctAnswerIndex": { "type": "number" }
+                },
+                "required": ["questionText", "options", "correctAnswerIndex"]
+              }
+            }
+          },
+          "required": ["title", "questions"]
+        }
+      },
+      "required": ["id", "studentId", "teacherId", "content", "isBlocking", "createdAt"]
+    },
+    "FocusInterval": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "FocusInterval",
+      "type": "object",
+      "description": "Represents a single focus interval recorded by a student.",
+      "properties": {
+        "id": { "type": "string", "description": "Unique identifier for the focus interval." },
+        "studentId": { "type": "string" },
+        "intervalName": { "type": "string", "description": "The name of the study interval (e.g., 'Physics - Part 1')." },
+        "score": { "type": "number", "description": "The focus score from 0 to 10." },
+        "timestamp": { "type": "string", "format": "date-time", "description": "The time the interval was recorded." },
+        "startTime": { "type": "string", "description": "The start time of the interval.", "format": "time" },
+        "endTime": { "type": "string", "description": "The end time of the interval.", "format": "time" },
+        "duration": { "type": "number", "description": "The duration of the interval in minutes." }
+      },
+      "required": ["id", "studentId", "intervalName", "score", "timestamp", "startTime", "endTime", "duration"]
+    },
+    "Questionnaire": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Questionnaire",
+      "type": "object",
+      "description": "Represents a questionnaire or quiz created by a teacher.",
+      "properties": {
+        "id": { "type": "string" },
+        "teacherId": { "type": "string" },
+        "title": { "type": "string" },
+        "duration": { "type": "number", "description": "Optional overall questionnaire duration in minutes." },
+        "allowBackNavigation": { "type": "boolean", "description": "Controls if student can go back to previous questions." },
+        "questions": {
+          "type": "array",
+          "items": {
+            "$ref": "#/entities/QuestionnaireQuestion"
+          }
+        },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "teacherId", "title", "questions", "createdAt", "allowBackNavigation"]
+    },
+    "QuestionnaireQuestion": {
+        "title": "QuestionnaireQuestion",
+        "type": "object",
+        "description": "A single question within a questionnaire.",
+        "properties": {
+            "questionText": { "type": "string" },
+            "options": { "type": "array", "items": { "type": "string" }, "minItems": 4, "maxItems": 4 },
+            "correctAnswerIndex": { "type": "number" },
+            "duration": { "type": "number", "description": "Optional duration in seconds for this question." }
+        },
+        "required": ["questionText", "options", "correctAnswerIndex"]
+    },
+    "QuestionnaireSubmission": {
+        "title": "QuestionnaireSubmission",
+        "type": "object",
+        "description": "Represents a student's submission for a questionnaire.",
+        "properties": {
+            "id": { "type": "string" },
+            "questionnaireId": { "type": "string" },
+            "studentId": { "type": "string" },
+            "answers": { "type": "array", "items": { "type": "number" } },
+            "score": { "type": "number" },
+            "submittedAt": { "type": "string", "format": "date-time" }
+        },
+        "required": ["id", "questionnaireId", "studentId", "answers", "score", "submittedAt"]
+    },
+    "Test": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Test",
+      "type": "object",
+      "description": "Represents an online test created by a teacher.",
+      "properties": {
+        "id": { "type": "string" },
+        "teacherId": { "type": "string" },
+        "title": { "type": "string" },
+        "duration": { "type": "number", "description": "Optional overall test duration in minutes." },
+        "allowBackNavigation": { "type": "boolean", "description": "Controls if student can go back to previous questions." },
+        "questions": {
+          "type": "array",
+          "items": {
+            "$ref": "#/entities/TestQuestion"
+          }
+        },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "teacherId", "title", "questions", "createdAt", "allowBackNavigation"]
+    },
+    "TestQuestion": {
+        "title": "TestQuestion",
+        "type": "object",
+        "description": "A single question within a test.",
+        "properties": {
+            "questionText": { "type": "string" },
+            "options": { "type": "array", "items": { "type": "string" }, "minItems": 4, "maxItems": 4 },
+            "correctAnswerIndex": { "type": "number" },
+            "duration": { "type": "number", "description": "Optional duration in seconds for this question." }
+        },
+        "required": ["questionText", "options", "correctAnswerIndex"]
+    },
+    "TestSubmission": {
+        "title": "TestSubmission",
+        "type": "object",
+        "description": "Represents a student's submission for a test.",
+        "properties": {
+            "id": { "type": "string" },
+            "testId": { "type": "string" },
+            "studentId": { "type": "string" },
+            "answers": { "type": "array", "items": { "type": "number" } },
+            "score": { "type": "number" },
+            "submittedAt": { "type": "string", "format": "date-time" }
+        },
+        "required": ["id", "testId", "studentId", "answers", "score", "submittedAt"]
+    },
+    "StrategicPlan": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "StrategicPlan",
+      "type": "object",
+      "description": "Represents a strategic test plan or syllabus provided by the teacher.",
+      "properties": {
+        "id": { "type": "string", "description": "Unique identifier for the plan." },
+        "teacherId": { "type": "string" },
+        "title": { "type": "string", "description": "The title of the strategic plan (e.g., 'برنامه راهبردی آزمون قلمچی ۲۴ فروردین')." },
+        "description": { "type": "string", "description": "A brief description of the plan." },
+        "fileUrl": { "type": "string", "description": "URL to the attached plan file (e.g., PDF).", "format": "uri" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "teacherId", "title", "createdAt"]
+    },
+    "ScheduleItem": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "ScheduleItem",
+      "type": "object",
+      "description": "Represents a class or meeting in the schedule.",
+      "properties": {
+        "id": { "type": "string" },
+        "teacherId": { "type": "string" },
+        "title": { "type": "string" },
+        "description": { "type": "string" },
+        "dateTime": { "type": "string", "format": "date-time" },
+        "link": { "type": "string", "format": "uri" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "teacherId", "title", "dateTime"]
+    },
+    "ConsultingContent": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "ConsultingContent",
+      "type": "object",
+      "description": "Represents a piece of consulting content (article, video, etc.).",
+      "properties": {
+        "id": { "type": "string" },
+        "teacherId": { "type": "string" },
+        "title": { "type": "string" },
+        "content": { "type": "string" },
+        "videoUrl": { "type": "string", "format": "uri" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "teacherId", "title", "content"]
+    },
+    "LoginHistory": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "LoginHistory",
+      "type": "object",
+      "description": "Represents a student's login attempt.",
+      "properties": {
+        "id": { "type": "string" },
+        "studentId": { "type": "string" },
+        "studentName": { "type": "string" },
+        "email": { "type": "string" },
+        "timestamp": { "type": "string", "format": "date-time" },
+        "type": { "type": "string", "enum": ["login", "logout"] },
+        "status": { "type": "string", "enum": ["success", "failure"] },
+        "failureReason": { "type": "string", "description": "Reason for failure, e.g., 'wrong-password'." }
+      },
+      "required": ["id", "studentId", "email", "timestamp", "type", "status"]
+    },
+     "OverallExamReport": {
+      "title": "OverallExamReport",
+      "type": "object",
+      "description": "Represents a student's overall analysis report for a specific subject across multiple exams.",
+      "properties": {
+        "id": { "type": "string" },
+        "studentId": { "type": "string" },
+        "subjectName": { "type": "string" },
+        "examEntries": { "type": "array", "items": { "$ref": "#/entities/OverallExamEntry" } },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "studentId", "subjectName", "examEntries"]
+    },
+    "OverallExamEntry": {
+      "title": "OverallExamEntry",
+      "type": "object",
+      "description": "A single entry within an overall exam report.",
+      "properties": {
+        "examNumber": { "type": "number" },
+        "date": { "type": "string", "format": "date-time" },
+        "correctCount": { "type": "number" },
+        "incorrectCount": { "type": "number" },
+        "percentage": { "type": "number" },
+        "questionsAnswered": { "type": "number" },
+        "satisfaction": { "type": "number", "description": "Satisfaction score, e.g., 1 to 3 for emojis" },
+        "notes": { "type": "string" }
+      },
+      "required": ["examNumber", "date", "correctCount", "incorrectCount", "percentage"]
+    },
+    "QuestionAnswer": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "title": "QuestionAnswer",
+        "type": "object",
+        "description": "Represents a question asked by a student to a teacher and the corresponding answer.",
+        "properties": {
+            "id": { "type": "string" },
+            "studentId": { "type": "string" },
+            "teacherId": { "type": "string" },
+            "question": { "type": "string" },
+            "answer": { "type": "string" },
+            "isAnswered": { "type": "boolean", "default": false },
+            "createdAt": { "type": "string", "format": "date-time" },
+            "answeredAt": { "type": "string", "format": "date-time" }
+        },
+        "required": ["id", "studentId", "teacherId", "question", "isAnswered", "createdAt"]
+    }
+  },
+  "auth": {
+    "providers": ["password", "anonymous"]
+  },
+  "firestore": {
+    "structure": [
+      { "path": "/announcements/{announcementId}", "definition": { "entityName": "Announcement", "schema": { "$ref": "#/entities/Announcement" }, "description": "Stores public announcements created by teachers, visible on the main login page." } },
+      { "path": "/teachers/{teacherId}", "definition": { "entityName": "Teacher", "schema": { "$ref": "#/entities/Teacher" }, "description": "Stores teacher profiles." } },
+      { "path": "/teachers/{teacherId}/students/{studentId}", "definition": { "entityName": "student", "schema": { "$ref": "#/entities/Student" }, "description": "Stores student profiles managed by a specific teacher." } },
+      { "path": "/teachers/{teacherId}/students/{studentId}/dailyReports/{dailyReportId}", "definition": { "entityName": "DailyReport", "schema": { "$ref": "#/entities/DailyReport" }, "description": "Stores daily reports for a specific student." } },
+      { "path": "/teachers/{teacherId}/students/{studentId}/dailyReports/{dailyReportId}/subjectItems/{subjectItemId}", "definition": { "entityName": "SubjectItem", "schema": { "$ref": "#/entities/SubjectItem" }, "description": "Stores subject items for a specific daily report." } },
+      { "path": "/teachers/{teacherId}/messages/{messageId}", "definition": { "entityName": "Message", "schema": { "$ref": "#/entities/Message" }, "description": "Stores messages sent by a teacher to all of their students." } },
+      { "path": "/teachers/{teacherId}/students/{studentId}/messages/{messageId}", "definition": { "entityName": "Message", "schema": { "$ref": "#/entities/Message" }, "description": "Stores messages sent by a teacher to a specific student." } },
+      { "path": "/teachers/{teacherId}/students/{studentId}/examReports/{reportId}", "definition": { "entityName": "ExamReport", "schema": { "$ref": "#/entities/ExamReport" }, "description": "Stores exam analysis reports for a student." } },
+      { "path": "/teachers/{teacherId}/students/{studentId}/weeklyProgress/{reportId}", "definition": { "entityName": "WeeklyProgressReport", "schema": { "$ref": "#/entities/WeeklyProgressReport" }, "description": "Stores weekly progress reports for a student." } },
+      { "path": "/teachers/{teacherId}/students/{studentId}/topicInvestments/{reportId}", "definition": { "entityName": "TopicInvestmentReport", "schema": { "$ref": "#/entities/TopicInvestmentReport" }, "description": "Stores topic-based time investment plans for a student." } },
+      { "path": "/teachers/{teacherId}/students/{studentId}/overallExamReports/{reportId}", "definition": { "entityName": "OverallExamReport", "schema": { "$ref": "#/entities/OverallExamReport" }, "description": "Stores overall exam analysis reports for a student for a specific subject." } },
+      { "path": "/teachers/{teacherId}/students/{studentId}/recommendations/{recommendationId}", "definition": { "entityName": "Recommendation", "schema": { "$ref": "#/entities/Recommendation" }, "description": "Stores recommendations from a teacher to a specific student." } },
+      { "path": "/teachers/{teacherId}/students/{studentId}/focusIntervals/{intervalId}", "definition": { "entityName": "FocusInterval", "schema": { "$ref": "#/entities/FocusInterval" }, "description": "Stores focus intervals recorded by a student." } },
+      { "path": "/teachers/{teacherId}/questionnaires/{questionnaireId}", "definition": { "entityName": "Questionnaire", "schema": { "$ref": "#/entities/Questionnaire" }, "description": "Stores questionnaires created by a teacher." } },
+      { "path": "/teachers/{teacherId}/questionnaires/{questionnaireId}/submissions/{submissionId}", "definition": { "entityName": "QuestionnaireSubmission", "schema": { "$ref": "#/entities/QuestionnaireSubmission" }, "description": "Stores student submissions for a specific questionnaire." } },
+      { "path": "/teachers/{teacherId}/tests/{testId}", "definition": { "entityName": "Test", "schema": { "$ref": "#/entities/Test" }, "description": "Stores online tests created by a teacher." } },
+      { "path": "/teachers/{teacherId}/tests/{testId}/submissions/{submissionId}", "definition": { "entityName": "TestSubmission", "schema": { "$ref": "#/entities/TestSubmission" }, "description": "Stores student submissions for a specific test." } },
+      { "path": "/teachers/{teacherId}/strategicPlans/{planId}", "definition": { "entityName": "StrategicPlan", "schema": { "$ref": "#/entities/StrategicPlan" }, "description": "Stores strategic test plans and syllabi." } },
+      { "path": "/teachers/{teacherId}/schedule/{scheduleItemId}", "definition": { "entityName": "ScheduleItem", "schema": { "$ref": "#/entities/ScheduleItem" }, "description": "Stores class and meeting schedule items." } },
+      { "path": "/teachers/{teacherId}/consultingContent/{contentId}", "definition": { "entityName": "ConsultingContent", "schema": { "$ref": "#/entities/ConsultingContent" }, "description": "Stores consulting content created by the teacher." } },
+      { "path": "/teachers/{teacherId}/loginHistory/{historyId}", "definition": { "entityName": "LoginHistory", "schema": { "$ref": "#/entities/LoginHistory" }, "description": "Stores login history for all students of a teacher." } },
+      { "path": "/teachers/{teacherId}/questions/{questionId}", "definition": { "entityName": "QuestionAnswer", "schema": { "$ref": "#/entities/QuestionAnswer" }, "description": "Stores questions asked by students to a teacher." } }
+    ]
+  }
+}

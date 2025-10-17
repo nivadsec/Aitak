@@ -3,7 +3,7 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import * as z from 'zod';
-import { Save, Loader2, Bot, BarChart3, Calendar, FileText, BookCopy, ClipboardPen, BrainCircuit, Map, ClipboardCheck, ClipboardEdit } from 'lucide-react';
+import { Save, Loader2, Bot, BarChart3, Calendar, FileText, BookCopy, ClipboardPen, BrainCircuit, Map, ClipboardCheck, ClipboardEdit, ClipboardList } from 'lucide-react';
 import React from 'react';
 
 import { Button } from '@/components/ui/button';
@@ -40,6 +40,7 @@ const formSchema = z.object({
   canViewSchedule: z.boolean().default(true),
   canSubmitDailyReport: z.boolean().default(true),
   canViewQuestionnaires: z.boolean().default(true),
+  canViewTests: z.boolean().default(true),
   canSubmitWeeklyReport: z.boolean().default(true),
   canSubmitExamAnalysis: z.boolean().default(true),
   canSubmitFocusLadder: z.boolean().default(true),
@@ -61,6 +62,7 @@ const permissionFields: { key: keyof FormValues, label: string, icon: React.Elem
     { key: 'assistantEnabled', label: 'ربات هوشمند', icon: Bot },
     { key: 'canViewStats', label: 'آمار عملکرد', icon: BarChart3 },
     { key: 'canViewSchedule', label: 'برنامه کلاسی', icon: Calendar },
+    { key: 'canViewTests', label: 'آزمون‌های آنلاین', icon: ClipboardList },
     { key: 'canViewQuestionnaires', label: 'پرسشنامه‌ها', icon: FileText },
     { key: 'canSubmitDailyReport', label: 'گزارش روزانه', icon: ClipboardEdit },
     { key: 'canSubmitWeeklyReport', label: 'گزارش هفتگی', icon: BookCopy },
@@ -95,6 +97,7 @@ export function StudentForm({ student, onSuccess, onCancel }: StudentFormProps) 
       canViewSchedule: student?.canViewSchedule ?? true,
       canSubmitDailyReport: student?.canSubmitDailyReport ?? true,
       canViewQuestionnaires: student?.canViewQuestionnaires ?? true,
+      canViewTests: student?.canViewTests ?? true,
       canSubmitWeeklyReport: student?.canSubmitWeeklyReport ?? true,
       canSubmitExamAnalysis: student?.canSubmitExamAnalysis ?? true,
       canSubmitFocusLadder: student?.canSubmitFocusLadder ?? true,
