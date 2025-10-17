@@ -1,4 +1,3 @@
-
 'use client';
 
 import React from 'react';
@@ -11,7 +10,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { useToast } from '@/hooks/use-toast';
-import { Settings, ArrowLeft, Bot, BarChart3, Calendar, FileText, BookCopy, ClipboardPen, BrainCircuit, Map, ClipboardCheck, ClipboardEdit } from 'lucide-react';
+import { Settings, ArrowLeft, Bot, BarChart3, Calendar, FileText, BookCopy, ClipboardPen, BrainCircuit, Map, ClipboardCheck, ClipboardEdit, ClipboardList } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 interface FeatureToggleProps {
@@ -61,7 +60,7 @@ function FeatureToggle({ student, featureKey, label, description, icon: Icon }: 
 export default function StudentSettingsPage({ params }: { params: { id: string } }) {
   const { firestore, user } = useFirebase();
   const router = useRouter();
-  const { id } = params;
+  const id = React.use(params);
 
   const studentRef = useMemoFirebase(() => {
     if (!user || !id) return null;
@@ -75,7 +74,8 @@ export default function StudentSettingsPage({ params }: { params: { id: string }
     { featureKey: 'canViewStats', label: 'آمار عملکرد', description: 'نمایش صفحه آمار و نمودارهای عملکرد فردی.', icon: BarChart3 },
     { featureKey: 'canViewSchedule', label: 'برنامه کلاسی', description: 'نمایش صفحه برنامه کلاسی و جلسات مشاوره.', icon: Calendar },
     { featureKey: 'canViewStrategicPlans', label: 'برنامه راهبردی', description: 'امکان مشاهده و دانلود برنامه‌های راهبردی آزمون.', icon: Map },
-    { featureKey: 'canViewQuestionnaires', label: 'پرسشنامه‌ها', description: 'امکان مشاهده و شرکت در پرسشنامه‌های تعریف شده.', icon: FileText },
+    { featureKey: 'canViewTests', label: 'آزمون‌های آنلاین', description: 'امکان شرکت در آزمون‌های آنلاین درسی.', icon: ClipboardList },
+    { featureKey: 'canViewQuestionnaires', label: 'پرسشنامه‌ها', description: 'امکان شرکت در پرسشنامه‌های غیردرسی (هوش و...).', icon: FileText },
     { featureKey: 'canSubmitDailyReport', label: 'گزارش روزانه', description: 'اجازه ثبت و ارسال فرم گزارش روزانه.', icon: ClipboardEdit },
     { featureKey: 'canSubmitWeeklyReport', label: 'گزارش هفتگی', description: 'اجازه ثبت و ارسال فرم گزارش پیشرفت هفتگی.', icon: BookCopy },
     { featureKey: 'canSubmitExamAnalysis', label: 'تحلیل آزمون عددمحور', description: 'اجازه ثبت و ارسال فرم تحلیل آزمون عددمحور.', icon: ClipboardPen },

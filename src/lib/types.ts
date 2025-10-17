@@ -17,6 +17,7 @@ export interface Student {
   canViewSchedule?: boolean;
   canSubmitDailyReport?: boolean;
   canViewQuestionnaires?: boolean;
+  canViewTests?: boolean;
   canSubmitWeeklyReport?: boolean;
   canSubmitExamAnalysis?: boolean;
   canSubmitFocusLadder?: boolean;
@@ -189,6 +190,34 @@ export interface QuestionnaireSubmission {
     score: number; // Percentage score
     submittedAt: any; // Firestore Timestamp
 }
+
+export interface TestQuestion {
+    questionText: string;
+    options: string[];
+    correctAnswerIndex: number;
+    duration?: number; // Optional: duration in seconds for this specific question
+}
+
+export interface Test {
+    id: string;
+    teacherId: string;
+    title: string;
+    questions: TestQuestion[];
+    duration?: number; // Optional: overall test duration in minutes
+    allowBackNavigation: boolean; // Whether the student can go back to previous questions
+    createdAt: any; // Firestore Timestamp
+    updatedAt: any; // Firestore Timestamp
+}
+
+export interface TestSubmission {
+    id: string;
+    testId: string;
+    studentId: string;
+    answers: (number | null)[]; // Array of selected option indices, null if unanswered
+    score: number; // Percentage score
+    submittedAt: any; // Firestore Timestamp
+}
+
 
 export interface StrategicPlan {
     id: string;
