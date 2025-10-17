@@ -1,9 +1,3 @@
-import {genkit} from 'genkit';
-import {googleAI} from '@genkit-ai/google-genai';
-import {config} from 'dotenv';
+import { ai } from '@/ai/genkit';
+import { config } from 'dotenv';
 config();
-
-export const ai = genkit({
-  plugins: [googleAI({apiKey: process.env.MOTIVATIONAL_TIPS_API_KEY})],
-  model: 'googleai/gemini-2.5-flash',
-});
