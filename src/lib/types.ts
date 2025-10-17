@@ -28,28 +28,32 @@ export interface Student {
 }
 
 
-export interface DailyReportItem {
+export interface SubjectItem {
+  id: string;
+  dailyReportId: string;
   subject: string;
   topic: string;
-  studyTime: number; // in minutes
-  testCount: number;
-  correctCount: number;
-  wrongCount: number;
-  testTime: number; // in minutes
+  studyTime: number;
+  totalTestQuestions: number;
+  correctTestQuestions: number;
+  incorrectTestQuestions: number;
+  testPercentage: number;
+  testTime: number;
 }
 
 export interface DailyReport {
+  id: string;
   studentId: string;
   date: string;
   wakeUpTime: string;
   studyStartTime: string;
   studyEndTime: string;
-  items: DailyReportItem[];
-  classMinutes: number;
-  sleepHours: number;
+  totalStudyMinutes: number;
+  minutesOfClasses: number;
+  sleepAmount: number;
   disasterLevel: number;
-  mobileHours: number;
-  attachmentUrl?: string;
+  minutesOfMobileUsage: number;
+  items: SubjectItem[];
 }
 
 export interface ExamAnalysisSubject {

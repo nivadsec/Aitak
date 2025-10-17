@@ -10,7 +10,7 @@ import {
 } from '@/components/ui/card';
 import { BrainCircuit, CheckCircle2, Smile, Smartphone, PieChart as PieChartIcon } from 'lucide-react';
 import { PieChart, Pie, Cell, Tooltip, Legend, ResponsiveContainer } from 'recharts';
-import type { StudentReport } from '@/lib/types';
+import type { DailyReport } from '@/lib/types';
 import { Skeleton } from '../ui/skeleton';
 
 const StatCard = ({ icon: Icon, title, value, footer, colorClass }) => (
@@ -32,29 +32,30 @@ const CHART_COLORS = {
   unanswered: 'hsl(var(--muted))', // Gray
 };
 
-function TestAnalyticsChart({ report }: { report: StudentReport }) {
+function TestAnalyticsChart({ report }: { report: DailyReport }) {
   const testData = React.useMemo(() => {
     if (!report || !report.items || report.items.length === 0) {
       return null;
     }
 
-    const correct = report.items.reduce((sum, item) => sum + (item.correctCount || 0), 0);
-    const wrong = report.items.reduce((sum, item) => sum + (item.wrongCount || 0), 0);
-    const totalQuestions = report.items.reduce((sum, item) => sum + (item.testCount || 0), 0);
+    const totalCorrect = report.items.reduce((sum, item) => sum + (item.correctTestQuestions || 0), 0);
+    const totalIncorrect = report.items.reduce((sum, item) => sum + (item.incorrectTestQuestions || 0), 0);
+    const totalQuestions = report.items.reduce((sum, item) => sum + (item.totalTestQuestions || 0), 0);
+
     
     if (totalQuestions === 0) return null;
     
-    const unanswered = totalQuestions - (correct + wrong);
+    const unanswered = totalQuestions - (totalCorrect + totalIncorrect);
 
     const chartData = [
-      { name: 'صحیح', value: correct, color: CHART_COLORS.correct },
-      { name: 'غلط', value: wrong, color: CHART_COLORS.wrong },
+      { name: 'صحیح', value: totalCorrect, color: CHART_COLORS.correct },
+      { name: 'غلط', value: totalIncorrect, color: CHART_COLORS.wrong },
       { name: 'نزده', value: unanswered > 0 ? unanswered : 0, color: CHART_COLORS.unanswered },
     ].filter(item => item.value > 0);
 
-    const accuracyPercent = totalQuestions > 0 ? ((correct * 3 - wrong) / (totalQuestions * 3)) * 100 : 0;
-    const accuracyRate = (correct + wrong) > 0 ? (correct / (correct + wrong)) * 100 : 0;
-    const responseCoverage = totalQuestions > 0 ? ((correct + wrong) / totalQuestions) * 100 : 0;
+    const accuracyPercent = totalQuestions > 0 ? (((totalCorrect * 3) - totalIncorrect) / (totalQuestions * 3)) * 100 : 0;
+    const accuracyRate = (totalCorrect + totalIncorrect) > 0 ? (totalCorrect / (totalCorrect + totalIncorrect)) * 100 : 0;
+    const responseCoverage = totalQuestions > 0 ? ((totalCorrect + totalIncorrect) / totalQuestions) * 100 : 0;
 
     return {
       chartData,
@@ -148,22 +149,22 @@ function TestAnalyticsChart({ report }: { report: StudentReport }) {
 }
 
 
-export default function PersonalStats({ children, report, isLoading }: { children?: React.ReactNode, report: StudentReport | undefined, isLoading: boolean }) {
+export default function PersonalStats({ children, report, isLoading }: { children?: React.ReactNode, report: DailyReport | undefined, isLoading: boolean }) {
   const stats = React.useMemo(() => {
     if (!report) return null;
-    const totalStudyMinutes = report.items ? report.items.reduce((sum, item) => sum + (item.studyTime || 0), 0) : 0;
+    const totalStudyMinutes = report.totalStudyMinutes || 0;
     const avgStudyHours = (totalStudyMinutes / 60).toFixed(1);
     
-    const totalCorrect = report.items ? report.items.reduce((sum, item) => sum + (item.correctCount || 0), 0) : 0;
-    const totalTests = report.items ? report.items.reduce((sum, item) => sum + (item.testCount || 0), 0) : 0;
-    const totalWrong = report.items ? report.items.reduce((sum, item) => sum + (item.wrongCount || 0), 0) : 0;
+    const totalCorrect = report.items ? report.items.reduce((sum, item) => sum + (item.correctTestQuestions || 0), 0) : 0;
+    const totalTests = report.items ? report.items.reduce((sum, item) => sum + (item.totalTestQuestions || 0), 0) : 0;
+    const totalWrong = report.items ? report.items.reduce((sum, item) => sum + (item.incorrectTestQuestions || 0), 0) : 0;
     
     const accuracy = totalTests > 0 ? (((totalCorrect * 3) - totalWrong) / (totalTests * 3)) * 100 : 0;
 
     return {
       avgStudyHours,
-      moodScore: report.moodScore,
-      mobileHours: report.mobileHours,
+      disasterLevel: report.disasterLevel,
+      mobileHours: report.minutesOfMobileUsage,
       accuracy: accuracy.toFixed(1),
     }
   }, [report]);
@@ -254,7 +255,7 @@ export default function PersonalStats({ children, report, isLoading }: { childre
                  <StatCard 
                     icon={Smile}
                     title="شاخص روانی"
-                    value={`${stats.moodScore}`}
+                    value={`${stats.disasterLevel}`}
                     footer="امتیاز از ۱۰"
                     colorClass="text-amber-500"
                 />

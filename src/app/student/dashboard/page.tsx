@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { useCollection, useFirebase, useMemoFirebase, FirestorePermissionError, errorEmitter } from '@/firebase';
 import { downloadJson } from '@/lib/utils';
 import { collection, doc, getDocs, query, orderBy, limit, getDoc, where } from 'firebase/firestore';
-import { Download, ClipboardEdit, BrainCircuit, ClipboardPen, BookCopy, BarChart3 } from 'lucide-react';
+import { Download, ClipboardEdit, BrainCircuit, ClipboardPen, BookCopy, BarChart3, HelpCircle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import type { StudentRecommendation, DailyReport } from '@/lib/types';
 import React from 'react';
@@ -196,7 +196,7 @@ export default function StudentDashboardPage() {
                 buttonText="ورود به نردبان"
             />
             <ActionCard 
-                title="تحلیل آزمون"
+                title="تحلیل آزمون عددمحور"
                 description="عملکرد خود را در آزمون‌ها تحلیل کنید."
                 icon={ClipboardPen}
                 href="/student/exam-analysis"
@@ -208,6 +208,13 @@ export default function StudentDashboardPage() {
                 icon={BookCopy}
                 href="/student/weekly-progress"
                 buttonText="ثبت گزارش هفتگی"
+            />
+             <ActionCard 
+                title="پرسش و پاسخ"
+                description="سوالات خود را مستقیماً از معلم بپرسید."
+                icon={HelpCircle}
+                href="/student/qa"
+                buttonText="ورود به پرسش و پاسخ"
             />
         </div>
       </div>
