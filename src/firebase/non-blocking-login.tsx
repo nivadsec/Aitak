@@ -1,3 +1,4 @@
+
 'use client';
 import {
   Auth,
@@ -14,7 +15,7 @@ export async function initiateAnonymousSignIn(authInstance: Auth): Promise<void>
     await signInAnonymously(authInstance);
   } catch (error) {
     console.error('Anonymous Sign-In Error:', error);
-    errorEmitter.emit('auth-error', error);
+    // errorEmitter.emit('auth-error', error);
   }
 }
 
@@ -54,6 +55,6 @@ export async function initiateSignOut(authInstance: Auth): Promise<void> {
     await signOut(authInstance);
   } catch (error) {
     console.error('Sign-Out Error:', error);
-    errorEmitter.emit('auth-error', error);
+    // errorEmitter.emit('auth-error', error);
   }
 }
