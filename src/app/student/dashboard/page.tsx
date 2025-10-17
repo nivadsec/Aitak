@@ -11,7 +11,7 @@ import { useToast } from '@/hooks/use-toast';
 import type { Student, StudentRecommendation, DailyReport } from '@/lib/types';
 import React, { useMemo } from 'react';
 import Link from 'next/link';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { getDailyReportsForGenkit } from '@/lib/data';
 import StudentPerformanceAnalysis from '@/components/teacher/StudentPerformanceAnalysis';
 import { DashboardStatsCard } from '@/components/student/DashboardStatsCard';
@@ -49,7 +49,7 @@ const createTrendDescription = (reports: DailyReport[]): string => {
 function ActionCard({ title, description, icon: Icon, href, buttonText }) {
     return (
         <Card className="hover:shadow-lg transition-shadow duration-300 h-full flex flex-col">
-            <CardHeader className="flex-row items-start gap-4">
+            <CardHeader className="flex-row items-start gap-4 pb-4">
                 <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
                     <Icon className="h-6 w-6" />
                 </div>
@@ -58,8 +58,8 @@ function ActionCard({ title, description, icon: Icon, href, buttonText }) {
                     <CardDescription className="text-xs mt-1">{description}</CardDescription>
                 </div>
             </CardHeader>
-            <CardContent>
-                 <Button asChild className="w-full mt-auto">
+            <CardContent className="flex-grow flex items-end">
+                 <Button asChild className="w-full">
                     <Link href={href}>
                         {buttonText}
                     </Link>
