@@ -1,22 +1,33 @@
 'use server';
+import { config } from 'dotenv';
+config();
 
 import * as admin from 'firebase-admin';
 import { ROLES } from '@/lib/roles';
 
-// Initialize Firebase Admin SDK
-// This should only be done once. The check `admin.apps.length` ensures that.
+// Load service account credentials from environment variable
+// In environments like Firebase Hosting, the SDK can discover credentials
+// automatically. In a local environment, we need to load them manually.
+const serviceAccountKey = process.env.SERVICE_ACCOUNT_KEY;
+
 if (!admin.apps.length) {
   try {
-    // When running on Google Cloud (like Firebase Hosting with a server-side component),
-    // the SDK can often auto-discover credentials.
-    admin.initializeApp({
+    if (serviceAccountKey) {
+      // Running in a local or CI environment with an explicit key
+      const serviceAccount = JSON.parse(serviceAccountKey);
+      admin.initializeApp({
+        credential: admin.credential.cert(serviceAccount),
+      });
+    } else {
+      // Running on Google Cloud (e.g., Firebase App Hosting)
+      admin.initializeApp({
         credential: admin.credential.applicationDefault(),
-    });
+      });
+    }
   } catch (error: any) {
     console.error('Firebase Admin Initialization Error:', error);
-    // If auto-discovery fails, you might need to provide credentials manually,
-    // especially in a local development environment.
-    // Make sure GOOGLE_APPLICATION_CREDENTIALS environment variable is set.
+    // We don't throw an error here, but the functions below will fail
+    // and return a user-friendly error to the client.
   }
 }
 
