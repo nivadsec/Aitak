@@ -31,7 +31,7 @@ const allStudentNav = [
   { type: 'separator' },
   { href: '/student/exam-analysis', label: 'تحلیل آزمون عددمحور', icon: ClipboardPen, feature: 'canSubmitExamAnalysis' },
   { href: '/student/overall-exam-analysis', label: 'تحلیل آزمون کلی', icon: ClipboardCheck, feature: 'canSubmitOverallExamAnalysis' },
-  { href: '/student/tests', label: 'آزمون‌های آنلاین', icon: ClipboardList, feature: 'canViewTests' },
+  { href: '/student/tests', label: 'آزمون‌های آنلاین', icon: ClipboardList, feature: 'canViewQuizzes' },
   { href: '/student/questionnaires', label: 'پرسشنامه‌ها', icon: FileText, feature: 'canViewQuestionnaires' },
   { type: 'separator' },
   { href: '/student/topic-investment', label: 'روندنمای درسی', icon: BarChart3, feature: 'canSubmitTopicInvestment' },
