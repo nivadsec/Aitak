@@ -1,3 +1,4 @@
+
 'use client';
 
 import { Bot, Loader2, Send, Sparkles, X } from 'lucide-react';
@@ -80,7 +81,7 @@ export function StudyAssistant() {
               <CardHeader className="flex flex-row items-center justify-between">
                 <div className="flex items-center gap-3">
                     <div className="p-2 bg-primary/10 rounded-full">
-                        <Bot className="h-6 w-6 text-primary" />
+                        <Sparkles className="h-6 w-6 text-primary" />
                     </div>
                     <div>
                         <CardTitle className="font-headline text-lg">مشاور هوشمند</CardTitle>
