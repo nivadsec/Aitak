@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useFirebase } from '@/firebase';
@@ -18,15 +19,14 @@ export default function TeacherSettingsPage() {
   const [hasCopied, setHasCopied] = React.useState(false);
 
   const handleCopy = () => {
-    if (user?.uid) {
-        copyToClipboard(user.uid).then((success) => {
-            if (success) {
-                setHasCopied(true);
-                toast({ title: 'کد معلم کپی شد!' });
-                setTimeout(() => setHasCopied(false), 2000);
-            }
-        });
-    }
+    const teacherCode = 'default-teacher';
+    copyToClipboard(teacherCode).then((success) => {
+        if (success) {
+            setHasCopied(true);
+            toast({ title: 'کد معلم کپی شد!' });
+            setTimeout(() => setHasCopied(false), 2000);
+        }
+    });
   };
 
 
@@ -105,7 +105,7 @@ export default function TeacherSettingsPage() {
           </CardDescription>
         </CardHeader>
         <CardContent className="flex items-center gap-2">
-            <Input readOnly value={user.uid} className="font-mono bg-muted" />
+            <Input readOnly value="default-teacher" className="font-mono bg-muted" />
             <Button variant="outline" size="icon" onClick={handleCopy}>
                 {hasCopied ? <Check className="h-4 w-4 text-green-600" /> : <Copy className="h-4 w-4" />}
             </Button>

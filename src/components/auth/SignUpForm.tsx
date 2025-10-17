@@ -44,7 +44,6 @@ const formSchema = z.object({
   major: z.enum(['انسانی', 'تجربی', 'ریاضی'], {
     required_error: 'انتخاب رشته تحصیلی الزامی است.',
   }),
-  teacherCode: z.string().optional(),
 });
 
 type FormValues = z.infer<typeof formSchema>;
@@ -63,11 +62,10 @@ export function SignUpForm() {
       lastName: '',
       email: '',
       password: '',
-      teacherCode: '',
     },
   });
 
-  const handleUserCreation = async (data: FormValues, teacherId?: string) => {
+  const handleUserCreation = async (data: FormValues, teacherId: string) => {
     if (!auth || !firestore) return;
 
     try {
@@ -79,7 +77,7 @@ export function SignUpForm() {
         const user = userCredential.user;
 
         // Construct role info for photoURL
-        const roleInfo = teacherId ? `${ROLES.STUDENT}:${teacherId}` : ROLES.STUDENT;
+        const roleInfo = `${ROLES.STUDENT}:${teacherId}`;
 
         await updateProfile(user, {
             displayName: `${data.firstName} ${data.lastName}`,
@@ -87,35 +85,30 @@ export function SignUpForm() {
         });
 
         
-        // If a teacherId is present, create the student record under that teacher
-        if (teacherId) {
-            const studentRef = doc(firestore, 'teachers', teacherId, 'students', user.uid);
-            const studentData = {
-                id: user.uid,
-                teacherId: teacherId,
-                firstName: data.firstName,
-                lastName: data.lastName,
-                email: data.email,
-                gradeLevel: data.gradeLevel,
-                major: data.major,
-                isActive: true,
-                assistantEnabled: true,
-                canViewStats: true,
-                canViewSchedule: true,
-                canViewTests: true,
-                canViewQuestionnaires: true,
-                canViewStrategicPlans: true,
-                canViewConsultingContent: true,
-                canSubmitWeeklyReport: true,
-                canSubmitExamAnalysis: true,
-                canSubmitFocusLadder: true,
-                canSubmitTopicInvestment: true,
-            };
-            setDocumentNonBlocking(studentRef, studentData, {});
-        } else {
-            // This logic can be expanded if unassigned students need to be stored elsewhere.
-        }
-
+        const studentRef = doc(firestore, 'teachers', teacherId, 'students', user.uid);
+        const studentData = {
+            id: user.uid,
+            teacherId: teacherId,
+            firstName: data.firstName,
+            lastName: data.lastName,
+            email: data.email,
+            gradeLevel: data.gradeLevel,
+            major: data.major,
+            isActive: true,
+            assistantEnabled: true,
+            canViewStats: true,
+            canViewSchedule: true,
+            canViewTests: true,
+            canViewQuestionnaires: true,
+            canViewStrategicPlans: true,
+            canViewConsultingContent: true,
+            canSubmitWeeklyReport: true,
+            canSubmitExamAnalysis: true,
+            canSubmitFocusLadder: true,
+            canSubmitTopicInvestment: true,
+        };
+        setDocumentNonBlocking(studentRef, studentData, {});
+        
         // Send verification email only after all backend setup is confirmed to be on track
         await sendEmailVerification(user);
 
@@ -149,40 +142,13 @@ export function SignUpForm() {
     setIsLoading(true);
 
     try {
-      let teacherId: string | undefined = undefined;
-
-      if (data.teacherCode) {
-        const teacherRef = doc(firestore, 'teachers', data.teacherCode);
-        const teacherSnap = await getDoc(teacherRef);
-
-        if (!teacherSnap.exists()) {
-          toast({
-            title: 'کد معلم نامعتبر',
-            description: 'معلمی با این کد یافت نشد. لطفاً کد را بررسی کنید یا فیلد را خالی بگذارید.',
-            variant: 'destructive',
-          });
-          setIsLoading(false); // Stop loading
-          return; // Stop execution
-        }
-        teacherId = teacherSnap.id;
-      }
+      const teacherId = 'default-teacher'; // Hardcode the default teacher ID
       
-      // Proceed to create the user, with or without a teacherId
+      // Proceed to create the user with the default teacherId
       await handleUserCreation(data, teacherId);
 
     } catch (error: any) {
-      // This will catch errors from getDoc (like permission errors) or any other unexpected error.
       console.error('Error during sign up process:', error);
-      
-      // Check if it's a Firestore permission error we can identify
-      if(error.name === 'FirebaseError' && (error.code === 'permission-denied' || error.code === 'failed-precondition')) {
-          const permissionError = new FirestorePermissionError({
-              path: `teachers/${data.teacherCode}`, // Approximate path
-              operation: 'get',
-          });
-          errorEmitter.emit('permission-error', permissionError);
-      }
-      
       toast({
         title: 'خطای غیرمنتظره',
         description: 'یک خطای غیرمنتظره در فرآیند ثبت‌نام رخ داد. لطفا دوباره تلاش کنید.',
@@ -308,23 +274,7 @@ export function SignUpForm() {
             )}
           />
         </div>
-         <FormField
-          control={form.control}
-          name="teacherCode"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>کد معلم (اختیاری)</FormLabel>
-              <FormControl>
-                <Input placeholder="کد معلم خود را وارد کنید" {...field} />
-              </FormControl>
-              <FormDescription>
-                اگر کد معلم دارید، با وارد کردن آن به لیست دانش‌آموزان او اضافه می‌شوید.
-              </FormDescription>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-
+        
         <div className="flex justify-end pt-4">
           <Button type="submit" disabled={isLoading} size="lg">
             {isLoading ? (
