@@ -49,6 +49,7 @@ const formSchema = z.object({
   canViewStrategicPlans: z.boolean().default(true),
   canViewConsultingContent: z.boolean().default(true),
   canSubmitOverallExamAnalysis: z.boolean().default(true),
+  canSubmitDetailedExamChecklist: z.boolean().default(true),
 });
 
 type FormValues = z.infer<typeof formSchema>;
@@ -70,6 +71,7 @@ const permissionFields: { key: keyof FormValues, label: string, icon: React.Elem
     { key: 'canSubmitWeeklyReport', label: 'گزارش هفتگی', icon: BookCopy },
     { key: 'canSubmitExamAnalysis', label: 'تحلیل آزمون', icon: ClipboardPen },
     { key: 'canSubmitOverallExamAnalysis', label: 'تحلیل کلی آزمون', icon: ClipboardCheck },
+    { key: 'canSubmitDetailedExamChecklist', label: 'چک‌لیست آزمون', icon: ClipboardCheck },
     { key: 'canSubmitFocusLadder', label: 'نردبان تمرکز', icon: BrainCircuit },
     { key: 'canSubmitTopicInvestment', label: 'روندنمای درسی', icon: Map },
     { key: 'canViewStrategicPlans', label: 'برنامه‌های راهبردی', icon: BarChart3 },
@@ -108,6 +110,7 @@ export function StudentForm({ student, onSuccess, onCancel }: StudentFormProps) 
       canViewStrategicPlans: student?.canViewStrategicPlans ?? true,
       canViewConsultingContent: student?.canViewConsultingContent ?? true,
       canSubmitOverallExamAnalysis: student?.canSubmitOverallExamAnalysis ?? true,
+      canSubmitDetailedExamChecklist: student?.canSubmitDetailedExamChecklist ?? true,
     },
   });
 

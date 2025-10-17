@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { useCollection, useFirebase, useMemoFirebase, FirestorePermissionError, errorEmitter, useDoc } from '@/firebase';
 import { downloadJson } from '@/lib/utils';
 import { collection, doc, getDocs, query, orderBy, limit, getDoc, where } from 'firebase/firestore';
-import { Download, ClipboardEdit, BrainCircuit, ClipboardPen, BookCopy, BarChart3, HelpCircle, FileText, Map, Calendar, BookOpen, ClipboardCheck, ClipboardList, LineChart, ClipboardTick } from 'lucide-react';
+import { Download, ClipboardEdit, BrainCircuit, ClipboardPen, BookCopy, BarChart3, HelpCircle, FileText, Map, Calendar, BookOpen, ClipboardCheck, ClipboardList, LineChart } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import type { Student, StudentRecommendation, DailyReport } from '@/lib/types';
 import React, { useMemo } from 'react';
@@ -109,7 +109,7 @@ const actionCards = [
      {
       title: "چک‌لیست تفصیلی آزمون",
       description: "میزان آمادگی خود را قبل از هر آزمون بسنجید.",
-      icon: ClipboardTick,
+      icon: ClipboardCheck,
       href: "/student/detailed-exam-checklist",
       buttonText: "شروع چک‌لیست"
     },
