@@ -48,24 +48,24 @@ const createTrendDescription = (reports: DailyReport[]): string => {
 
 function ActionCard({ title, description, icon: Icon, href, buttonText }) {
     return (
-        <Card className="hover:shadow-lg transition-shadow duration-300 h-full flex flex-col">
-            <CardHeader className="flex-row items-start gap-4 pb-4 flex-grow">
-                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
-                    <Icon className="h-6 w-6" />
-                </div>
-                <div>
-                    <CardTitle className="font-headline text-lg">{title}</CardTitle>
-                    <CardDescription className="text-xs mt-1">{description}</CardDescription>
-                </div>
-            </CardHeader>
-            <CardFooter>
-                 <Button asChild className="w-full">
-                    <Link href={href}>
-                        {buttonText}
-                    </Link>
-                </Button>
-            </CardFooter>
-        </Card>
+      <Card className="hover:shadow-lg transition-shadow duration-300 h-full flex flex-col">
+        <CardHeader className="flex-row items-start gap-4 pb-4 flex-grow">
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
+            <Icon className="h-6 w-6" />
+          </div>
+          <div>
+            <CardTitle className="font-headline text-lg">{title}</CardTitle>
+            <CardDescription className="text-xs mt-1">{description}</CardDescription>
+          </div>
+        </CardHeader>
+        <CardFooter>
+          <Link href={href} passHref legacyBehavior>
+            <Button as="a" className="w-full">
+              {buttonText}
+            </Button>
+          </Link>
+        </CardFooter>
+      </Card>
     );
 }
 
