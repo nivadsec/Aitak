@@ -83,7 +83,7 @@ export default function StudentsPage() {
           )}
         </CardContent>
       </Card>
-      <DialogContent className="sm:max-w-[425px]">
+      <DialogContent className="sm:max-w-lg">
         <DialogHeader>
           <DialogTitle className="font-headline">افزودن دانش‌آموز جدید</DialogTitle>
           <DialogDescription>
