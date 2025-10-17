@@ -15,7 +15,6 @@ import { Button } from '@/components/ui/button';
 import {
   Form,
   FormControl,
-  FormDescription,
   FormField,
   FormItem,
   FormLabel,
@@ -79,13 +78,14 @@ export function SignUpForm() {
     setIsLoading(true);
 
     try {
+        const teacherId = ADMIN_TEACHER_ID;
+        
         const userCredential = await createUserWithEmailAndPassword(
             auth,
             data.email,
             data.password
         );
         const user = userCredential.user;
-        const teacherId = ADMIN_TEACHER_ID;
 
         const roleInfo = `${ROLES.STUDENT}:${teacherId}`;
 
