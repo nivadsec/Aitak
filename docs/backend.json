@@ -351,6 +351,23 @@
         "notes": { "type": "string" }
       },
       "required": ["examNumber", "date", "correctCount", "incorrectCount", "percentage"]
+    },
+    "QuestionAnswer": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "title": "QuestionAnswer",
+        "type": "object",
+        "description": "Represents a question asked by a student to a teacher and the corresponding answer.",
+        "properties": {
+            "id": { "type": "string" },
+            "studentId": { "type": "string" },
+            "teacherId": { "type": "string" },
+            "question": { "type": "string" },
+            "answer": { "type": "string" },
+            "isAnswered": { "type": "boolean", "default": false },
+            "createdAt": { "type": "string", "format": "date-time" },
+            "answeredAt": { "type": "string", "format": "date-time" }
+        },
+        "required": ["id", "studentId", "teacherId", "question", "isAnswered", "createdAt"]
     }
   },
   "auth": {
@@ -376,7 +393,8 @@
       { "path": "/teachers/{teacherId}/strategicPlans/{planId}", "definition": { "entityName": "StrategicPlan", "schema": { "$ref": "#/entities/StrategicPlan" }, "description": "Stores strategic test plans and syllabi." } },
       { "path": "/teachers/{teacherId}/schedule/{scheduleItemId}", "definition": { "entityName": "ScheduleItem", "schema": { "$ref": "#/entities/ScheduleItem" }, "description": "Stores class and meeting schedule items." } },
       { "path": "/teachers/{teacherId}/consultingContent/{contentId}", "definition": { "entityName": "ConsultingContent", "schema": { "$ref": "#/entities/ConsultingContent" }, "description": "Stores consulting content created by the teacher." } },
-      { "path": "/teachers/{teacherId}/loginHistory/{historyId}", "definition": { "entityName": "LoginHistory", "schema": { "$ref": "#/entities/LoginHistory" }, "description": "Stores login history for all students of a teacher." } }
+      { "path": "/teachers/{teacherId}/loginHistory/{historyId}", "definition": { "entityName": "LoginHistory", "schema": { "$ref": "#/entities/LoginHistory" }, "description": "Stores login history for all students of a teacher." } },
+      { "path": "/teachers/{teacherId}/questions/{questionId}", "definition": { "entityName": "QuestionAnswer", "schema": { "$ref": "#/entities/QuestionAnswer" }, "description": "Stores questions asked by students to a teacher." } }
     ]
   }
 }

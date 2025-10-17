@@ -3,7 +3,7 @@
 
 import React from 'react';
 import { useCollection, useFirebase, useMemoFirebase, setDocumentNonBlocking } from '@/firebase';
-import { collection, query, orderBy, doc, serverTimestamp } from 'firebase/firestore';
+import { collection, query, orderBy, doc, serverTimestamp, where } from 'firebase/firestore';
 import type { QuestionAnswer } from '@/lib/types';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
@@ -34,7 +34,7 @@ export default function StudentQAPage() {
         const questionsCol = collection(firestore, 'teachers', teacherId, 'questions');
         const newDocRef = doc(questionsCol);
         
-        const questionData = {
+        const questionData: Omit<QuestionAnswer, 'answer' | 'answeredAt'> = {
             id: newDocRef.id,
             studentId: user.uid,
             teacherId: teacherId,
