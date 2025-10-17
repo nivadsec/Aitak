@@ -1,3 +1,4 @@
+
 'use client';
 
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -10,6 +11,8 @@ import {
   sendEmailVerification,
   updateProfile,
 } from 'firebase/auth';
+import Link from 'next/link';
+import { doc } from 'firebase/firestore';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -24,14 +27,10 @@ import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth, useFirebase } from '@/firebase';
 import { setDocumentNonBlocking } from '@/firebase/non-blocking-updates';
-import { doc } from 'firebase/firestore';
-import Link from 'next/link';
-
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 import { Alert, AlertDescription, AlertTitle } from '../ui/alert';
 import { ROLES } from '@/lib/roles';
 
-// The hardcoded UID of the single admin/teacher.
 const ADMIN_TEACHER_ID = "05OiQevVDkNy9MmhveRs9h2w81y2";
 
 const formSchema = z.object({
@@ -150,7 +149,6 @@ export function SignUpForm() {
         setIsLoading(false);
     }
   }
-
 
   if (isSuccess) {
     return (
