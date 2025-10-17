@@ -12,19 +12,19 @@ export interface Student {
   avatarUrl?: string; // Optional avatar
   
   // Feature flags
-  assistantEnabled?: boolean;
-  canViewStats?: boolean;
-  canViewSchedule?: boolean;
-  canSubmitDailyReport?: boolean;
-  canViewQuestionnaires?: boolean;
-  canViewTests?: boolean;
-  canSubmitWeeklyReport?: boolean;
-  canSubmitExamAnalysis?: boolean;
-  canSubmitFocusLadder?: boolean;
-  canSubmitTopicInvestment?: boolean;
-  canViewStrategicPlans?: boolean;
-  canViewConsultingContent?: boolean;
-  canSubmitOverallExamAnalysis?: boolean;
+  assistantEnabled: boolean;
+  canViewStats: boolean;
+  canViewSchedule: boolean;
+  canSubmitDailyReport: boolean;
+  canViewQuestionnaires: boolean;
+  canViewTests: boolean;
+  canSubmitWeeklyReport: boolean;
+  canSubmitExamAnalysis: boolean;
+  canSubmitFocusLadder: boolean;
+  canSubmitTopicInvestment: boolean;
+  canViewStrategicPlans: boolean;
+  canViewConsultingContent: boolean;
+  canSubmitOverallExamAnalysis: boolean;
 }
 
 
