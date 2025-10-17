@@ -1,4 +1,3 @@
-
 'use client'
 import { MotivationTip } from '@/components/student/MotivationTip';
 import PersonalStats from '@/components/student/PersonalStats';
@@ -183,13 +182,6 @@ export default function StudentDashboardPage() {
         )}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
            <ActionCard 
-                title="ثبت گزارش روزانه"
-                description="فعالیت‌های درسی امروز خود را ثبت کنید."
-                icon={ClipboardEdit}
-                href="/student/daily-report"
-                buttonText="شروع ثبت"
-            />
-            <ActionCard 
                 title="نردبان تمرکز"
                 description="امتیاز تمرکز خود را در هر بازه ثبت کنید."
                 icon={BrainCircuit}

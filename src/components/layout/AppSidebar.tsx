@@ -1,4 +1,3 @@
-
 'use client';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
@@ -25,7 +24,6 @@ type AppSidebarProps = {
 
 const allStudentNav = [
   { href: '/student/dashboard', label: 'داشبورد', icon: Home, feature: 'core' },
-  { href: '/student/daily-report', label: 'گزارش روزانه', icon: ClipboardEdit, feature: 'core' },
   { href: '/student/weekly-progress', label: 'گزارش هفتگی', icon: BookCopy, feature: 'canSubmitWeeklyReport' },
   { href: '/student/exam-analysis', label: 'تحلیل آزمون', icon: ClipboardPen, feature: 'canSubmitExamAnalysis' },
   { href: '/student/overall-exam-analysis', label: 'تحلیل آزمون کلی', icon: ClipboardCheck, feature: 'canSubmitOverallExamAnalysis' },
@@ -142,5 +140,3 @@ export function AppSidebar({ role }: AppSidebarProps) {
     </Sidebar>
   );
 }
-
-    

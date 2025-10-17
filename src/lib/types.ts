@@ -1,4 +1,3 @@
-
 'use client';
 
 export interface Student {
@@ -262,5 +261,3 @@ export interface QuestionAnswer {
     createdAt: any; // Firestore Timestamp
     answeredAt?: any; // Firestore Timestamp
 }
-
-    

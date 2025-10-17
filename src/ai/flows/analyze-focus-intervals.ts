@@ -5,7 +5,7 @@
  * - analyzeFocusIntervals - A function that handles the focus analysis process.
  */
 
-import {ai} from './genkit-analyze-focus';
+import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
 
 const FocusIntervalInputSchema = z.object({
