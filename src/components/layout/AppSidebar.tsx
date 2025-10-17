@@ -2,7 +2,7 @@
 'use client';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { BookCopy, Home, Users, BarChart3, MessageSquare, Megaphone, ClipboardPen, ClipboardEdit, BrainCircuit, Settings, Lightbulb, Bot, FileText, Calendar, BookOpen, Map, History, ShieldCheck, ClipboardCheck } from 'lucide-react';
+import { BookCopy, Home, Users, BarChart3, MessageSquare, Megaphone, ClipboardPen, ClipboardEdit, BrainCircuit, Settings, Lightbulb, Bot, FileText, Calendar, BookOpen, Map, History, ShieldCheck, ClipboardCheck, HelpCircle } from 'lucide-react';
 import React from 'react';
 import {
   Sidebar,
@@ -34,6 +34,8 @@ const allStudentNav = [
   { href: '/student/strategic-plans', label: 'برنامه راهبردی', icon: Map, feature: 'canViewStrategicPlans' },
   { href: '/student/quizzes', label: 'آزمون‌ها', icon: FileText, feature: 'canViewQuizzes' },
   { href: '/student/schedule', label: 'برنامه کلاسی', icon: Calendar, feature: 'canViewSchedule' },
+  { href: '/student/consulting', label: 'محتوای مشاوره‌ای', icon: BookOpen, feature: 'canViewConsultingContent' },
+  { href: '/student/qa', label: 'پرسش و پاسخ', icon: HelpCircle, feature: 'core' },
   { href: '/student/stats', label: 'آمار عملکرد', icon: BarChart3, feature: 'canViewStats' },
   { href: '/student/settings', label: 'تنظیمات', icon: Settings, feature: 'core' },
 ];
@@ -42,6 +44,7 @@ const teacherNav = [
   { href: '/teacher/dashboard', label: 'داشبورد', icon: Home },
   { href: '/teacher/students', label: 'دانش‌آموزان', icon: Users },
   { href: '/teacher/permissions', label: 'دسترسی‌ها', icon: ShieldCheck },
+  { href: '/teacher/qa', label: 'پرسش و پاسخ', icon: HelpCircle },
   { href: '/teacher/strategic-plans', label: 'برنامه راهبردی', icon: Map },
   { href: '/teacher/quizzes', label: 'آزمون‌ها', icon: FileText },
   { href: '/teacher/recommendations', label: 'توصیه‌ها', icon: Lightbulb },

@@ -251,3 +251,14 @@ export interface OverallExamReport {
     createdAt: any; // Firestore Timestamp
     updatedAt: any; // Firestore Timestamp
 }
+
+export interface QuestionAnswer {
+    id: string;
+    studentId: string;
+    teacherId: string;
+    question: string;
+    answer?: string;
+    isAnswered: boolean;
+    createdAt: any; // Firestore Timestamp
+    answeredAt?: any; // Firestore Timestamp
+}
