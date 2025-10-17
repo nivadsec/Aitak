@@ -1,3 +1,4 @@
+
 'use client';
 
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -9,7 +10,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '
 import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Textarea } from '@/components/ui/textarea';
-import { ClipboardCheck, PlusCircle, Save, Trash2, Loader2 } from 'lucide-react';
+import { BarChart3, PlusCircle, Save, Trash2, Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import React from 'react';
 import { useFirebase } from '@/firebase';
@@ -19,10 +20,10 @@ import { setDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 const topicSchema = z.object({
   topic: z.string().min(1, "مبحث الزامی است."),
   priority: z.coerce.number().min(1, "اولویت الزامی است."),
-  studyHours: z.coerce.number().min(0),
-  videoHours: z.coerce.number().min(0),
-  testHours: z.coerce.number().min(0),
-  extraActions: z.string().optional(),
+  studyHours: z.coerce.number().min(0).default(0),
+  videoHours: z.coerce.number().min(0).default(0),
+  testHours: z.coerce.number().min(0).default(0),
+  extraActions: z.string().optional().default(''),
 });
 
 const formSchema = z.object({
@@ -35,7 +36,7 @@ const formSchema = z.object({
   partCount: z.coerce.number().optional(),
   partTime: z.coerce.number().optional(),
   finalNotes: z.string().optional(),
-  topics: z.array(topicSchema),
+  topics: z.array(topicSchema).min(1, 'حداقل یک مبحث باید اضافه شود.'),
 });
 
 type FormValues = z.infer<typeof formSchema>;
@@ -50,6 +51,14 @@ export function TopicInvestmentForm() {
         resolver: zodResolver(formSchema),
         defaultValues: {
             lessonName: '',
+            averageScore: 0,
+            mostColor: '',
+            holidayGoal: '',
+            examGoal: '',
+            lessonTimeInvestment: 0,
+            partCount: 0,
+            partTime: 0,
+            finalNotes: '',
             topics: [{ topic: '', priority: 1, studyHours: 0, videoHours: 0, testHours: 0, extraActions: '' }],
         },
     });
@@ -84,8 +93,8 @@ export function TopicInvestmentForm() {
         try {
             setDocumentNonBlocking(reportRef, reportData, { merge: true });
             toast({
-                title: "فرم ذخیره شد",
-                description: "اطلاعات سرمایه‌گذاری زمانی شما با موفقیت ثبت شد.",
+                title: "فرم روندنما ذخیره شد",
+                description: "اطلاعات برنامه‌ریزی شما با موفقیت ثبت شد.",
                 className: 'font-body',
             });
             form.reset();
@@ -111,18 +120,21 @@ export function TopicInvestmentForm() {
                 <Card className="bg-muted/30 border-none shadow-none">
                     <CardHeader>
                         <CardTitle className="font-headline text-2xl flex items-center gap-3">
-                            <ClipboardCheck className="h-7 w-7 text-primary" />
-                            فرم سرمایه زمانی مبحث‌محور
+                            <BarChart3 className="h-7 w-7 text-primary" />
+                            فرم روندنمای درسی
                         </CardTitle>
                         <CardDescription>
-                            حالا که فرم درس‌محور تمام شد، از این درس کدام مباحث را بخوانیم؟
+                            مسیر یادگیری هر درس را گام‌به‌گام و با کنترل پیشرفت برنامه‌ریزی کنید.
                         </CardDescription>
                     </CardHeader>
                 </Card>
 
                 {/* Section 1: General Info */}
                 <Card>
-                    <CardContent className="pt-6 grid grid-cols-2 md:grid-cols-4 gap-4">
+                     <CardHeader>
+                        <CardTitle className="font-headline text-lg">اطلاعات کلی درس</CardTitle>
+                    </CardHeader>
+                    <CardContent className="pt-0 grid grid-cols-2 md:grid-cols-4 gap-4">
                         <FormField control={form.control} name="lessonName" render={({ field }) => (
                             <FormItem><FormLabel>نام درس</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
                         )} />
@@ -133,7 +145,7 @@ export function TopicInvestmentForm() {
                             <FormItem><FormLabel>هدفگذاری عید</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
                         )} />
                         <FormField control={form.control} name="mostColor" render={({ field }) => (
-                            <FormItem><FormLabel>بیشترین رنگ</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
+                            <FormItem><FormLabel>بیشترین رنگ شما</FormLabel><FormControl><Input placeholder="مثال: زرد" {...field} /></FormControl><FormMessage /></FormItem>
                         )} />
                          <FormField control={form.control} name="lessonTimeInvestment" render={({ field }) => (
                             <FormItem><FormLabel>سرمایه درس (دقیقه)</FormLabel><FormControl><Input type="number" {...field} /></FormControl><FormMessage /></FormItem>
@@ -153,7 +165,7 @@ export function TopicInvestmentForm() {
                 {/* Section 2: Topics Table */}
                  <Card>
                     <CardHeader>
-                        <CardTitle className="font-headline text-lg">جزئیات سرمایه‌گذاری زمانی بر اساس مبحث</CardTitle>
+                        <CardTitle className="font-headline text-lg">جزئیات برنامه‌ریزی بر اساس مبحث</CardTitle>
                         <CardDescription>مجموع سرمایه‌گذاری زمانی شما: <span className='font-bold text-primary'>{totalInvestment.toFixed(2)}</span> ساعت</CardDescription>
                     </CardHeader>
                     <CardContent>
@@ -194,7 +206,8 @@ export function TopicInvestmentForm() {
                  {/* Section 3: Final Notes */}
                 <Card>
                     <CardHeader>
-                        <CardTitle className="font-headline text-lg">توضیحات نهایی</CardTitle>
+                        <CardTitle className="font-headline text-lg">یادداشت شخصی</CardTitle>
+                         <CardDescription>آینده در مورد این مدت، نکته‌ای داری؟ اینجا بنویس تا فراموش نکنی.</CardDescription>
                     </CardHeader>
                     <CardContent>
                         <FormField control={form.control} name="finalNotes" render={({ field }) => (
@@ -209,7 +222,7 @@ export function TopicInvestmentForm() {
                 <div className="flex justify-end">
                     <Button type="submit" size="lg" disabled={isLoading}>
                         {isLoading ? <Loader2 className="ml-2 h-4 w-4 animate-spin" /> : <Save className="ml-2 h-4 w-4" />}
-                        ذخیره فرم
+                        ذخیره روندنما
                     </Button>
                 </div>
             </form>

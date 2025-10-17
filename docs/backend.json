@@ -147,12 +147,20 @@
       "required": ["id", "studentId", "weekNumber", "weekDateRange"]
     },
     "TopicInvestmentReport": {
-      "title": "TopicInvestmentReport", "type": "object", "description": "Represents a student's topic-based time investment plan.",
+      "title": "TopicInvestmentReport", "type": "object", "description": "Represents a student's topic-based time investment plan (Ravadnama).",
       "properties": {
-        "id": {"type": "string"}, "studentId": {"type": "string"}, "lessonName": {"type": "string"}, "averageScore": {"type": "number"}, "mostColor": {"type": "string"},
-        "holidayGoal": {"type": "string"}, "examGoal": {"type": "string"}, "lessonTimeInvestment": {"type": "number"}, "partCount": {"type": "number"}, "partTime": {"type": "number"},
+        "id": {"type": "string"}, "studentId": {"type": "string"}, "lessonName": {"type": "string"},
+        "averageScore": {"type": "number"}, "mostColor": {"type": "string"},
+        "holidayGoal": {"type": "string"}, "examGoal": {"type": "string"},
+        "lessonTimeInvestment": {"type": "number"}, "partCount": {"type": "number"}, "partTime": {"type": "number"},
         "finalNotes": {"type": "string"},
-        "topics": {"type": "array", "items": {"type": "object", "properties": {"topic": {"type": "string"}, "priority": {"type": "number"}, "studyHours": {"type": "number"}, "videoHours": {"type": "number"}, "testHours": {"type": "number"}, "extraActions": {"type": "string"}}, "required": ["topic", "priority"]}}
+        "topics": {"type": "array", "items": {"type": "object", "properties": {
+              "topic": {"type": "string"}, "priority": {"type": "number"},
+              "studyHours": {"type": "number"}, "videoHours": {"type": "number"}, "testHours": {"type": "number"},
+              "extraActions": {"type": "string"}
+            }, "required": ["topic", "priority"]
+          }
+        }
       },
       "required": ["id", "studentId", "lessonName", "topics"]
     },
@@ -398,3 +406,5 @@
     ]
   }
 }
+
+    
