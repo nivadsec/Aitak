@@ -3,7 +3,7 @@
 import React from 'react';
 import { useCollection, useDoc, useFirebase, useMemoFirebase } from '@/firebase';
 import { collection, doc, query, orderBy } from 'firebase/firestore';
-import type { Quiz, QuizSubmission, Student } from '@/lib/types';
+import type { Questionnaire, QuestionnaireSubmission, Student } from '@/lib/types';
 import { notFound } from 'next/navigation';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -11,18 +11,18 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { FileText, Percent, User, Calendar, CheckCircle } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 
-export default function QuizResultsPage({ params }: { params: { id: string } }) {
+export default function QuestionnaireResultsPage({ params }: { params: { id: string } }) {
     const { firestore, user } = useFirebase();
     const { id } = params;
 
-    const quizRef = useMemoFirebase(() => {
+    const questionnaireRef = useMemoFirebase(() => {
         if (!user || !id) return null;
-        return doc(firestore, 'teachers', user.uid, 'quizzes', id);
+        return doc(firestore, 'teachers', user.uid, 'questionnaires', id);
     }, [firestore, user, id]);
 
     const submissionsQuery = useMemoFirebase(() => {
         if (!user || !id) return null;
-        return query(collection(firestore, 'teachers', user.uid, 'quizzes', id, 'submissions'), orderBy('submittedAt', 'desc'));
+        return query(collection(firestore, 'teachers', user.uid, 'questionnaires', id, 'submissions'), orderBy('submittedAt', 'desc'));
     }, [firestore, user, id]);
 
     const studentsQuery = useMemoFirebase(() => {
@@ -30,8 +30,8 @@ export default function QuizResultsPage({ params }: { params: { id: string } }) 
         return query(collection(firestore, 'teachers', user.uid, 'students'));
     }, [firestore, user]);
 
-    const { data: quiz, isLoading: isQuizLoading } = useDoc<Quiz>(quizRef);
-    const { data: submissions, isLoading: areSubmissionsLoading } = useCollection<QuizSubmission>(submissionsQuery);
+    const { data: questionnaire, isLoading: isQuestionnaireLoading } = useDoc<Questionnaire>(questionnaireRef);
+    const { data: submissions, isLoading: areSubmissionsLoading } = useCollection<QuestionnaireSubmission>(submissionsQuery);
     const { data: students, isLoading: areStudentsLoading } = useCollection<Student>(studentsQuery);
 
     const studentsMap = React.useMemo(() => {
@@ -39,7 +39,7 @@ export default function QuizResultsPage({ params }: { params: { id: string } }) 
         return new Map(students.map(s => [s.id, s]));
     }, [students]);
     
-    const isLoading = isQuizLoading || areSubmissionsLoading || areStudentsLoading;
+    const isLoading = isQuestionnaireLoading || areSubmissionsLoading || areStudentsLoading;
 
     if (isLoading) {
         return (
@@ -62,7 +62,7 @@ export default function QuizResultsPage({ params }: { params: { id: string } }) 
         );
     }
     
-    if (!quiz) {
+    if (!questionnaire) {
         return notFound();
     }
 
@@ -72,10 +72,10 @@ export default function QuizResultsPage({ params }: { params: { id: string } }) 
                 <CardHeader>
                     <CardTitle className="font-headline text-2xl flex items-center gap-3">
                         <FileText className="h-7 w-7 text-primary" />
-                        نتایج آزمون: {quiz.title}
+                        نتایج پرسشنامه: {questionnaire.title}
                     </CardTitle>
                     <CardDescription>
-                        در این بخش می‌توانید نتایج ثبت شده توسط دانش‌آموزان برای این آزمون را مشاهده کنید.
+                        در این بخش می‌توانید نتایج ثبت شده توسط دانش‌آموزان برای این پرسشنامه را مشاهده کنید.
                     </CardDescription>
                 </CardHeader>
             </Card>
@@ -119,7 +119,7 @@ export default function QuizResultsPage({ params }: { params: { id: string } }) 
                             ) : (
                                 <TableRow>
                                     <TableCell colSpan={3} className="text-center h-24">
-                                        هنوز هیچ نتیجه‌ای برای این آزمون ثبت نشده است.
+                                        هنوز هیچ نتیجه‌ای برای این پرسشنامه ثبت نشده است.
                                     </TableCell>
                                 </TableRow>
                             )}
@@ -130,7 +130,3 @@ export default function QuizResultsPage({ params }: { params: { id: string } }) 
         </div>
     );
 }
-
-    
-
-    

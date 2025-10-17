@@ -8,14 +8,14 @@ import { downloadJson } from '@/lib/utils';
 import { collection, doc, getDocs, query, orderBy, limit, getDoc, where } from 'firebase/firestore';
 import { Download, ClipboardEdit, BrainCircuit, ClipboardPen, BookCopy, BarChart3 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import type { StudentRecommendation, StudentReport } from '@/lib/types';
+import type { StudentRecommendation, DailyReport } from '@/lib/types';
 import React from 'react';
 import Link from 'next/link';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { FocusLadder } from '@/components/student/FocusLadder';
 
 // Helper function to create a simple trend description
-const createTrendDescription = (reports: StudentReport[]): string => {
+const createTrendDescription = (reports: DailyReport[]): string => {
     if (reports.length < 2) {
         return "گزارش‌های کافی برای تحلیل روند وجود ندارد.";
     }
@@ -34,9 +34,9 @@ const createTrendDescription = (reports: StudentReport[]): string => {
         trend += "ثبات در ساعت مطالعه";
     }
 
-    if (latest.moodScore > previous.moodScore) {
+    if (latest.disasterLevel > previous.disasterLevel) {
         trend += " و بهبود در وضعیت روانی";
-    } else if (latest.moodScore < previous.moodScore) {
+    } else if (latest.disasterLevel < previous.disasterLevel) {
         trend += " و افت در وضعیت روانی";
     }
 
@@ -95,7 +95,7 @@ export default function StudentDashboardPage() {
       )
   }, [firestore, user, teacherId]);
 
-  const { data: reports, isLoading: isReportLoading } = useCollection<StudentReport>(reportsQuery);
+  const { data: reports, isLoading: isReportLoading } = useCollection<DailyReport>(reportsQuery);
   const { data: recommendations, isLoading: isRecommendationLoading } = useCollection<StudentRecommendation>(recommendationQuery);
   
   const latestReport = reports?.[0];
@@ -180,6 +180,13 @@ export default function StudentDashboardPage() {
         {unreadRecommendation && (
             <StudentRecommendationCard recommendation={unreadRecommendation} />
         )}
+        <ActionCard
+          title="گزارش روزانه"
+          description="ثبت و تحلیل عملکرد روزانه در مطالعه و فعالیت‌ها."
+          icon={ClipboardEdit}
+          href="/student/daily-report"
+          buttonText="ثبت گزارش روزانه"
+        />
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
            <ActionCard 
                 title="نردبان تمرکز"

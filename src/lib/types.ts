@@ -15,7 +15,8 @@ export interface Student {
   assistantEnabled?: boolean;
   canViewStats?: boolean;
   canViewSchedule?: boolean;
-  canViewQuizzes?: boolean;
+  canSubmitDailyReport?: boolean;
+  canViewQuestionnaires?: boolean;
   canSubmitWeeklyReport?: boolean;
   canSubmitExamAnalysis?: boolean;
   canSubmitFocusLadder?: boolean;
@@ -36,7 +37,7 @@ export interface DailyReportItem {
   testTime: number; // in minutes
 }
 
-export interface StudentReport {
+export interface DailyReport {
   studentId: string;
   date: string;
   wakeUpTime: string;
@@ -45,7 +46,7 @@ export interface StudentReport {
   items: DailyReportItem[];
   classMinutes: number;
   sleepHours: number;
-  moodScore: number; // 1 to 10
+  disasterLevel: number;
   mobileHours: number;
   attachmentUrl?: string;
 }
@@ -162,27 +163,27 @@ export interface FocusInterval {
     duration: number; // in minutes
 }
 
-export interface QuizQuestion {
+export interface QuestionnaireQuestion {
     questionText: string;
     options: string[];
     correctAnswerIndex: number;
     duration?: number; // Optional: duration in seconds for this specific question
 }
 
-export interface Quiz {
+export interface Questionnaire {
     id: string;
     teacherId: string;
     title: string;
-    questions: QuizQuestion[];
-    duration?: number; // Optional: overall quiz duration in minutes
+    questions: QuestionnaireQuestion[];
+    duration?: number; // Optional: overall questionnaire duration in minutes
     allowBackNavigation: boolean; // Whether the student can go back to previous questions
     createdAt: any; // Firestore Timestamp
     updatedAt: any; // Firestore Timestamp
 }
 
-export interface QuizSubmission {
+export interface QuestionnaireSubmission {
     id: string;
-    quizId: string;
+    questionnaireId: string;
     studentId: string;
     answers: (number | null)[]; // Array of selected option indices, null if unanswered
     score: number; // Percentage score

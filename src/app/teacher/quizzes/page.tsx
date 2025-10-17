@@ -3,23 +3,23 @@
 import React from 'react';
 import { useCollection, useFirebase, useMemoFirebase } from '@/firebase';
 import { collection, query, orderBy } from 'firebase/firestore';
-import type { Quiz } from '@/lib/types';
+import type { Questionnaire } from '@/lib/types';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { FileText, PlusCircle } from 'lucide-react';
-import { QuizzesList } from '@/components/teacher/QuizzesList';
+import { QuestionnairesList } from '@/components/teacher/QuestionnairesList';
 import Link from 'next/link';
 
-export default function TeacherQuizzesPage() {
+export default function TeacherQuestionnairesPage() {
     const { firestore, user } = useFirebase();
 
-    const quizzesQuery = useMemoFirebase(() => {
+    const questionnairesQuery = useMemoFirebase(() => {
         if (!user) return null;
-        return query(collection(firestore, 'teachers', user.uid, 'quizzes'), orderBy('createdAt', 'desc'));
+        return query(collection(firestore, 'teachers', user.uid, 'questionnaires'), orderBy('createdAt', 'desc'));
     }, [firestore, user]);
 
-    const { data: quizzes, isLoading } = useCollection<Quiz>(quizzesQuery);
+    const { data: questionnaires, isLoading } = useCollection<Questionnaire>(questionnairesQuery);
 
     return (
         <div className="space-y-6">
@@ -28,16 +28,16 @@ export default function TeacherQuizzesPage() {
                     <div>
                         <CardTitle className="font-headline text-xl flex items-center gap-2">
                             <FileText />
-                            مدیریت آزمون‌ها
+                            مدیریت پرسشنامه‌ها
                         </CardTitle>
                         <CardDescription>
-                            آزمون‌های جدید ایجاد کنید، آزمون‌های قبلی را ویرایش یا حذف کنید و نتایج را مشاهده نمایید.
+                            پرسشنامه‌های جدید (مانند آزمون هوش، شخصیت‌شناسی و...) ایجاد کنید، موارد قبلی را ویرایش یا حذف کنید و نتایج را مشاهده نمایید.
                         </CardDescription>
                     </div>
                      <Button asChild>
-                        <Link href="/teacher/quizzes/new">
+                        <Link href="/teacher/questionnaires/new">
                             <PlusCircle className="ml-2 h-4 w-4" />
-                            آزمون جدید
+                            پرسشنامه جدید
                         </Link>
                     </Button>
                 </CardHeader>
@@ -48,7 +48,7 @@ export default function TeacherQuizzesPage() {
                             <Skeleton className="h-24 w-full" />
                         </div>
                     ) : (
-                        <QuizzesList quizzes={quizzes || []} />
+                        <QuestionnairesList questionnaires={questionnaires || []} />
                     )}
                 </CardContent>
             </Card>

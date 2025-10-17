@@ -7,7 +7,7 @@ import { Edit, MoreVertical, Trash2, AlertTriangle, FileText, BarChart2 } from '
 import { deleteDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 import { useFirebase } from '@/firebase/provider';
 import { useToast } from '@/hooks/use-toast';
-import type { Quiz } from '@/lib/types';
+import type { Questionnaire } from '@/lib/types';
 
 import {
   AlertDialog,
@@ -30,38 +30,38 @@ import {
 } from '@/components/ui/dropdown-menu';
 import Link from 'next/link';
 
-interface QuizzesListProps {
-  quizzes: Quiz[];
+interface QuestionnairesListProps {
+  questionnaires: Questionnaire[];
 }
 
-export function QuizzesList({ quizzes }: QuizzesListProps) {
+export function QuestionnairesList({ questionnaires }: QuestionnairesListProps) {
   const { firestore, user } = useFirebase();
   const { toast } = useToast();
-  const [deletingQuiz, setDeletingQuiz] = React.useState<Quiz | null>(null);
+  const [deletingQuestionnaire, setDeletingQuestionnaire] = React.useState<Questionnaire | null>(null);
 
-  const handleDelete = (quizId: string) => {
+  const handleDelete = (questionnaireId: string) => {
     if (!user) return;
-    // Note: Deleting a quiz should also delete its subcollections (submissions)
+    // Note: Deleting a questionnaire should also delete its subcollections (submissions)
     // This requires a Cloud Function for robust implementation. The current client-side
-    // delete will only remove the quiz document itself.
-    const quizRef = doc(firestore, 'teachers', user.uid, 'quizzes', quizId);
-    deleteDocumentNonBlocking(quizRef);
-    setDeletingQuiz(null);
+    // delete will only remove the questionnaire document itself.
+    const questionnaireRef = doc(firestore, 'teachers', user.uid, 'questionnaires', questionnaireId);
+    deleteDocumentNonBlocking(questionnaireRef);
+    setDeletingQuestionnaire(null);
     toast({
-      title: "آزمون حذف شد",
-      description: "آزمون مورد نظر با موفقیت حذف شد.",
+      title: "پرسشنامه حذف شد",
+      description: "پرسشنامه مورد نظر با موفقیت حذف شد.",
       variant: 'destructive',
       className: 'font-body',
     });
   };
 
-  if (quizzes.length === 0) {
+  if (questionnaires.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center rounded-md border-2 border-dashed p-12 text-center">
         <FileText className="h-10 w-10 text-muted-foreground" />
-        <h3 className="mt-4 text-lg font-semibold">هیچ آزمونی یافت نشد</h3>
+        <h3 className="mt-4 text-lg font-semibold">هیچ پرسشنامه‌ای یافت نشد</h3>
         <p className="mt-2 text-sm text-muted-foreground">
-          برای ایجاد اولین آزمون، روی دکمه "آزمون جدید" کلیک کنید.
+          برای ایجاد اولین پرسشنامه، روی دکمه "پرسشنامه جدید" کلیک کنید.
         </p>
       </div>
     );
@@ -70,13 +70,13 @@ export function QuizzesList({ quizzes }: QuizzesListProps) {
   return (
     <>
       <div className="space-y-4">
-        {quizzes.map((quiz) => (
-          <Card key={quiz.id}>
+        {questionnaires.map((q) => (
+          <Card key={q.id}>
             <CardHeader className="flex-row items-start justify-between">
               <div>
-                <CardTitle className="text-lg font-headline">{quiz.title}</CardTitle>
+                <CardTitle className="text-lg font-headline">{q.title}</CardTitle>
                 <CardDescription>
-                  {quiz.questions.length} سوال | ساخته شده در: {new Date(quiz.createdAt?.seconds * 1000).toLocaleDateString('fa-IR')}
+                  {q.questions.length} سوال | ساخته شده در: {new Date(q.createdAt?.seconds * 1000).toLocaleDateString('fa-IR')}
                 </CardDescription>
               </div>
               <DropdownMenu>
@@ -87,13 +87,13 @@ export function QuizzesList({ quizzes }: QuizzesListProps) {
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
                   <DropdownMenuItem asChild>
-                     <Link href={`/teacher/quizzes/results/${quiz.id}`}>
+                     <Link href={`/teacher/questionnaires/results/${q.id}`}>
                         <BarChart2 className="ml-2 h-4 w-4" />
                         مشاهده نتایج
                     </Link>
                   </DropdownMenuItem>
                   <DropdownMenuItem asChild>
-                    <Link href={`/teacher/quizzes/edit/${quiz.id}`}>
+                    <Link href={`/teacher/questionnaires/edit/${q.id}`}>
                       <Edit className="ml-2 h-4 w-4" />
                       ویرایش
                     </Link>
@@ -101,7 +101,7 @@ export function QuizzesList({ quizzes }: QuizzesListProps) {
                   <DropdownMenuSeparator />
                   <DropdownMenuItem
                     className="text-destructive focus:text-destructive focus:bg-destructive/10"
-                    onClick={() => setDeletingQuiz(quiz)}
+                    onClick={() => setDeletingQuestionnaire(q)}
                   >
                     <Trash2 className="ml-2 h-4 w-4" />
                     حذف
@@ -113,22 +113,22 @@ export function QuizzesList({ quizzes }: QuizzesListProps) {
         ))}
       </div>
       
-      <AlertDialog open={!!deletingQuiz} onOpenChange={(open) => !open && setDeletingQuiz(null)}>
+      <AlertDialog open={!!deletingQuestionnaire} onOpenChange={(open) => !open && setDeletingQuestionnaire(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle className="font-headline flex items-center gap-2">
               <AlertTriangle className="text-destructive" />
-              آیا از حذف آزمون مطمئن هستید؟
+              آیا از حذف پرسشنامه مطمئن هستید؟
             </AlertDialogTitle>
             <AlertDialogDescription>
-              این عمل قابل بازگشت نیست و آزمون برای همیشه حذف خواهد شد. تمام نتایج ثبت شده توسط دانش‌آموزان نیز حذف می‌شود.
+              این عمل قابل بازگشت نیست و پرسشنامه برای همیشه حذف خواهد شد. تمام نتایج ثبت شده توسط دانش‌آموزان نیز حذف می‌شود.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>انصراف</AlertDialogCancel>
             <AlertDialogAction
               className="bg-destructive hover:bg-destructive/90"
-              onClick={() => handleDelete(deletingQuiz!.id)}
+              onClick={() => handleDelete(deletingQuestionnaire!.id)}
             >
               حذف کن
             </AlertDialogAction>

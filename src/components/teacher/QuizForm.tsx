@@ -15,11 +15,11 @@ import { setDocumentNonBlocking, updateDocumentNonBlocking } from '@/firebase/no
 import { Input } from '../ui/input';
 import { RadioGroup, RadioGroupItem } from '../ui/radio-group';
 import { Textarea } from '../ui/textarea';
-import type { Quiz } from '@/lib/types';
+import type { Questionnaire } from '@/lib/types';
 import { Switch } from '../ui/switch';
 
 
-const quizQuestionSchema = z.object({
+const questionnaireQuestionSchema = z.object({
     questionText: z.string().min(1, 'متن سوال الزامی است.'),
     options: z.array(z.string().min(1, 'متن گزینه الزامی است.')).length(4, 'باید دقیقاً ۴ گزینه وجود داشته باشد.'),
     correctAnswerIndex: z.coerce.number().min(0).max(3),
@@ -27,32 +27,32 @@ const quizQuestionSchema = z.object({
 });
 
 const formSchema = z.object({
-  title: z.string().min(3, "عنوان آزمون باید حداقل ۳ کاراکتر باشد."),
+  title: z.string().min(3, "عنوان پرسشنامه باید حداقل ۳ کاراکتر باشد."),
   duration: z.coerce.number().min(0).optional(),
   allowBackNavigation: z.boolean().default(true),
-  questions: z.array(quizQuestionSchema).min(1, 'آزمون باید حداقل یک سوال داشته باشد.'),
+  questions: z.array(questionnaireQuestionSchema).min(1, 'پرسشنامه باید حداقل یک سوال داشته باشد.'),
 });
 
 type FormValues = z.infer<typeof formSchema>;
 
-interface QuizFormProps {
-  quiz?: Quiz;
+interface QuestionnaireFormProps {
+  questionnaire?: Questionnaire;
   onSuccess: () => void;
 }
 
-export function QuizForm({ quiz, onSuccess }: QuizFormProps) {
+export function QuestionnaireForm({ questionnaire, onSuccess }: QuestionnaireFormProps) {
   const { toast } = useToast();
   const { firestore, user } = useFirebase();
   const [isLoading, setIsLoading] = React.useState(false);
-  const isEditMode = !!quiz;
+  const isEditMode = !!questionnaire;
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: isEditMode ? {
-        title: quiz.title,
-        duration: quiz.duration,
-        allowBackNavigation: quiz.allowBackNavigation,
-        questions: quiz.questions.map(q => ({
+        title: questionnaire.title,
+        duration: questionnaire.duration,
+        allowBackNavigation: questionnaire.allowBackNavigation,
+        questions: questionnaire.questions.map(q => ({
             ...q,
             correctAnswerIndex: Number(q.correctAnswerIndex),
             duration: q.duration || 0,
@@ -77,7 +77,7 @@ export function QuizForm({ quiz, onSuccess }: QuizFormProps) {
     }
     setIsLoading(true);
 
-    const quizData = {
+    const questionnaireData = {
         teacherId: user.uid,
         title: data.title,
         duration: data.duration,
@@ -91,20 +91,20 @@ export function QuizForm({ quiz, onSuccess }: QuizFormProps) {
     }
 
     try {
-        if (isEditMode && quiz) {
-            const quizRef = doc(firestore, 'teachers', user.uid, 'quizzes', quiz.id);
-            updateDocumentNonBlocking(quizRef, { ...quizData, createdAt: quiz.createdAt });
-            toast({ title: 'آزمون به‌روزرسانی شد', description: 'تغییرات با موفقیت ذخیره شد.' });
+        if (isEditMode && questionnaire) {
+            const questionnaireRef = doc(firestore, 'teachers', user.uid, 'questionnaires', questionnaire.id);
+            updateDocumentNonBlocking(questionnaireRef, { ...questionnaireData, createdAt: questionnaire.createdAt });
+            toast({ title: 'پرسشنامه به‌روزرسانی شد', description: 'تغییرات با موفقیت ذخیره شد.' });
         } else {
-            const quizzesCol = collection(firestore, 'teachers', user.uid, 'quizzes');
-            const newDocRef = doc(quizzesCol);
-            setDocumentNonBlocking(newDocRef, { ...quizData, id: newDocRef.id }, {});
-            toast({ title: 'آزمون ایجاد شد', description: 'آزمون جدید با موفقیت ساخته شد.' });
+            const questionnairesCol = collection(firestore, 'teachers', user.uid, 'questionnaires');
+            const newDocRef = doc(questionnairesCol);
+            setDocumentNonBlocking(newDocRef, { ...questionnaireData, id: newDocRef.id }, {});
+            toast({ title: 'پرسشنامه ایجاد شد', description: 'پرسشنامه جدید با موفقیت ساخته شد.' });
         }
       onSuccess();
     } catch (error: any) {
-      console.error('Error saving quiz:', error);
-      toast({ title: 'خطا در ذخیره‌سازی', description: error.message || 'مشکلی در هنگام ذخیره آزمون پیش آمد.', variant: 'destructive' });
+      console.error('Error saving questionnaire:', error);
+      toast({ title: 'خطا در ذخیره‌سازی', description: error.message || 'مشکلی در هنگام ذخیره پرسشنامه پیش آمد.', variant: 'destructive' });
     } finally {
       setIsLoading(false);
     }
@@ -116,7 +116,7 @@ export function QuizForm({ quiz, onSuccess }: QuizFormProps) {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <FormField control={form.control} name="title" render={({ field }) => (
               <FormItem>
-                  <FormLabel>عنوان آزمون</FormLabel>
+                  <FormLabel>عنوان پرسشنامه</FormLabel>
                   <FormControl><Input placeholder="مثال: آزمون فصل اول فیزیک دهم" {...field} /></FormControl>
                   <FormMessage />
               </FormItem>
@@ -125,7 +125,7 @@ export function QuizForm({ quiz, onSuccess }: QuizFormProps) {
                 <FormItem>
                     <FormLabel className="flex items-center gap-2">
                       <Timer className="h-4 w-4"/>
-                      زمان کلی آزمون (دقیقه)
+                      زمان کلی (دقیقه)
                     </FormLabel>
                     <FormControl><Input type="number" placeholder="مثال: 25" {...field} /></FormControl>
                     <FormDescription className="text-xs">برای آزمون بدون زمان کلی، این فیلد را خالی یا 0 بگذارید.</FormDescription>
@@ -150,7 +150,7 @@ export function QuizForm({ quiz, onSuccess }: QuizFormProps) {
         )} />
         
         <div className="space-y-4">
-            <FormLabel>سوالات آزمون</FormLabel>
+            <FormLabel>سوالات</FormLabel>
             {fields.map((field, index) => (
                 <div key={field.id} className="space-y-3 rounded-md border p-4 relative bg-muted/50">
                     <div className='flex justify-between items-center'>
@@ -204,7 +204,7 @@ export function QuizForm({ quiz, onSuccess }: QuizFormProps) {
             </Button>
              <Button type="submit" disabled={isLoading}>
                 {isLoading ? <Loader2 className="ml-2 h-4 w-4 animate-spin" /> : <Save className="ml-2 h-4 w-4" />}
-                {isEditMode ? 'ذخیره تغییرات' : 'ایجاد آزمون'}
+                {isEditMode ? 'ذخیره تغییرات' : 'ایجاد پرسشنامه'}
             </Button>
         </div>
       </form>

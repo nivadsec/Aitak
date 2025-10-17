@@ -18,7 +18,8 @@
         "assistantEnabled": { "type": "boolean", "description": "Controls access to the AI study assistant." },
         "canViewStats": { "type": "boolean", "description": "Controls access to the personal stats page." },
         "canViewSchedule": { "type": "boolean", "description": "Controls access to the class schedule page." },
-        "canViewQuizzes": { "type": "boolean", "description": "Controls access to the quizzes page." },
+        "canSubmitDailyReport": { "type": "boolean", "description": "Controls access to the daily report form." },
+        "canViewQuestionnaires": { "type": "boolean", "description": "Controls access to the questionnaires page." },
         "canSubmitWeeklyReport": { "type": "boolean", "description": "Controls access to the weekly progress report form." },
         "canSubmitExamAnalysis": { "type": "boolean", "description": "Controls access to the exam analysis form." },
         "canSubmitFocusLadder": { "type": "boolean", "description": "Controls access to the focus ladder form." },
@@ -217,21 +218,21 @@
       },
       "required": ["id", "studentId", "intervalName", "score", "timestamp", "startTime", "endTime", "duration"]
     },
-    "Quiz": {
+    "Questionnaire": {
       "$schema": "http://json-schema.org/draft-07/schema#",
-      "title": "Quiz",
+      "title": "Questionnaire",
       "type": "object",
-      "description": "Represents a quiz created by a teacher.",
+      "description": "Represents a questionnaire or quiz created by a teacher.",
       "properties": {
         "id": { "type": "string" },
         "teacherId": { "type": "string" },
         "title": { "type": "string" },
-        "duration": { "type": "number", "description": "Optional overall quiz duration in minutes." },
+        "duration": { "type": "number", "description": "Optional overall questionnaire duration in minutes." },
         "allowBackNavigation": { "type": "boolean", "description": "Controls if student can go back to previous questions." },
         "questions": {
           "type": "array",
           "items": {
-            "$ref": "#/entities/QuizQuestion"
+            "$ref": "#/entities/QuestionnaireQuestion"
           }
         },
         "createdAt": { "type": "string", "format": "date-time" },
@@ -239,10 +240,10 @@
       },
       "required": ["id", "teacherId", "title", "questions", "createdAt", "allowBackNavigation"]
     },
-    "QuizQuestion": {
-        "title": "QuizQuestion",
+    "QuestionnaireQuestion": {
+        "title": "QuestionnaireQuestion",
         "type": "object",
-        "description": "A single question within a quiz.",
+        "description": "A single question within a questionnaire.",
         "properties": {
             "questionText": { "type": "string" },
             "options": { "type": "array", "items": { "type": "string" }, "minItems": 4, "maxItems": 4 },
@@ -251,19 +252,19 @@
         },
         "required": ["questionText", "options", "correctAnswerIndex"]
     },
-    "QuizSubmission": {
-        "title": "QuizSubmission",
+    "QuestionnaireSubmission": {
+        "title": "QuestionnaireSubmission",
         "type": "object",
-        "description": "Represents a student's submission for a quiz.",
+        "description": "Represents a student's submission for a questionnaire.",
         "properties": {
             "id": { "type": "string" },
-            "quizId": { "type": "string" },
+            "questionnaireId": { "type": "string" },
             "studentId": { "type": "string" },
             "answers": { "type": "array", "items": { "type": "number" } },
             "score": { "type": "number" },
             "submittedAt": { "type": "string", "format": "date-time" }
         },
-        "required": ["id", "quizId", "studentId", "answers", "score", "submittedAt"]
+        "required": ["id", "questionnaireId", "studentId", "answers", "score", "submittedAt"]
     },
     "StrategicPlan": {
       "$schema": "http://json-schema.org/draft-07/schema#",
@@ -396,8 +397,8 @@
       { "path": "/teachers/{teacherId}/students/{studentId}/overallExamReports/{reportId}", "definition": { "entityName": "OverallExamReport", "schema": { "$ref": "#/entities/OverallExamReport" }, "description": "Stores overall exam analysis reports for a student for a specific subject." } },
       { "path": "/teachers/{teacherId}/students/{studentId}/recommendations/{recommendationId}", "definition": { "entityName": "Recommendation", "schema": { "$ref": "#/entities/Recommendation" }, "description": "Stores recommendations from a teacher to a specific student." } },
       { "path": "/teachers/{teacherId}/students/{studentId}/focusIntervals/{intervalId}", "definition": { "entityName": "FocusInterval", "schema": { "$ref": "#/entities/FocusInterval" }, "description": "Stores focus intervals recorded by a student." } },
-      { "path": "/teachers/{teacherId}/quizzes/{quizId}", "definition": { "entityName": "Quiz", "schema": { "$ref": "#/entities/Quiz" }, "description": "Stores quizzes created by a teacher." } },
-      { "path": "/teachers/{teacherId}/quizzes/{quizId}/submissions/{submissionId}", "definition": { "entityName": "QuizSubmission", "schema": { "$ref": "#/entities/QuizSubmission" }, "description": "Stores student submissions for a specific quiz." } },
+      { "path": "/teachers/{teacherId}/questionnaires/{questionnaireId}", "definition": { "entityName": "Questionnaire", "schema": { "$ref": "#/entities/Questionnaire" }, "description": "Stores questionnaires created by a teacher." } },
+      { "path": "/teachers/{teacherId}/questionnaires/{questionnaireId}/submissions/{submissionId}", "definition": { "entityName": "QuestionnaireSubmission", "schema": { "$ref": "#/entities/QuestionnaireSubmission" }, "description": "Stores student submissions for a specific questionnaire." } },
       { "path": "/teachers/{teacherId}/strategicPlans/{planId}", "definition": { "entityName": "StrategicPlan", "schema": { "$ref": "#/entities/StrategicPlan" }, "description": "Stores strategic test plans and syllabi." } },
       { "path": "/teachers/{teacherId}/schedule/{scheduleItemId}", "definition": { "entityName": "ScheduleItem", "schema": { "$ref": "#/entities/ScheduleItem" }, "description": "Stores class and meeting schedule items." } },
       { "path": "/teachers/{teacherId}/consultingContent/{contentId}", "definition": { "entityName": "ConsultingContent", "schema": { "$ref": "#/entities/ConsultingContent" }, "description": "Stores consulting content created by the teacher." } },

@@ -2,24 +2,24 @@
 
 import { useDoc, useFirebase, useMemoFirebase } from '@/firebase';
 import { doc } from 'firebase/firestore';
-import type { Quiz } from '@/lib/types';
+import type { Questionnaire } from '@/lib/types';
 import { notFound, useRouter } from 'next/navigation';
 import { Skeleton } from '@/components/ui/skeleton';
-import { QuizForm } from '@/components/teacher/QuizForm';
+import { QuestionnaireForm } from '@/components/teacher/QuestionnaireForm';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { FileText } from 'lucide-react';
 
-export default function EditQuizPage({ params }: { params: { id: string } }) {
+export default function EditQuestionnairePage({ params }: { params: { id: string } }) {
     const { firestore, user } = useFirebase();
     const router = useRouter();
     const { id } = params;
 
-    const quizRef = useMemoFirebase(() => {
+    const questionnaireRef = useMemoFirebase(() => {
         if (!user || !id) return null;
-        return doc(firestore, 'teachers', user.uid, 'quizzes', id);
+        return doc(firestore, 'teachers', user.uid, 'questionnaires', id);
     }, [firestore, user, id]);
 
-    const { data: quiz, isLoading } = useDoc<Quiz>(quizRef);
+    const { data: questionnaire, isLoading } = useDoc<Questionnaire>(questionnaireRef);
 
     if (isLoading) {
         return (
@@ -41,7 +41,7 @@ export default function EditQuizPage({ params }: { params: { id: string } }) {
         );
     }
     
-    if (!quiz) {
+    if (!questionnaire) {
         return notFound();
     }
 
@@ -50,17 +50,15 @@ export default function EditQuizPage({ params }: { params: { id: string } }) {
             <CardHeader>
                 <CardTitle className="font-headline flex items-center gap-2 text-xl">
                     <FileText />
-                    ویرایش آزمون
+                    ویرایش پرسشنامه
                 </CardTitle>
                 <CardDescription>
-                    اطلاعات و سوالات آزمون «{quiz.title}» را ویرایش کنید.
+                    اطلاعات و سوالات پرسشنامه «{questionnaire.title}» را ویرایش کنید.
                 </CardDescription>
             </CardHeader>
             <CardContent>
-                <QuizForm quiz={quiz} onSuccess={() => router.push('/teacher/quizzes')} />
+                <QuestionnaireForm questionnaire={questionnaire} onSuccess={() => router.push('/teacher/questionnaires')} />
             </CardContent>
         </Card>
     );
 }
-
-    

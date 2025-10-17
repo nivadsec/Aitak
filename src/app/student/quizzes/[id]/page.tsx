@@ -3,7 +3,7 @@
 import React, { useEffect, useState, useCallback, useMemo } from 'react';
 import { useDoc, useFirebase, useMemoFirebase } from '@/firebase';
 import { doc, serverTimestamp } from 'firebase/firestore';
-import type { Quiz, QuizSubmission } from '@/lib/types';
+import type { Questionnaire, QuestionnaireSubmission } from '@/lib/types';
 import { notFound, useRouter } from 'next/navigation';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -17,33 +17,33 @@ import { Progress } from '@/components/ui/progress';
 import jsPDF from 'jspdf';
 import 'jspdf-autotable'; // Ensure you have this installed: npm install jspdf jspdf-autotable
 
-const QuizTaker = ({ quiz }: { quiz: Quiz }) => {
+const QuestionnaireTaker = ({ questionnaire }: { questionnaire: Questionnaire }) => {
     const { toast } = useToast();
     const { firestore, user, role } = useFirebase();
     const teacherId = role?.split(':')[1];
     const router = useRouter();
 
     const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
-    const [answers, setAnswers] = useState<(number | null)[]>(() => Array(quiz.questions.length).fill(null));
+    const [answers, setAnswers] = useState<(number | null)[]>(() => Array(questionnaire.questions.length).fill(null));
     const [isFinished, setIsFinished] = useState(false);
     const [result, setResult] = useState<{ score: number; correct: number; total: number } | null>(null);
     const [isLoading, setIsLoading] = useState(false);
     
-    // Timer state for overall quiz
-    const [overallTimeLeft, setOverallTimeLeft] = useState(quiz.duration ? quiz.duration * 60 : null);
+    // Timer state for overall questionnaire
+    const [overallTimeLeft, setOverallTimeLeft] = useState(questionnaire.duration ? questionnaire.duration * 60 : null);
     // Timer state for individual questions
     const [questionTimeLeft, setQuestionTimeLeft] = useState<number | null>(null);
 
-    const currentQuestion = quiz.questions[currentQuestionIndex];
+    const currentQuestion = questionnaire.questions[currentQuestionIndex];
 
     const goToNextQuestion = useCallback(() => {
-        if (currentQuestionIndex < quiz.questions.length - 1) {
+        if (currentQuestionIndex < questionnaire.questions.length - 1) {
             setCurrentQuestionIndex(prev => prev + 1);
         } else {
             // This is the last question, so submit
             handleSubmit();
         }
-    }, [currentQuestionIndex, quiz.questions.length]);
+    }, [currentQuestionIndex, questionnaire.questions.length]);
 
 
     // Effect to manage per-question timer
@@ -65,7 +65,7 @@ const QuizTaker = ({ quiz }: { quiz: Quiz }) => {
         }
     }, [currentQuestion, goToNextQuestion]);
     
-    // Effect to manage overall quiz timer
+    // Effect to manage overall questionnaire timer
     useEffect(() => {
         if (overallTimeLeft === null || isFinished) return;
 
@@ -92,37 +92,37 @@ const QuizTaker = ({ quiz }: { quiz: Quiz }) => {
         setIsFinished(true);
 
         let correctAnswers = 0;
-        quiz.questions.forEach((q, index) => {
+        questionnaire.questions.forEach((q, index) => {
             if (answers[index] === q.correctAnswerIndex) {
                 correctAnswers++;
             }
         });
         
-        const totalQuestions = quiz.questions.length;
+        const totalQuestions = questionnaire.questions.length;
         const score = (correctAnswers / totalQuestions) * 100;
         
-        const submissionData: Omit<QuizSubmission, 'id'> = {
-            quizId: quiz.id,
+        const submissionData: Omit<QuestionnaireSubmission, 'id'> = {
+            questionnaireId: questionnaire.id,
             studentId: user.uid,
             answers: answers as (number | null)[],
             score: score,
             submittedAt: serverTimestamp(),
         }
 
-        const submissionRef = doc(firestore, 'teachers', teacherId, 'quizzes', quiz.id, 'submissions', user.uid);
+        const submissionRef = doc(firestore, 'teachers', teacherId, 'questionnaires', questionnaire.id, 'submissions', user.uid);
         await setDocumentNonBlocking(submissionRef, submissionData, { merge: true });
 
         setResult({ score, correct: correctAnswers, total: totalQuestions });
         setIsLoading(false);
-        toast({ title: "آزمون ثبت شد!", description: `شما به ${correctAnswers} سوال از ${totalQuestions} پاسخ صحیح دادید.` });
+        toast({ title: "پرسشنامه ثبت شد!", description: `شما به ${correctAnswers} سوال از ${totalQuestions} پاسخ صحیح دادید.` });
     };
 
     const handleRetry = () => {
         setResult(null);
         setIsFinished(false);
         setCurrentQuestionIndex(0);
-        setAnswers(Array(quiz.questions.length).fill(null));
-        setOverallTimeLeft(quiz.duration ? quiz.duration * 60 : null);
+        setAnswers(Array(questionnaire.questions.length).fill(null));
+        setOverallTimeLeft(questionnaire.duration ? questionnaire.duration * 60 : null);
     };
 
     const handleDownloadPdf = () => {
@@ -134,12 +134,12 @@ const QuizTaker = ({ quiz }: { quiz: Quiz }) => {
         // A better approach would be a server-side PDF generation with proper font support.
         doc.setLanguage('fa');
         
-        doc.text(quiz.title, 105, 20, { align: 'center' });
+        doc.text(questionnaire.title, 105, 20, { align: 'center' });
         
         (doc as any).autoTable({
             startY: 30,
             head: [['سوال', 'گزینه ۱', 'گزینه ۲', 'گزینه ۳', 'گزینه ۴', 'پاسخ صحیح']],
-            body: quiz.questions.map((q, i) => [
+            body: questionnaire.questions.map((q, i) => [
                 `${i + 1}. ${q.questionText}`,
                 q.options[0],
                 q.options[1],
@@ -151,7 +151,7 @@ const QuizTaker = ({ quiz }: { quiz: Quiz }) => {
             headStyles: { halign: 'center', fillColor: [116, 188, 198] },
         });
 
-        doc.save(`${quiz.title}.pdf`);
+        doc.save(`${questionnaire.title}.pdf`);
     };
 
     const formatTime = (seconds: number) => {
@@ -164,15 +164,15 @@ const QuizTaker = ({ quiz }: { quiz: Quiz }) => {
         return (
             <Card>
                 <CardHeader>
-                    <CardTitle className="font-headline text-xl flex items-center gap-2"><Percent className="h-6 w-6 text-primary" />نتیجه آزمون: {quiz.title}</CardTitle>
+                    <CardTitle className="font-headline text-xl flex items-center gap-2"><Percent className="h-6 w-6 text-primary" />نتیجه پرسشنامه: {questionnaire.title}</CardTitle>
                 </CardHeader>
                 <CardContent className="text-center space-y-4">
                     <p className="text-5xl font-bold text-primary">{result.score.toFixed(0)}%</p>
                     <p className="text-muted-foreground">شما به {result.correct} سوال از {result.total} پاسخ صحیح دادید.</p>
                 </CardContent>
                 <CardFooter className="flex-col sm:flex-row gap-2">
-                    <Button onClick={handleRetry} variant="outline"><RefreshCcw className="ml-2 h-4 w-4" />شرکت مجدد در آزمون</Button>
-                    <Button onClick={() => router.push('/student/quizzes')}>بازگشت به لیست آزمون‌ها</Button>
+                    <Button onClick={handleRetry} variant="outline"><RefreshCcw className="ml-2 h-4 w-4" />شرکت مجدد</Button>
+                    <Button onClick={() => router.push('/student/questionnaires')}>بازگشت به لیست</Button>
                 </CardFooter>
             </Card>
         );
@@ -184,12 +184,12 @@ const QuizTaker = ({ quiz }: { quiz: Quiz }) => {
                 <CardHeader>
                     <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-4">
                         <div>
-                            <CardTitle className="font-headline text-2xl">{quiz.title}</CardTitle>
-                            <CardDescription>سوال {currentQuestionIndex + 1} از {quiz.questions.length}</CardDescription>
+                            <CardTitle className="font-headline text-2xl">{questionnaire.title}</CardTitle>
+                            <CardDescription>سوال {currentQuestionIndex + 1} از {questionnaire.questions.length}</CardDescription>
                         </div>
                         <div className='flex gap-4 items-center'>
                            <Button variant="outline" size="sm" onClick={handleDownloadPdf}><FileDown className="ml-2 h-4 w-4" />PDF</Button>
-                            {overallTimeLeft !== null && quiz.duration && (
+                            {overallTimeLeft !== null && questionnaire.duration && (
                                 <div className="text-center space-y-1">
                                     <div className="flex items-center justify-center gap-2 text-sm font-mono font-semibold rounded-md border p-2 bg-muted">
                                         <Timer className="h-4 w-4 text-primary"/>
@@ -209,7 +209,7 @@ const QuizTaker = ({ quiz }: { quiz: Quiz }) => {
                             )}
                         </div>
                     </div>
-                     <Progress value={((currentQuestionIndex + 1) / quiz.questions.length) * 100} className="mt-4 h-2" />
+                     <Progress value={((currentQuestionIndex + 1) / questionnaire.questions.length) * 100} className="mt-4 h-2" />
                 </CardHeader>
                 <CardContent className="space-y-8 min-h-[300px]">
                     <div className="space-y-3">
@@ -225,13 +225,13 @@ const QuizTaker = ({ quiz }: { quiz: Quiz }) => {
                     </div>
                 </CardContent>
                 <CardFooter className="flex justify-between">
-                    <Button variant="outline" onClick={() => setCurrentQuestionIndex(prev => prev - 1)} disabled={currentQuestionIndex === 0 || !quiz.allowBackNavigation}>
+                    <Button variant="outline" onClick={() => setCurrentQuestionIndex(prev => prev - 1)} disabled={currentQuestionIndex === 0 || !questionnaire.allowBackNavigation}>
                         <ArrowRight className="ml-2 h-4 w-4" /> سوال قبل
                     </Button>
-                    {currentQuestionIndex === quiz.questions.length - 1 ? (
+                    {currentQuestionIndex === questionnaire.questions.length - 1 ? (
                         <Button size="lg" disabled={isLoading} onClick={handleSubmit}>
                             {isLoading ? <Loader2 className="ml-2 h-4 w-4 animate-spin" /> : <CheckCircle className="ml-2 h-4 w-4" />}
-                            پایان و ثبت آزمون
+                            پایان و ثبت
                         </Button>
                     ) : (
                         <Button onClick={goToNextQuestion}>
@@ -244,17 +244,18 @@ const QuizTaker = ({ quiz }: { quiz: Quiz }) => {
     );
 };
 
-export default function TakeQuizPage({ params }: { params: { id: string } }) {
+export default function TakeQuestionnairePage({ params }: { params: { id: string } }) {
     const { firestore, role } = useFirebase();
-    const teacherId = role?.split(':')[1];
+    const router = useRouter();
     const { id } = params;
 
-    const quizRef = useMemoFirebase(() => {
-        if (!teacherId || !id) return null;
-        return doc(firestore, 'teachers', teacherId, 'quizzes', id);
-    }, [firestore, teacherId, id]);
+    const questionnaireRef = useMemoFirebase(() => {
+        if (!role || !id) return null;
+        const teacherId = role.split(':')[1];
+        return doc(firestore, 'teachers', teacherId, 'questionnaires', id);
+    }, [firestore, role, id]);
 
-    const { data: quiz, isLoading } = useDoc<Quiz>(quizRef);
+    const { data: questionnaire, isLoading } = useDoc<Questionnaire>(questionnaireRef);
 
     if (isLoading) {
         return (
@@ -273,15 +274,13 @@ export default function TakeQuizPage({ params }: { params: { id: string } }) {
         );
     }
     
-    if (!quiz) {
+    if (!questionnaire) {
         return notFound();
     }
 
     return (
         <div className="max-w-3xl mx-auto">
-            <QuizTaker quiz={quiz} />
+            <QuestionnaireTaker questionnaire={questionnaire} />
         </div>
     );
 }
-
-    
