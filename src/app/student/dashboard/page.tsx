@@ -58,9 +58,8 @@ function ActionCard({ title, description, icon: Icon, href, buttonText }) {
                     <CardDescription className="text-xs mt-1">{description}</CardDescription>
                 </div>
             </CardHeader>
-            <CardContent className="flex-grow"></CardContent>
             <CardContent>
-                 <Button asChild className="w-full">
+                 <Button asChild className="w-full mt-auto">
                     <Link href={href}>
                         {buttonText}
                     </Link>
