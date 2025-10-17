@@ -1,5 +1,4 @@
-
-
+'use client';
 
 export interface Student {
   id: string; // This will be the Firebase Auth UID
@@ -166,6 +165,7 @@ export interface QuizQuestion {
     questionText: string;
     options: string[];
     correctAnswerIndex: number;
+    duration?: number; // Optional: duration in seconds for this specific question
 }
 
 export interface Quiz {
@@ -173,7 +173,8 @@ export interface Quiz {
     teacherId: string;
     title: string;
     questions: QuizQuestion[];
-    duration?: number; // Optional: duration in minutes
+    duration?: number; // Optional: overall quiz duration in minutes
+    allowBackNavigation: boolean; // Whether the student can go back to previous questions
     createdAt: any; // Firestore Timestamp
     updatedAt: any; // Firestore Timestamp
 }
@@ -182,7 +183,7 @@ export interface QuizSubmission {
     id: string;
     quizId: string;
     studentId: string;
-    answers: number[]; // Array of selected option indices
+    answers: (number | null)[]; // Array of selected option indices, null if unanswered
     score: number; // Percentage score
     submittedAt: any; // Firestore Timestamp
 }
@@ -228,4 +229,3 @@ export interface LoginHistory {
     status: 'success' | 'failure';
     failureReason?: string;
 }
-

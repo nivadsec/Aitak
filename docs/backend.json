@@ -217,7 +217,8 @@
         "id": { "type": "string" },
         "teacherId": { "type": "string" },
         "title": { "type": "string" },
-        "duration": { "type": "number", "description": "Optional quiz duration in minutes." },
+        "duration": { "type": "number", "description": "Optional overall quiz duration in minutes." },
+        "allowBackNavigation": { "type": "boolean", "description": "Controls if student can go back to previous questions." },
         "questions": {
           "type": "array",
           "items": {
@@ -227,7 +228,7 @@
         "createdAt": { "type": "string", "format": "date-time" },
         "updatedAt": { "type": "string", "format": "date-time" }
       },
-      "required": ["id", "teacherId", "title", "questions", "createdAt"]
+      "required": ["id", "teacherId", "title", "questions", "createdAt", "allowBackNavigation"]
     },
     "QuizQuestion": {
         "title": "QuizQuestion",
@@ -236,7 +237,8 @@
         "properties": {
             "questionText": { "type": "string" },
             "options": { "type": "array", "items": { "type": "string" }, "minItems": 4, "maxItems": 4 },
-            "correctAnswerIndex": { "type": "number" }
+            "correctAnswerIndex": { "type": "number" },
+            "duration": { "type": "number", "description": "Optional duration in seconds for this question." }
         },
         "required": ["questionText", "options", "correctAnswerIndex"]
     },

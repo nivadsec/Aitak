@@ -3,7 +3,7 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useFieldArray, useForm } from 'react-hook-form';
 import * as z from 'zod';
-import { Loader2, Save, PlusCircle, Trash2, Timer } from 'lucide-react';
+import { Loader2, Save, PlusCircle, Trash2, Timer, Lock, Unlock } from 'lucide-react';
 import React from 'react';
 
 import { Button } from '@/components/ui/button';
@@ -16,17 +16,20 @@ import { Input } from '../ui/input';
 import { RadioGroup, RadioGroupItem } from '../ui/radio-group';
 import { Textarea } from '../ui/textarea';
 import type { Quiz } from '@/lib/types';
+import { Switch } from '../ui/switch';
 
 
 const quizQuestionSchema = z.object({
     questionText: z.string().min(1, 'متن سوال الزامی است.'),
     options: z.array(z.string().min(1, 'متن گزینه الزامی است.')).length(4, 'باید دقیقاً ۴ گزینه وجود داشته باشد.'),
     correctAnswerIndex: z.coerce.number().min(0).max(3),
+    duration: z.coerce.number().min(0).optional(),
 });
 
 const formSchema = z.object({
   title: z.string().min(3, "عنوان آزمون باید حداقل ۳ کاراکتر باشد."),
   duration: z.coerce.number().min(0).optional(),
+  allowBackNavigation: z.boolean().default(true),
   questions: z.array(quizQuestionSchema).min(1, 'آزمون باید حداقل یک سوال داشته باشد.'),
 });
 
@@ -48,14 +51,17 @@ export function QuizForm({ quiz, onSuccess }: QuizFormProps) {
     defaultValues: isEditMode ? {
         title: quiz.title,
         duration: quiz.duration,
+        allowBackNavigation: quiz.allowBackNavigation,
         questions: quiz.questions.map(q => ({
             ...q,
-            correctAnswerIndex: Number(q.correctAnswerIndex)
+            correctAnswerIndex: Number(q.correctAnswerIndex),
+            duration: q.duration || 0,
         }))
     } : {
       title: '',
       duration: 0,
-      questions: [{ questionText: '', options: ['', '', '', ''], correctAnswerIndex: 0 }],
+      allowBackNavigation: true,
+      questions: [{ questionText: '', options: ['', '', '', ''], correctAnswerIndex: 0, duration: 0 }],
     },
   });
 
@@ -75,6 +81,7 @@ export function QuizForm({ quiz, onSuccess }: QuizFormProps) {
         teacherId: user.uid,
         title: data.title,
         duration: data.duration,
+        allowBackNavigation: data.allowBackNavigation,
         questions: data.questions.map(q => ({
             ...q,
             correctAnswerIndex: Number(q.correctAnswerIndex)
@@ -118,14 +125,29 @@ export function QuizForm({ quiz, onSuccess }: QuizFormProps) {
                 <FormItem>
                     <FormLabel className="flex items-center gap-2">
                       <Timer className="h-4 w-4"/>
-                      زمان آزمون (دقیقه)
+                      زمان کلی آزمون (دقیقه)
                     </FormLabel>
                     <FormControl><Input type="number" placeholder="مثال: 25" {...field} /></FormControl>
-                    <FormDescription className="text-xs">برای آزمون بدون زمان، این فیلد را خالی یا 0 بگذارید.</FormDescription>
+                    <FormDescription className="text-xs">برای آزمون بدون زمان کلی، این فیلد را خالی یا 0 بگذارید.</FormDescription>
                     <FormMessage />
                 </FormItem>
             )} />
         </div>
+        
+        <FormField control={form.control} name="allowBackNavigation" render={({ field }) => (
+            <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm">
+                <div className="space-y-0.5">
+                    <FormLabel className="flex items-center gap-2 text-sm">
+                      {field.value ? <Unlock className="h-4 w-4"/> : <Lock className="h-4 w-4"/>}
+                      امکان بازگشت به سوالات قبل
+                    </FormLabel>
+                    <FormDescription className="text-xs">
+                        {field.value ? 'دانش‌آموز می‌تواند بین سوالات جابجا شود.' : 'دانش‌آموز نمی‌تواند به سوالات قبلی بازگردد.'}
+                    </FormDescription>
+                </div>
+                <FormControl><Switch checked={field.value} onCheckedChange={field.onChange} /></FormControl>
+            </FormItem>
+        )} />
         
         <div className="space-y-4">
             <FormLabel>سوالات آزمون</FormLabel>
@@ -163,12 +185,21 @@ export function QuizForm({ quiz, onSuccess }: QuizFormProps) {
                         <FormMessage />
                         </FormItem>
                     )} />
+
+                    <FormField control={form.control} name={`questions.${index}.duration`} render={({ field }) => (
+                        <FormItem className="max-w-xs">
+                            <FormLabel className="text-xs">زمان این سوال (ثانیه)</FormLabel>
+                            <FormControl><Input type="number" placeholder="اختیاری" {...field} /></FormControl>
+                            <FormDescription className="text-xs">برای زمان‌بندی مجزا، این فیلد را پر کنید.</FormDescription>
+                            <FormMessage />
+                        </FormItem>
+                    )} />
                 </div>
             ))}
         </div>
 
         <div className="flex justify-between items-center">
-             <Button type="button" variant="outline" size="sm" onClick={() => append({ questionText: '', options: ['', '', '', ''], correctAnswerIndex: 0 })}>
+             <Button type="button" variant="outline" size="sm" onClick={() => append({ questionText: '', options: ['', '', '', ''], correctAnswerIndex: 0, duration: 0 })}>
                 <PlusCircle className="ml-2 h-4 w-4" /> افزودن سوال
             </Button>
              <Button type="submit" disabled={isLoading}>
