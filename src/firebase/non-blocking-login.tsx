@@ -5,6 +5,7 @@ import {
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
   signOut,
+  sendPasswordResetEmail,
 } from 'firebase/auth';
 import { errorEmitter } from './error-emitter';
 
@@ -57,4 +58,14 @@ export async function initiateSignOut(authInstance: Auth): Promise<void> {
     console.error('Sign-Out Error:', error);
     // errorEmitter.emit('auth-error', error);
   }
+}
+
+/** Initiate password reset email (non-blocking). */
+export async function initiatePasswordReset(authInstance: Auth, email: string): Promise<void> {
+    try {
+        await sendPasswordResetEmail(authInstance, email);
+    } catch (error) {
+        console.error('Password Reset Error:', error);
+        throw error; // Let the form handle UI feedback
+    }
 }

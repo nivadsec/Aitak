@@ -1,4 +1,3 @@
-
 'use client';
 
 import * as React from 'react';
@@ -13,7 +12,7 @@ import {
   getFilteredRowModel,
   ColumnFiltersState,
 } from '@tanstack/react-table';
-import { MoreHorizontal, Trash2, Edit, ToggleLeft, ToggleRight, AlertTriangle, LineChart, Settings } from 'lucide-react';
+import { MoreHorizontal, Trash2, Edit, ToggleLeft, ToggleRight, AlertTriangle, LineChart, Settings, KeyRound } from 'lucide-react';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -58,6 +57,7 @@ import { useFirebase } from '@/firebase/provider';
 import { doc } from 'firebase/firestore';
 import { updateDocumentNonBlocking, deleteDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 import { useToast } from '@/hooks/use-toast';
+import { ChangePasswordForm } from './ChangePasswordForm';
 
 const calculateAverages = (studentId: string, reports: StudentReport[]) => {
   const studentReports = reports.filter((r) => r.studentId === studentId);
@@ -89,6 +89,7 @@ export default function StudentsDataTable({ students, reports }: StudentsDataTab
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([]);
   const [editingStudent, setEditingStudent] = React.useState<Student | null>(null);
   const [deletingStudent, setDeletingStudent] = React.useState<Student | null>(null);
+  const [changingPasswordStudent, setChangingPasswordStudent] = React.useState<Student | null>(null);
   const { firestore, user } = useFirebase();
   const { toast } = useToast();
 
@@ -196,6 +197,10 @@ export default function StudentsDataTable({ students, reports }: StudentsDataTab
               <DropdownMenuItem onClick={() => setEditingStudent(student)}>
                 <Edit className="ml-2 h-4 w-4" />
                 ویرایش پروفایل
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => setChangingPasswordStudent(student)}>
+                <KeyRound className="ml-2 h-4 w-4" />
+                تغییر رمز عبور
               </DropdownMenuItem>
               <DropdownMenuItem onClick={() => handleToggleActive(student)}>
                 {student.isActive ? <ToggleLeft className="ml-2 h-4 w-4" /> : <ToggleRight className="ml-2 h-4 w-4" />}
@@ -305,6 +310,24 @@ export default function StudentsDataTable({ students, reports }: StudentsDataTab
             onSuccess={() => setEditingStudent(null)}
             onCancel={() => setEditingStudent(null)}
           />
+        </DialogContent>
+      </Dialog>
+
+      {/* Change Password Dialog */}
+      <Dialog open={!!changingPasswordStudent} onOpenChange={(open) => !open && setChangingPasswordStudent(null)}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="font-headline">تغییر رمز عبور دانش‌آموز</DialogTitle>
+            <DialogDescription>
+              رمز عبور جدیدی برای {changingPasswordStudent?.firstName} {changingPasswordStudent?.lastName} تنظیم کنید.
+            </DialogDescription>
+          </DialogHeader>
+          {changingPasswordStudent && (
+            <ChangePasswordForm
+              studentId={changingPasswordStudent.id}
+              onSuccess={() => setChangingPasswordStudent(null)}
+            />
+          )}
         </DialogContent>
       </Dialog>
 

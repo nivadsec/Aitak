@@ -1,4 +1,3 @@
-
 'use client';
 
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -21,6 +20,8 @@ import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/firebase/provider';
 import { initiateEmailSignIn } from '@/firebase/non-blocking-login';
 import { ROLES } from '@/lib/roles';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '../ui/dialog';
+import { ResetPasswordForm } from './ResetPasswordForm';
 
 const formSchema = z.object({
   email: z.string().email('ایمیل وارد شده معتبر نیست.'),
@@ -36,6 +37,7 @@ interface LoginFormProps {
 export function LoginForm({ role }: LoginFormProps) {
   const { toast } = useToast();
   const auth = useAuth();
+  const [isResetOpen, setIsResetOpen] = React.useState(false);
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -84,45 +86,66 @@ export function LoginForm({ role }: LoginFormProps) {
   }
 
   return (
-    <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-        <FormField
-          control={form.control}
-          name="email"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>ایمیل</FormLabel>
-              <FormControl>
-                <Input placeholder={role === ROLES.TEACHER ? "teacher@example.com" : "student@example.com"} {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <FormField
-          control={form.control}
-          name="password"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>رمز عبور</FormLabel>
-              <FormControl>
-                <Input type="password" placeholder="••••••••" {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <div className="flex justify-end pt-2">
-          <Button type="submit" disabled={isSubmitting} className="w-full">
-            {isSubmitting ? (
-              <Loader2 className="ml-2 h-4 w-4 animate-spin" />
-            ) : (
-              <LogIn className="ml-2 h-4 w-4" />
+    <Dialog open={isResetOpen} onOpenChange={setIsResetOpen}>
+      <Form {...form}>
+        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+          <FormField
+            control={form.control}
+            name="email"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>ایمیل</FormLabel>
+                <FormControl>
+                  <Input placeholder={role === ROLES.TEACHER ? "teacher@example.com" : "student@example.com"} {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
             )}
-            ورود
-          </Button>
-        </div>
-      </form>
-    </Form>
+          />
+          <FormField
+            control={form.control}
+            name="password"
+            render={({ field }) => (
+              <FormItem>
+                <div className="flex items-center justify-between">
+                    <FormLabel>رمز عبور</FormLabel>
+                    {role === ROLES.STUDENT && (
+                        <DialogTrigger asChild>
+                            <Button variant="link" size="sm" type="button" className="text-xs h-auto p-0">
+                                فراموشی رمز عبور؟
+                            </Button>
+                        </DialogTrigger>
+                    )}
+                </div>
+                <FormControl>
+                  <Input type="password" placeholder="••••••••" {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <div className="flex justify-end pt-2">
+            <Button type="submit" disabled={isSubmitting} className="w-full">
+              {isSubmitting ? (
+                <Loader2 className="ml-2 h-4 w-4 animate-spin" />
+              ) : (
+                <LogIn className="ml-2 h-4 w-4" />
+              )}
+              ورود
+            </Button>
+          </div>
+        </form>
+      </Form>
+      
+      <DialogContent>
+          <DialogHeader>
+              <DialogTitle className="font-headline">بازیابی رمز عبور</DialogTitle>
+              <DialogDescription>
+                  ایمیل حساب کاربری خود را وارد کنید تا لینک بازیابی رمز عبور برایتان ارسال شود.
+              </DialogDescription>
+          </DialogHeader>
+          <ResetPasswordForm onSuccess={() => setIsResetOpen(false)} />
+      </DialogContent>
+    </Dialog>
   );
 }
