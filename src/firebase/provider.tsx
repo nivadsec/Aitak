@@ -3,12 +3,15 @@
 
 import React, { DependencyList, createContext, useContext, ReactNode, useMemo, useState, useEffect } from 'react';
 import { FirebaseApp } from 'firebase/app';
-import { Firestore } from 'firebase/firestore';
+import { Firestore, collection, doc } from 'firebase/firestore';
 import { Auth, User, onAuthStateChanged } from 'firebase/auth';
 import { useRouter, usePathname } from 'next/navigation';
 
 import { FirebaseErrorListener } from '@/components/FirebaseErrorListener';
 import { ROLES } from '@/lib/roles';
+import { setDocumentNonBlocking } from './non-blocking-updates';
+import type { LoginHistory } from '@/lib/types';
+import { serverTimestamp } from 'firebase/firestore';
 
 interface FirebaseProviderProps {
   children: ReactNode;
@@ -103,7 +106,7 @@ export const FirebaseProvider: React.FC<FirebaseProviderProps> = ({
           }
         } else {
           setUserAuthState({ user: null, isUserLoading: false, userError: null, role: null });
-          const isProtectedRoute = pathname.startsWith('/teacher/') || pathname.startsWith('/student/');
+          const isProtectedRoute = (pathname.startsWith('/teacher/') && pathname !== '/teacher/login') || pathname.startsWith('/student/');
           if (isProtectedRoute) {
             router.push('/');
           }
