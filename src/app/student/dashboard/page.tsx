@@ -1,3 +1,4 @@
+
 'use client'
 import { MotivationTip } from '@/components/student/MotivationTip';
 import PersonalStats from '@/components/student/PersonalStats';
@@ -6,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { useCollection, useFirebase, useMemoFirebase, FirestorePermissionError, errorEmitter } from '@/firebase';
 import { downloadJson } from '@/lib/utils';
 import { collection, doc, getDocs, query, orderBy, limit, getDoc, where } from 'firebase/firestore';
-import { Download, ClipboardEdit, BrainCircuit, ClipboardPen, BookCopy } from 'lucide-react';
+import { Download, ClipboardEdit, BrainCircuit, ClipboardPen, BookCopy, BarChart3 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import type { StudentRecommendation, StudentReport } from '@/lib/types';
 import React from 'react';

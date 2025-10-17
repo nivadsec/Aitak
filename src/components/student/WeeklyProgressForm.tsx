@@ -1,3 +1,4 @@
+
 'use client'
 
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -282,7 +283,9 @@ export function WeeklyProgressForm() {
                         <FormField control={form.control} name="nextWeekGoals" render={({ field }) => (
                             <FormItem>
                                 <FormLabel>سه هدف دقیق و قابل‌اندازه‌گیری برای هفته آینده؟</FormLabel>
-                                <FormControl><Textarea placeholder="۱. افزایش ساعت مطالعه فیزیک به روزی ۲ ساعت.&#x0a;۲. زدن ۳۰ تست قرابت معنایی هر شب.&#x0a;۳. شروع مطالعه فصل جدید شیمی." {...field} /></FormControl>
+                                <FormControl><Textarea placeholder="۱. افزایش ساعت مطالعه فیزیک به روزی ۲ ساعت.
+۲. زدن ۳۰ تست قرابت معنایی هر شب.
+۳. شروع مطالعه فصل جدید شیمی." {...field} /></FormControl>
                                 <FormMessage />
                             </FormItem>
                         )} />
