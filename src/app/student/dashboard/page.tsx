@@ -103,6 +103,20 @@ const actionCards = [
       buttonText: "شروع تحلیل کلی"
     },
     {
+      title: "روندنمای درسی",
+      description: "مسیر یادگیری هر درس را گام‌به‌گام برنامه‌ریزی کنید.",
+      icon: BarChart3,
+      href: "/student/topic-investment",
+      buttonText: "ورود به روندنما"
+    },
+    {
+      title: "برنامه راهبردی",
+      description: "برنامه‌های راهبردی آزمون‌ها را مشاهده و دانلود کنید.",
+      icon: Map,
+      href: "/student/strategic-plans",
+      buttonText: "مشاهده برنامه‌ها"
+    },
+    {
       title: "آزمون‌های آنلاین",
       description: "در آزمون‌های آنلاین درسی که توسط معلم طراحی شده شرکت کنید.",
       icon: ClipboardList,
