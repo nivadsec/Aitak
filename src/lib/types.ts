@@ -26,6 +26,7 @@ export interface Student {
   canViewStrategicPlans: boolean;
   canViewConsultingContent: boolean;
   canSubmitOverallExamAnalysis: boolean;
+  canSubmitDetailedExamChecklist: boolean;
 }
 
 
@@ -295,4 +296,35 @@ export interface QuestionAnswer {
     isAnswered: boolean;
     createdAt: any; // Firestore Timestamp
     answeredAt?: any; // Firestore Timestamp
+}
+
+export type ChecklistStatus = "عالی" | "خوب" | "متوسط" | "ضعیف";
+
+export interface DetailedExamChecklist {
+  id: string;
+  studentId: string;
+  examName: string;
+  examDate: any; // Firestore Timestamp
+  scientificPrep: {
+    summaryReview: ChecklistStatus;
+    markedQuestionsReview: ChecklistStatus;
+    timeManagementPlan: ChecklistStatus;
+    notes?: string;
+  };
+  mentalPrep: {
+    peaceOfMind: ChecklistStatus;
+    sleepQuality: ChecklistStatus;
+    nutrition: ChecklistStatus;
+    notes?: string;
+  };
+  logisticsPrep: {
+    pencil: ChecklistStatus;
+    eraser: ChecklistStatus;
+    card: ChecklistStatus;
+    watch: ChecklistStatus;
+    water: ChecklistStatus;
+    clothes: ChecklistStatus;
+    notes?: string;
+  };
+  createdAt: any; // Firestore Timestamp
 }

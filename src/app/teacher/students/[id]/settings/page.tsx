@@ -10,7 +10,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { useToast } from '@/hooks/use-toast';
-import { Settings, ArrowLeft, Bot, BarChart3, Calendar, FileText, BookCopy, ClipboardPen, BrainCircuit, Map, ClipboardCheck, ClipboardEdit, ClipboardList, BookOpen, Brain } from 'lucide-react';
+import { Settings, ArrowLeft, Bot, BarChart3, Calendar, FileText, BookCopy, ClipboardPen, BrainCircuit, Map, ClipboardCheck, ClipboardEdit, ClipboardList, BookOpen, Brain, ClipboardTick } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 interface FeatureToggleProps {
@@ -81,6 +81,7 @@ export default function StudentSettingsPage({ params }: { params: { id: string }
     { featureKey: 'canSubmitWeeklyReport', label: 'گزارش هفتگی', description: 'اجازه ثبت و ارسال فرم گزارش پیشرفت هفتگی.', icon: BookCopy },
     { featureKey: 'canSubmitExamAnalysis', label: 'تحلیل آزمون عددمحور', description: 'اجازه ثبت و ارسال فرم تحلیل آزمون عددمحور.', icon: ClipboardPen },
     { featureKey: 'canSubmitOverallExamAnalysis', label: 'تحلیل آزمون کلی', description: 'اجازه ثبت فرم تحلیل آزمون کلی.', icon: ClipboardCheck },
+    { featureKey: 'canSubmitDetailedExamChecklist', label: 'چک‌لیست تفصیلی آزمون', description: 'اجازه ثبت فرم چک‌لیست آمادگی قبل از آزمون.', icon: ClipboardTick },
     { featureKey: 'canSubmitFocusLadder', label: 'نردبان تمرکز', description: 'امکان ثبت امتیاز در نردبان و نمودار تمرکز.', icon: BrainCircuit },
     { featureKey: 'canSubmitTopicInvestment', label: 'روندنمای درسی', description: 'اجازه ثبت فرم روندنمای برنامه‌ریزی درسی.', icon: BarChart3 },
     { featureKey: 'canViewConsultingContent', label: 'محتوای مشاوره‌ای', description: 'امکان مشاهده محتوای مشاوره‌ای (مقالات و ویدیوها).', icon: BookOpen },
