@@ -1,277 +1,266 @@
 /**
- * @fileoverview Firestore Security Rules for the آی‌تاب system.
- *
- * Core Philosophy:
- * This ruleset enforces a user and teacher-centric security model. Students can only
- * access their own data, and teachers can access and manage data for their students.
+ * @file Firestore Security Rules
+ * @description This ruleset enforces a strict user-ownership and teacher-management model for the آی‌تاب application.
  *
  * Data Structure:
- * - Announcements are stored at the root level and publicly readable.
- * - Teacher profiles are stored under /teachers/{teacherId}.
- * - Student profiles and associated data are nested under /teachers/{teacherId}/students/{studentId}/...
+ * All data is organized hierarchically, with teachers managing students and their associated data.
+ * - /announcements/{announcementId}: Public announcements.
+ * - /teachers/{teacherId}: Teacher profiles.
+ * - /teachers/{teacherId}/students/{studentId}: Student profiles managed by a teacher.
+ * - /teachers/{teacherId}/students/{studentId}/...: Student-specific data (reports, messages, etc.).
  *
  * Key Security Decisions:
- * - Announcements are publicly readable, but only teachers can create them.
- * - Students can only read their own profiles.
- * - Teachers can manage student profiles and all associated data for their students.
- * - Listing of documents is generally allowed for owners, but not globally.
+ * - Teachers can manage student profiles and data associated with their students.
+ * - Students can only access their own data.
+ * - Public announcements are readable by anyone.
+ * - Listing of users is generally disallowed for privacy and security.
  *
  * Denormalization for Authorization:
- *  - To avoid `get()` calls and enforce ownership, critical relationships like `studentId` and `teacherId`
- *    are validated on creation and made immutable on update. This ensures data consistency and efficient rules.
- *
- * Structural Segregation:
- *  - The system uses nested collections under `/teachers/{teacherId}/students/{studentId}` to clearly segregate
- *    student-specific data, ensuring privacy and controlled access.
+ *  To simplify rules, student documents are nested under teachers, making it easy to check teacher-student relationships.
+ *  For example, a recommendation document at /teachers/{teacherId}/students/{studentId}/recommendations/{recommendationId} implicitly contains both teacherId and studentId.
  */
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
     /**
-     * @description Allows anyone to read announcements, but only teachers can create, update, or delete them.
+     * @description Allows anyone to read public announcements. Only teachers can create, update, or delete them.
      * @path /announcements/{announcementId}
-     * @allow (get, list): if true
-     * @allow (create): if isSignedIn() && request.auth.uid == request.resource.data.teacherId
-     * @allow (update, delete): if isSignedIn() && resource.data.teacherId == request.auth.uid
-     * @deny (create): if request.resource.data.teacherId == null || request.resource.data.id != request.resource.id
-     * @deny (update, delete): if resource == null
-     * @principle Allows public read access for announcements, but enforces teacher-only writes and verifies data integrity.
+     * @allow (get, list): if true;
+     * @allow (create): if isSignedIn() && request.resource.data.teacherId == request.auth.uid;
+     * @allow (update, delete): if isSignedIn() && resource.data.teacherId == request.auth.uid;
+     * @deny (create): if !isSignedIn()
+     * @deny (update, delete): if !isSignedIn()
+     * @principle Public read, owner-only writes.
      */
     match /announcements/{announcementId} {
       allow get, list: if true;
-      allow create: if isSignedIn() && request.auth.uid == request.resource.data.teacherId;
-      allow update: if isSignedIn() && resource.data.teacherId == request.auth.uid && resource != null;
-      allow delete: if isSignedIn() && resource.data.teacherId == request.auth.uid && resource != null;
+      allow create: if isSignedIn() && request.resource.data.teacherId == request.auth.uid;
+      allow update: if isSignedIn() && resource.data.teacherId == request.auth.uid;
+      allow delete: if isSignedIn() && resource.data.teacherId == request.auth.uid;
     }
 
     /**
-     * @description Allows read access to a teacher's profile only to the teacher themselves. Only the teacher can create/update/delete their profile.
+     * @description Allows anyone to read teacher profile, but only the teacher can create, update, or delete their own profile.
      * @path /teachers/{teacherId}
-     * @allow (get): if isSignedIn() && request.auth.uid == teacherId
-     * @allow (list): if false
-     * @allow (create): if isSignedIn() && request.auth.uid == teacherId && request.resource.data.id == teacherId
-     * @allow (update): if isSignedIn() && request.auth.uid == teacherId && resource != null
-     * @allow (delete): if isSignedIn() && request.auth.uid == teacherId && resource != null
-     * @deny (create): if request.resource.data.id != teacherId
-     * @deny (update, delete): if resource == null
-     * @principle Enforces ownership for teacher profile management.
+     * @allow (get): if true;
+     * @allow (create): if isOwner(teacherId);
+     * @allow (update, delete): if isExistingOwner(teacherId);
+     * @deny (list): if true;
+     * @principle Owner-only access to teacher profiles, public read access.
      */
     match /teachers/{teacherId} {
-      allow get: if isSignedIn() && request.auth.uid == teacherId;
+      allow get: if true;
       allow list: if false;
-      allow create: if isSignedIn() && request.auth.uid == teacherId && request.resource.data.id == teacherId;
-      allow update: if isSignedIn() && request.auth.uid == teacherId && resource != null && request.resource.data.id == resource.data.id;
-      allow delete: if isSignedIn() && request.auth.uid == teacherId && resource != null;
+      allow create: if isOwner(teacherId);
+      allow update: if isExistingOwner(teacherId);
+      allow delete: if isExistingOwner(teacherId);
     }
 
     /**
-     * @description Allows a teacher to manage their students. Students can read their own profile.
+     * @description Allows a teacher to manage student profiles under their care, and students to read their own profile.
      * @path /teachers/{teacherId}/students/{studentId}
-     * @allow (get): if isSignedIn() && request.auth.uid == studentId
-     * @allow (list): if false
-     * @allow (create): if isSignedIn() && request.auth.uid == teacherId && request.resource.data.id == studentId && request.resource.data.teacherId == teacherId
-     * @allow (update): if isSignedIn() && (request.auth.uid == teacherId || request.auth.uid == studentId) && resource != null && request.resource.data.id == resource.data.id && request.resource.data.teacherId == resource.data.teacherId
-     * @allow (delete): if isSignedIn() && request.auth.uid == teacherId && resource != null
-     * @deny (create): if request.resource.data.id != studentId || request.resource.data.teacherId != teacherId
-     * @deny (update, delete): if resource == null
-     * @principle Teachers manage students; students can read their own profile. Ensures relational integrity.
+     * @allow (get, list): if isOwner(studentId) || (isSignedIn() && request.auth.uid == teacherId);
+     * @allow (create): if isSignedIn() && request.auth.uid == teacherId && request.resource.data.id == studentId;
+     * @allow (update, delete): if isSignedIn() && request.auth.uid == teacherId && resource != null;
+     * @deny (create): if !isSignedIn() || request.resource.data.id != studentId;
+     * @deny (update, delete): if !isSignedIn();
+     * @principle Teacher-managed student profiles with owner read access.
      */
     match /teachers/{teacherId}/students/{studentId} {
-      allow get: if isSignedIn() && request.auth.uid == studentId;
-      allow list: if false;
-      allow create: if isSignedIn() && request.auth.uid == teacherId && request.resource.data.id == studentId && request.resource.data.teacherId == teacherId;
-      allow update: if isSignedIn() && (request.auth.uid == teacherId || request.auth.uid == studentId) && resource != null && request.resource.data.id == resource.data.id && request.resource.data.teacherId == resource.data.teacherId;
+      allow get, list: if isOwner(studentId) || (isSignedIn() && request.auth.uid == teacherId);
+      allow create: if isSignedIn() && request.auth.uid == teacherId && request.resource.data.id == studentId;
+      allow update: if isSignedIn() && request.auth.uid == teacherId && resource != null;
       allow delete: if isSignedIn() && request.auth.uid == teacherId && resource != null;
     }
 
     /**
-     * @description Allows a teacher to manage daily reports for their students, and a student to manage their own daily reports.
+     * @description Allows a teacher to manage daily reports for their students, and the student to read their own reports.
      * @path /teachers/{teacherId}/students/{studentId}/dailyReports/{dailyReportId}
-     * @allow (get, list): if isSignedIn() && (request.auth.uid == teacherId || request.auth.uid == studentId)
-     * @allow (create): if isSignedIn() && (request.auth.uid == teacherId || request.auth.uid == studentId) && request.resource.data.studentId == studentId
-     * @allow (update): if isSignedIn() && (request.auth.uid == teacherId || request.auth.uid == studentId) && resource != null && request.resource.data.studentId == studentId
-     * @allow (delete): if isSignedIn() && request.auth.uid == teacherId && resource != null
-     * @deny (create): if request.resource.data.studentId != studentId
-     * @deny (update, delete): if resource == null
-     * @principle Teachers manage student data, students can manage their own. Ensures data consistency through studentId.
+     * @allow (get, list): if isOwner(studentId) || (isSignedIn() && request.auth.uid == teacherId);
+     * @allow (create): if isSignedIn() && request.auth.uid == teacherId;
+     * @allow (update, delete): if isSignedIn() && request.auth.uid == teacherId && resource != null;
+     * @deny (create): if !isSignedIn();
+     * @deny (update, delete): if !isSignedIn();
+     * @principle Teacher-managed daily reports with owner read access.
      */
     match /teachers/{teacherId}/students/{studentId}/dailyReports/{dailyReportId} {
-      allow get, list: if isSignedIn() && (request.auth.uid == teacherId || request.auth.uid == studentId);
-      allow create: if isSignedIn() && (request.auth.uid == teacherId || request.auth.uid == studentId) && request.resource.data.studentId == studentId;
-      allow update: if isSignedIn() && (request.auth.uid == teacherId || request.auth.uid == studentId) && resource != null && request.resource.data.studentId == studentId;
+      allow get, list: if isOwner(studentId) || (isSignedIn() && request.auth.uid == teacherId);
+      allow create: if isSignedIn() && request.auth.uid == teacherId;
+      allow update: if isSignedIn() && request.auth.uid == teacherId && resource != null;
       allow delete: if isSignedIn() && request.auth.uid == teacherId && resource != null;
     }
 
     /**
-     * @description Allows a teacher to manage subject items for a student's daily report.
+     * @description Allows a teacher to manage subject items for a daily report, and the student to read data.
      * @path /teachers/{teacherId}/students/{studentId}/dailyReports/{dailyReportId}/subjectItems/{subjectItemId}
-     * @allow (get, list): if isSignedIn() && request.auth.uid == teacherId
-     * @allow (create): if isSignedIn() && request.auth.uid == teacherId && request.resource.data.dailyReportId == dailyReportId
-     * @allow (update): if isSignedIn() && request.auth.uid == teacherId && resource != null && request.resource.data.dailyReportId == dailyReportId
-     * @allow (delete): if isSignedIn() && request.auth.uid == teacherId && resource != null
-     * @deny (create): if request.resource.data.dailyReportId != dailyReportId
-     * @deny (update, delete): if resource == null
-     * @principle Teachers manage all subject items. Ensures data integrity through dailyReportId.
+     * @allow (get, list): if isOwner(studentId) || (isSignedIn() && request.auth.uid == teacherId);
+     * @allow (create): if isSignedIn() && request.auth.uid == teacherId;
+     * @allow (update, delete): if isSignedIn() && request.auth.uid == teacherId && resource != null;
+     * @deny (create): if !isSignedIn();
+     * @deny (update, delete): if !isSignedIn();
+     * @principle Teacher-managed subject items with owner read access.
      */
     match /teachers/{teacherId}/students/{studentId}/dailyReports/{dailyReportId}/subjectItems/{subjectItemId} {
-      allow get, list: if isSignedIn() && request.auth.uid == teacherId;
-      allow create: if isSignedIn() && request.auth.uid == teacherId && request.resource.data.dailyReportId == dailyReportId;
-      allow update: if isSignedIn() && request.auth.uid == teacherId && resource != null && request.resource.data.dailyReportId == dailyReportId;
+      allow get, list: if isOwner(studentId) || (isSignedIn() && request.auth.uid == teacherId);
+      allow create: if isSignedIn() && request.auth.uid == teacherId;
+      allow update: if isSignedIn() && request.auth.uid == teacherId && resource != null;
       allow delete: if isSignedIn() && request.auth.uid == teacherId && resource != null;
     }
 
-    /**
-     * @description Allows a teacher to create messages.  A student can only read messages addressed to them.
+   /**
+     * @description Allows a teacher to create messages to all students. Students can access messages directed to them.
      * @path /teachers/{teacherId}/messages/{messageId}
-     * @allow (get, list): if isSignedIn() && request.auth.uid == teacherId //messages are not created in this node.
-     * @allow (create): if isSignedIn() && request.auth.uid == teacherId
-     * @allow (update): if false;
-     * @allow (delete): if isSignedIn() && request.auth.uid == teacherId && resource != null
-     * @principle Teachers can send messages; students can read messages directed to them from /teachers/{teacherId}/students/{studentId}/messages/{messageId}.
+     * @allow get: if isSignedIn() && (resource.data.studentId == 'all' || resource.data.studentId == request.auth.uid) || (isSignedIn() && request.auth.uid == teacherId);
+     * @allow list: if isSignedIn() && request.auth.uid == teacherId;
+     * @allow create: if isSignedIn() && request.auth.uid == teacherId;
+     * @allow update: if isSignedIn() && request.auth.uid == teacherId && resource != null;
+     * @allow delete: if isSignedIn() && request.auth.uid == teacherId && resource != null;
+     * @deny create: if !isSignedIn() || request.auth.uid != teacherId;
+     * @deny update, delete: if !isSignedIn() || request.auth.uid != teacherId;
+     * @principle Teacher-created messages, student read access.
      */
     match /teachers/{teacherId}/messages/{messageId} {
-      allow get, list: if isSignedIn() && request.auth.uid == teacherId;
+      allow get: if isSignedIn() && (resource.data.studentId == 'all' || resource.data.studentId == request.auth.uid) || (isSignedIn() && request.auth.uid == teacherId);
+      allow list: if isSignedIn() && request.auth.uid == teacherId;
       allow create: if isSignedIn() && request.auth.uid == teacherId;
-      allow update: if false;
+      allow update: if isSignedIn() && request.auth.uid == teacherId && resource != null;
       allow delete: if isSignedIn() && request.auth.uid == teacherId && resource != null;
     }
 
-    /**
-     * @description Allows a teacher to send messages to a specific student.  A student can only read messages addressed to them.
+     /**
+     * @description Allows a teacher to create and manage messages to a specific student. Students can only read messages sent to them.
      * @path /teachers/{teacherId}/students/{studentId}/messages/{messageId}
-     * @allow (get): if isSignedIn() && (request.auth.uid == teacherId || request.auth.uid == studentId)
-     * @allow (list): if isSignedIn() && request.auth.uid == teacherId
-     * @allow (create): if isSignedIn() && request.auth.uid == teacherId && request.resource.data.studentId == studentId
-     * @allow (update): if false;
-     * @allow (delete): if isSignedIn() && request.auth.uid == teacherId && resource != null
-     * @deny (create): if request.resource.data.studentId != studentId
-     * @principle Teachers manage messages; students can read messages directed to them. Ensures correct student assignment.
+     * @allow get: if isOwner(studentId) || (isSignedIn() && request.auth.uid == teacherId);
+     * @allow list: if isOwner(studentId) || (isSignedIn() && request.auth.uid == teacherId);
+     * @allow create: if isSignedIn() && request.auth.uid == teacherId;
+     * @allow update: if isSignedIn() && request.auth.uid == teacherId && resource != null;
+     * @allow delete: if isSignedIn() && request.auth.uid == teacherId && resource != null;
+     * @deny create: if !isSignedIn() || request.auth.uid != teacherId;
+     * @deny update, delete: if !isSignedIn() || request.auth.uid != teacherId;
+     * @principle Teacher-created messages, student read access.
      */
     match /teachers/{teacherId}/students/{studentId}/messages/{messageId} {
-      allow get: if isSignedIn() && (request.auth.uid == teacherId || request.auth.uid == studentId);
-      allow list: if isSignedIn() && request.auth.uid == teacherId;
-      allow create: if isSignedIn() && request.auth.uid == teacherId && request.resource.data.studentId == studentId;
-      allow update: if false;
+      allow get: if isOwner(studentId) || (isSignedIn() && request.auth.uid == teacherId);
+      allow list: if isOwner(studentId) || (isSignedIn() && request.auth.uid == teacherId);
+      allow create: if isSignedIn() && request.auth.uid == teacherId;
+      allow update: if isSignedIn() && request.auth.uid == teacherId && resource != null;
       allow delete: if isSignedIn() && request.auth.uid == teacherId && resource != null;
     }
-
+    
     /**
-     * @description Allows a teacher to manage exam reports for their students. Students can read their own exam reports.
+     * @description Allows a teacher to manage exam reports for their students, and the student to read their own reports.
      * @path /teachers/{teacherId}/students/{studentId}/examReports/{reportId}
-     * @allow (get, list): if isSignedIn() && (request.auth.uid == teacherId || request.auth.uid == studentId)
-     * @allow (create): if isSignedIn() && request.auth.uid == teacherId && request.resource.data.studentId == studentId
-     * @allow (update): if isSignedIn() && request.auth.uid == teacherId && resource != null && request.resource.data.studentId == studentId
-     * @allow (delete): if isSignedIn() && request.auth.uid == teacherId && resource != null
-     * @deny (create): if request.resource.data.studentId != studentId
-     * @deny (update, delete): if resource == null
-     * @principle Teachers manage student reports; students can read their own. Ensures student assignment through studentId.
+     * @allow (get, list): if isOwner(studentId) || (isSignedIn() && request.auth.uid == teacherId);
+     * @allow (create): if isSignedIn() && request.auth.uid == teacherId;
+     * @allow (update, delete): if isSignedIn() && request.auth.uid == teacherId && resource != null;
+     * @deny (create): if !isSignedIn();
+     * @deny (update, delete): if !isSignedIn();
+     * @principle Teacher-managed exam reports with owner read access.
      */
     match /teachers/{teacherId}/students/{studentId}/examReports/{reportId} {
-      allow get, list: if isSignedIn() && (request.auth.uid == teacherId || request.auth.uid == studentId);
-      allow create: if isSignedIn() && request.auth.uid == teacherId && request.resource.data.studentId == studentId;
-      allow update: if isSignedIn() && request.auth.uid == teacherId && resource != null && request.resource.data.studentId == studentId;
+      allow get, list: if isOwner(studentId) || (isSignedIn() && request.auth.uid == teacherId);
+      allow create: if isSignedIn() && request.auth.uid == teacherId;
+      allow update: if isSignedIn() && request.auth.uid == teacherId && resource != null;
       allow delete: if isSignedIn() && request.auth.uid == teacherId && resource != null;
     }
 
-    /**
-     * @description Allows a teacher to manage weekly progress reports for their students. Students can read their own reports.
+     /**
+     * @description Allows a teacher to manage weekly progress reports for their students, and the student to read their own reports.
      * @path /teachers/{teacherId}/students/{studentId}/weeklyProgress/{reportId}
-     * @allow (get, list): if isSignedIn() && (request.auth.uid == teacherId || request.auth.uid == studentId)
-     * @allow (create): if isSignedIn() && request.auth.uid == teacherId && request.resource.data.studentId == studentId
-     * @allow (update): if isSignedIn() && request.auth.uid == teacherId && resource != null && request.resource.data.studentId == studentId
-     * @allow (delete): if isSignedIn() && request.auth.uid == teacherId && resource != null
-     * @deny (create): if request.resource.data.studentId != studentId
-     * @deny (update, delete): if resource == null
-     * @principle Teachers manage student reports; students can read their own. Ensures student assignment through studentId.
+     * @allow (get, list): if isOwner(studentId) || (isSignedIn() && request.auth.uid == teacherId);
+     * @allow (create): if isSignedIn() && request.auth.uid == teacherId;
+     * @allow (update, delete): if isSignedIn() && request.auth.uid == teacherId && resource != null;
+     * @deny (create): if !isSignedIn();
+     * @deny (update, delete): if !isSignedIn();
+     * @principle Teacher-managed weekly progress reports with owner read access.
      */
     match /teachers/{teacherId}/students/{studentId}/weeklyProgress/{reportId} {
-      allow get, list: if isSignedIn() && (request.auth.uid == teacherId || request.auth.uid == studentId);
-      allow create: if isSignedIn() && request.auth.uid == teacherId && request.resource.data.studentId == studentId;
-      allow update: if isSignedIn() && request.auth.uid == teacherId && resource != null && request.resource.data.studentId == studentId;
+      allow get, list: if isOwner(studentId) || (isSignedIn() && request.auth.uid == teacherId);
+      allow create: if isSignedIn() && request.auth.uid == teacherId;
+      allow update: if isSignedIn() && request.auth.uid == teacherId && resource != null;
       allow delete: if isSignedIn() && request.auth.uid == teacherId && resource != null;
     }
 
-    /**
-     * @description Allows a teacher to manage topic investment reports for their students. Students can read their own reports.
+   /**
+     * @description Allows a teacher to manage topic investment reports for their students, and the student to read their own reports.
      * @path /teachers/{teacherId}/students/{studentId}/topicInvestments/{reportId}
-     * @allow (get, list): if isSignedIn() && (request.auth.uid == teacherId || request.auth.uid == studentId)
-     * @allow (create): if isSignedIn() && request.auth.uid == teacherId && request.resource.data.studentId == studentId
-     * @allow (update): if isSignedIn() && request.auth.uid == teacherId && resource != null && request.resource.data.studentId == studentId
-     * @allow (delete): if isSignedIn() && request.auth.uid == teacherId && resource != null
-     * @deny (create): if request.resource.data.studentId != studentId
-     * @deny (update, delete): if resource == null
-     * @principle Teachers manage student reports; students can read their own. Ensures student assignment through studentId.
+     * @allow (get, list): if isOwner(studentId) || (isSignedIn() && request.auth.uid == teacherId);
+     * @allow (create): if isSignedIn() && request.auth.uid == teacherId;
+     * @allow (update, delete): if isSignedIn() && request.auth.uid == teacherId && resource != null;
+     * @deny (create): if !isSignedIn();
+     * @deny (update, delete): if !isSignedIn();
+     * @principle Teacher-managed topic investment reports with owner read access.
      */
     match /teachers/{teacherId}/students/{studentId}/topicInvestments/{reportId} {
-      allow get, list: if isSignedIn() && (request.auth.uid == teacherId || request.auth.uid == studentId);
-      allow create: if isSignedIn() && request.auth.uid == teacherId && request.resource.data.studentId == studentId;
-      allow update: if isSignedIn() && request.auth.uid == teacherId && resource != null && request.resource.data.studentId == studentId;
+      allow get, list: if isOwner(studentId) || (isSignedIn() && request.auth.uid == teacherId);
+      allow create: if isSignedIn() && request.auth.uid == teacherId;
+      allow update: if isSignedIn() && request.auth.uid == teacherId && resource != null;
       allow delete: if isSignedIn() && request.auth.uid == teacherId && resource != null;
     }
 
-      /**
-       * @description Allows a teacher to manage overall exam reports for their students. Students can read their own reports.
-       * @path /teachers/{teacherId}/students/{studentId}/overallExamReports/{reportId}
-       * @allow (get, list): if isSignedIn() && (request.auth.uid == teacherId || request.auth.uid == studentId)
-       * @allow (create): if isSignedIn() && request.auth.uid == teacherId && request.resource.data.studentId == studentId
-       * @allow (update): if isSignedIn() && request.auth.uid == teacherId && resource != null && request.resource.data.studentId == studentId
-       * @allow (delete): if isSignedIn() && request.auth.uid == teacherId && resource != null
-       * @deny (create): if request.resource.data.studentId != studentId
-       * @deny (update, delete): if resource == null
-       * @principle Teachers manage student reports; students can read their own. Ensures student assignment through studentId.
-       */
-      match /teachers/{teacherId}/students/{studentId}/overallExamReports/{reportId} {
-        allow get, list: if isSignedIn() && (request.auth.uid == teacherId || request.auth.uid == studentId);
-        allow create: if isSignedIn() && request.auth.uid == teacherId && request.resource.data.studentId == studentId;
-        allow update: if isSignedIn() && request.auth.uid == teacherId && resource != null && request.resource.data.studentId == studentId;
-        allow delete: if isSignedIn() && request.auth.uid == teacherId && resource != null;
-      }
+    /**
+     * @description Allows a teacher to manage overall exam reports for their students, and the student to read their own reports.
+     * @path /teachers/{teacherId}/students/{studentId}/overallExamReports/{reportId}
+     * @allow (get, list): if isOwner(studentId) || (isSignedIn() && request.auth.uid == teacherId);
+     * @allow (create): if isSignedIn() && request.auth.uid == teacherId;
+     * @allow (update, delete): if isSignedIn() && request.auth.uid == teacherId && resource != null;
+     * @deny (create): if !isSignedIn();
+     * @deny (update, delete): if !isSignedIn();
+     * @principle Teacher-managed overall exam reports with owner read access.
+     */
+    match /teachers/{teacherId}/students/{studentId}/overallExamReports/{reportId} {
+      allow get, list: if isOwner(studentId) || (isSignedIn() && request.auth.uid == teacherId);
+      allow create: if isSignedIn() && request.auth.uid == teacherId;
+      allow update: if isSignedIn() && request.auth.uid == teacherId && resource != null;
+      allow delete: if isSignedIn() && request.auth.uid == teacherId && resource != null;
+    }
 
     /**
-     * @description Allows a teacher to send recommendations to a student. Students can only read recommendations sent to them.
+     * @description Allows a teacher to create recommendations for their students, and the student to read the recommendation.
      * @path /teachers/{teacherId}/students/{studentId}/recommendations/{recommendationId}
-     * @allow (get, list): if isSignedIn() && (request.auth.uid == teacherId || request.auth.uid == studentId)
-     * @allow (create): if isSignedIn() && request.auth.uid == teacherId && request.resource.data.studentId == studentId && request.resource.data.teacherId == teacherId
-     * @allow (update): if isSignedIn() && (request.auth.uid == teacherId) && resource != null && request.resource.data.studentId == studentId && request.resource.data.teacherId == teacherId
-     * @allow (delete): if isSignedIn() && request.auth.uid == teacherId && resource != null
-     * @deny (create): if request.resource.data.studentId != studentId || request.resource.data.teacherId != teacherId
-     * @deny (update, delete): if resource == null
-     * @principle Teachers manage recommendations; students can read recommendations directed to them. Ensures relational integrity.
+     * @allow (get): if isOwner(studentId) || (isSignedIn() && request.auth.uid == teacherId);
+     * @allow (list): if isOwner(studentId) || (isSignedIn() && request.auth.uid == teacherId);
+     * @allow (create): if isSignedIn() && request.auth.uid == teacherId;
+     * @allow (update, delete): if isSignedIn() && request.auth.uid == teacherId && resource != null;
+     * @deny (create): if !isSignedIn();
+     * @deny (update, delete): if !isSignedIn();
+     * @principle Teacher-managed recommendations with owner read access.
      */
     match /teachers/{teacherId}/students/{studentId}/recommendations/{recommendationId} {
-      allow get, list: if isSignedIn() && (request.auth.uid == teacherId || request.auth.uid == studentId);
-      allow create: if isSignedIn() && request.auth.uid == teacherId && request.resource.data.studentId == studentId && request.resource.data.teacherId == teacherId;
-      allow update: if isSignedIn() && (request.auth.uid == teacherId) && resource != null && request.resource.data.studentId == studentId && request.resource.data.teacherId == teacherId;
+      allow get: if isOwner(studentId) || (isSignedIn() && request.auth.uid == teacherId);
+      allow list: if isOwner(studentId) || (isSignedIn() && request.auth.uid == teacherId);
+      allow create: if isSignedIn() && request.auth.uid == teacherId;
+      allow update: if isSignedIn() && request.auth.uid == teacherId && resource != null;
       allow delete: if isSignedIn() && request.auth.uid == teacherId && resource != null;
     }
 
-    /**
-     * @description Allows a teacher to manage focus intervals for their students. Students can manage their own focus intervals.
+     /**
+     * @description Allows a teacher to manage focus intervals for their students, and the student to read their own intervals.
      * @path /teachers/{teacherId}/students/{studentId}/focusIntervals/{intervalId}
-     * @allow (get, list): if isSignedIn() && (request.auth.uid == teacherId || request.auth.uid == studentId)
-     * @allow (create): if isSignedIn() && (request.auth.uid == teacherId || request.auth.uid == studentId) && request.resource.data.studentId == studentId
-     * @allow (update): if isSignedIn() && (request.auth.uid == teacherId || request.auth.uid == studentId) && resource != null && request.resource.data.studentId == studentId
-     * @allow (delete): if isSignedIn() && (request.auth.uid == teacherId || request.auth.uid == studentId) && resource != null
-     * @deny (create): if request.resource.data.studentId != studentId
-     * @deny (update, delete): if resource == null
-     * @principle Teachers manage student focus intervals; students can manage their own. Ensures relational integrity.
+     * @allow (get, list): if isOwner(studentId) || (isSignedIn() && request.auth.uid == teacherId);
+     * @allow (create): if isSignedIn() && (request.auth.uid == studentId);
+     * @allow (update, delete): if isSignedIn() && (request.auth.uid == studentId) && resource != null;
+     * @deny (create): if !isSignedIn();
+     * @deny (update, delete): if !isSignedIn();
+     * @principle Teacher-managed focus intervals with owner access.
      */
     match /teachers/{teacherId}/students/{studentId}/focusIntervals/{intervalId} {
-      allow get, list: if isSignedIn() && (request.auth.uid == teacherId || request.auth.uid == studentId);
-      allow create: if isSignedIn() && (request.auth.uid == teacherId || request.auth.uid == studentId) && request.resource.data.studentId == studentId;
-      allow update: if isSignedIn() && (request.auth.uid == teacherId || request.auth.uid == studentId) && resource != null && request.resource.data.studentId == studentId;
-      allow delete: if isSignedIn() && (request.auth.uid == teacherId || request.auth.uid == studentId) && resource != null;
+      allow get, list: if isOwner(studentId) || (isSignedIn() && request.auth.uid == teacherId);
+      allow create: if isSignedIn() && (request.auth.uid == studentId);
+      allow update: if isSignedIn() && (request.auth.uid == studentId) && resource != null;
+      allow delete: if isSignedIn() && (request.auth.uid == studentId) && resource != null;
     }
-
-    /**
-     * @description Allows a teacher to create questionnaires. Students cannot directly access questionnaires.
+   
+   /**
+     * @description Allows a teacher to create questionnaires.
      * @path /teachers/{teacherId}/questionnaires/{questionnaireId}
-     * @allow (get, list): if isSignedIn() && request.auth.uid == teacherId
-     * @allow (create): if isSignedIn() && request.auth.uid == teacherId
-     * @allow (update): if isSignedIn() && request.auth.uid == teacherId && resource != null
-     * @allow (delete): if isSignedIn() && request.auth.uid == teacherId && resource != null
-     * @principle Teachers manage questionnaires. Students access questionnaires only indirectly through submissions.
+     * @allow (get, list): if isSignedIn() && request.auth.uid == teacherId;
+     * @allow (create): if isSignedIn() && request.auth.uid == teacherId;
+     * @allow (update, delete): if isSignedIn() && request.auth.uid == teacherId && resource != null;
+     * @deny (create): if !isSignedIn();
+     * @deny (update, delete): if !isSignedIn();
+     * @principle Teacher-managed questionnaires.
      */
     match /teachers/{teacherId}/questionnaires/{questionnaireId} {
       allow get, list: if isSignedIn() && request.auth.uid == teacherId;
@@ -280,30 +269,35 @@ service cloud.firestore {
       allow delete: if isSignedIn() && request.auth.uid == teacherId && resource != null;
     }
 
-    /**
-     * @description Allows a student to submit a questionnaire and the teacher to view all submissions for a questionnaire.
+   /**
+     * @description Allows a student to submit a questionnaire.
      * @path /teachers/{teacherId}/questionnaires/{questionnaireId}/submissions/{submissionId}
-     * @allow (get, list): if isSignedIn() && (request.auth.uid == teacherId)
-     * @allow (create): if isSignedIn() && request.resource.data.studentId == request.auth.uid
-     * @allow (update): if false;
-     * @allow (delete): if false;
-     * @principle Teachers read submissions, students create their own submissions.
+     * @allow get: if isOwner(request.resource.data.studentId) || (isSignedIn() && request.auth.uid == teacherId);
+     * @allow list: if isOwner(request.resource.data.studentId) || (isSignedIn() && request.auth.uid == teacherId);
+     * @allow create: if isSignedIn() && request.auth.uid == request.resource.data.studentId;
+     * @allow update: if false;
+     * @allow delete: if false;
+     * @deny (create): if !isSignedIn();
+     * @deny (update, delete): if !isSignedIn();
+     * @principle Teacher-managed questionnaires with student submissions.
      */
     match /teachers/{teacherId}/questionnaires/{questionnaireId}/submissions/{submissionId} {
-      allow get, list: if isSignedIn() && (request.auth.uid == teacherId);
-      allow create: if isSignedIn() && request.resource.data.studentId == request.auth.uid;
-      allow update: if false;
-      allow delete: if false;
+        allow get: if isOwner(request.resource.data.studentId) || (isSignedIn() && request.auth.uid == teacherId);
+        allow list: if isOwner(request.resource.data.studentId) || (isSignedIn() && request.auth.uid == teacherId);
+        allow create: if isSignedIn() && request.auth.uid == request.resource.data.studentId;
+        allow update: if false;
+        allow delete: if false;
     }
-
-     /**
-     * @description Allows a teacher to create tests. Students cannot directly access tests.
+   
+   /**
+     * @description Allows a teacher to create tests.
      * @path /teachers/{teacherId}/tests/{testId}
-     * @allow (get, list): if isSignedIn() && request.auth.uid == teacherId
-     * @allow (create): if isSignedIn() && request.auth.uid == teacherId
-     * @allow (update): if isSignedIn() && request.auth.uid == teacherId && resource != null
-     * @allow (delete): if isSignedIn() && request.auth.uid == teacherId && resource != null
-     * @principle Teachers manage tests. Students access tests only indirectly through submissions.
+     * @allow (get, list): if isSignedIn() && request.auth.uid == teacherId;
+     * @allow (create): if isSignedIn() && request.auth.uid == teacherId;
+     * @allow (update, delete): if isSignedIn() && request.auth.uid == teacherId && resource != null;
+     * @deny (create): if !isSignedIn();
+     * @deny (update, delete): if !isSignedIn();
+     * @principle Teacher-managed tests.
      */
     match /teachers/{teacherId}/tests/{testId} {
       allow get, list: if isSignedIn() && request.auth.uid == teacherId;
@@ -312,30 +306,35 @@ service cloud.firestore {
       allow delete: if isSignedIn() && request.auth.uid == teacherId && resource != null;
     }
 
-    /**
-     * @description Allows a student to submit a test and the teacher to view all submissions for a test.
+   /**
+     * @description Allows a student to submit a test.
      * @path /teachers/{teacherId}/tests/{testId}/submissions/{submissionId}
-     * @allow (get, list): if isSignedIn() && (request.auth.uid == teacherId)
-     * @allow (create): if isSignedIn() && request.resource.data.studentId == request.auth.uid
-     * @allow (update): if false;
-     * @allow (delete): if false;
-     * @principle Teachers read submissions, students create their own submissions.
+     * @allow get: if isOwner(request.resource.data.studentId) || (isSignedIn() && request.auth.uid == teacherId);
+     * @allow list: if isOwner(request.resource.data.studentId) || (isSignedIn() && request.auth.uid == teacherId);
+     * @allow create: if isSignedIn() && request.auth.uid == request.resource.data.studentId;
+     * @allow update: if false;
+     * @allow delete: if false;
+     * @deny (create): if !isSignedIn();
+     * @deny (update, delete): if !isSignedIn();
+     * @principle Teacher-managed tests with student submissions.
      */
     match /teachers/{teacherId}/tests/{testId}/submissions/{submissionId} {
-      allow get, list: if isSignedIn() && (request.auth.uid == teacherId);
-      allow create: if isSignedIn() && request.resource.data.studentId == request.auth.uid;
-      allow update: if false;
-      allow delete: if false;
+        allow get: if isOwner(request.resource.data.studentId) || (isSignedIn() && request.auth.uid == teacherId);
+        allow list: if isOwner(request.resource.data.studentId) || (isSignedIn() && request.auth.uid == teacherId);
+        allow create: if isSignedIn() && request.auth.uid == request.resource.data.studentId;
+        allow update: if false;
+        allow delete: if false;
     }
 
-    /**
-     * @description Allows a teacher to manage strategic plans. Students cannot directly access strategic plans.
+   /**
+     * @description Allows a teacher to create strategic plans.
      * @path /teachers/{teacherId}/strategicPlans/{planId}
-     * @allow (get, list): if isSignedIn() && request.auth.uid == teacherId
-     * @allow (create): if isSignedIn() && request.auth.uid == teacherId
-     * @allow (update): if isSignedIn() && request.auth.uid == teacherId && resource != null
-     * @allow (delete): if isSignedIn() && request.auth.uid == teacherId && resource != null
-     * @principle Teachers manage strategic plans. Access is restricted to the owning teacher.
+     * @allow (get, list): if isSignedIn() && request.auth.uid == teacherId;
+     * @allow (create): if isSignedIn() && request.auth.uid == teacherId;
+     * @allow (update, delete): if isSignedIn() && request.auth.uid == teacherId && resource != null;
+     * @deny (create): if !isSignedIn();
+     * @deny (update, delete): if !isSignedIn();
+     * @principle Teacher-managed strategic plans.
      */
     match /teachers/{teacherId}/strategicPlans/{planId} {
       allow get, list: if isSignedIn() && request.auth.uid == teacherId;
@@ -345,13 +344,14 @@ service cloud.firestore {
     }
 
     /**
-     * @description Allows a teacher to manage schedule items. Students cannot directly access schedule items.
+     * @description Allows a teacher to create schedule items.
      * @path /teachers/{teacherId}/schedule/{scheduleItemId}
-     * @allow (get, list): if isSignedIn() && request.auth.uid == teacherId
-     * @allow (create): if isSignedIn() && request.auth.uid == teacherId
-     * @allow (update): if isSignedIn() && request.auth.uid == teacherId && resource != null
-     * @allow (delete): if isSignedIn() && request.auth.uid == teacherId && resource != null
-     * @principle Teachers manage schedule items. Access is restricted to the owning teacher.
+     * @allow (get, list): if isSignedIn() && request.auth.uid == teacherId;
+     * @allow (create): if isSignedIn() && request.auth.uid == teacherId;
+     * @allow (update, delete): if isSignedIn() && request.auth.uid == teacherId && resource != null;
+     * @deny (create): if !isSignedIn();
+     * @deny (update, delete): if !isSignedIn();
+     * @principle Teacher-managed schedule items.
      */
     match /teachers/{teacherId}/schedule/{scheduleItemId} {
       allow get, list: if isSignedIn() && request.auth.uid == teacherId;
@@ -360,14 +360,15 @@ service cloud.firestore {
       allow delete: if isSignedIn() && request.auth.uid == teacherId && resource != null;
     }
 
-    /**
-     * @description Allows a teacher to manage consulting content. Students cannot directly access consulting content.
+   /**
+     * @description Allows a teacher to create consulting content.
      * @path /teachers/{teacherId}/consultingContent/{contentId}
-     * @allow (get, list): if isSignedIn() && request.auth.uid == teacherId
-     * @allow (create): if isSignedIn() && request.auth.uid == teacherId
-     * @allow (update): if isSignedIn() && request.auth.uid == teacherId && resource != null
-     * @allow (delete): if isSignedIn() && request.auth.uid == teacherId && resource != null
-     * @principle Teachers manage consulting content. Access is restricted to the owning teacher.
+     * @allow (get, list): if isSignedIn() && request.auth.uid == teacherId;
+     * @allow (create): if isSignedIn() && request.auth.uid == teacherId;
+     * @allow (update, delete): if isSignedIn() && request.auth.uid == teacherId && resource != null;
+     * @deny (create): if !isSignedIn();
+     * @deny (update, delete): if !isSignedIn();
+     * @principle Teacher-managed consulting content.
      */
     match /teachers/{teacherId}/consultingContent/{contentId} {
       allow get, list: if isSignedIn() && request.auth.uid == teacherId;
@@ -377,13 +378,13 @@ service cloud.firestore {
     }
 
     /**
-     * @description Allows a teacher to manage login history for their students.
+     * @description Allows a teacher to log student login history.
      * @path /teachers/{teacherId}/loginHistory/{historyId}
-     * @allow (get, list): if isSignedIn() && request.auth.uid == teacherId
-     * @allow (create): if isSignedIn() && request.auth.uid == teacherId
-     * @allow (update): if false;
-     * @allow (delete): if false;
-     * @principle Teachers manage login history. Access is restricted to the owning teacher.
+     * @allow (get, list): if isSignedIn() && request.auth.uid == teacherId;
+     * @allow (create): if isSignedIn() && request.auth.uid == teacherId;
+     * @allow (update, delete): if false;
+     * @deny (create): if !isSignedIn();
+     * @principle Teacher-managed login history.
      */
     match /teachers/{teacherId}/loginHistory/{historyId} {
       allow get, list: if isSignedIn() && request.auth.uid == teacherId;
@@ -392,44 +393,51 @@ service cloud.firestore {
       allow delete: if false;
     }
 
-    /**
-     * @description Allows a teacher to manage questions asked by students.
+   /**
+     * @description Allows a teacher to answer a student's question.
      * @path /teachers/{teacherId}/questions/{questionId}
-     * @allow (get, list): if isSignedIn() && request.auth.uid == teacherId
-     * @allow (create): if isSignedIn() && request.auth.uid == teacherId
-     * @allow (update): if isSignedIn() && request.auth.uid == teacherId && resource != null
-     * @allow (delete): if isSignedIn() && request.auth.uid == teacherId && resource != null
-     * @principle Teachers manage questions from students.
+     * @allow (get, list): if isSignedIn() && request.auth.uid == teacherId;
+     * @allow (create): if isSignedIn() && request.auth.uid == request.resource.data.teacherId && request.resource.data.studentId == request.auth.uid;
+     * @allow (update): if isSignedIn() && request.auth.uid == teacherId && resource != null;
+     * @allow (delete): if false;
+     * @deny (create): if !isSignedIn();
+     * @deny (update, delete): if !isSignedIn();
+     * @principle Teacher-managed question/answer.
      */
-    match /teachers/{teacherId}/questions/{questionId} {
-      allow get, list: if isSignedIn() && request.auth.uid == teacherId;
-      allow create: if isSignedIn() && request.auth.uid == teacherId;
-      allow update: if isSignedIn() && request.auth.uid == teacherId && resource != null;
-      allow delete: if isSignedIn() && request.auth.uid == teacherId && resource != null;
-    }
-    
-     /**
-      * @description Allows a teacher to manage detailed exam checklists for their students. Students can manage their own checklists.
-      * @path /teachers/{teacherId}/students/{studentId}/detailedExamChecklists/{checklistId}
-      * @allow (get, list): if isSignedIn() && (request.auth.uid == teacherId || request.auth.uid == studentId)
-      * @allow (create): if isSignedIn() && (request.auth.uid == teacherId || request.auth.uid == studentId) && request.resource.data.studentId == studentId
-      * @allow (update): if isSignedIn() && (request.auth.uid == teacherId || request.auth.uid == studentId) && resource != null && request.resource.data.studentId == studentId
-      * @allow (delete): if isSignedIn() && request.auth.uid == teacherId && resource != null
-      * @deny (create): if request.resource.data.studentId != studentId
-      * @deny (update, delete): if resource == null
-      * @principle Teachers manage student exam checklists; students can manage their own. Ensures relational integrity.
-      */
-    match /teachers/{teacherId}/students/{studentId}/detailedExamChecklists/{checklistId} {
-      allow get, list: if isSignedIn() && (request.auth.uid == teacherId || request.auth.uid == studentId);
-      allow create: if isSignedIn() && (request.auth.uid == teacherId || request.auth.uid == studentId) && request.resource.data.studentId == studentId;
-      allow update: if isSignedIn() && (request.auth.uid == teacherId || request.auth.uid == studentId) && resource != null && request.resource.data.studentId == studentId;
-      allow delete: if isSignedIn() && request.auth.uid == teacherId && resource != null;
+     match /teachers/{teacherId}/questions/{questionId} {
+        allow get, list: if isSignedIn() && request.auth.uid == teacherId;
+        allow create: if isSignedIn() && request.resource.data.studentId == request.auth.uid && request.resource.data.teacherId == teacherId;
+        allow update: if isSignedIn() && request.auth.uid == teacherId && resource != null;
+        allow delete: if false;
     }
 
+   /**
+     * @description Allows a teacher to create a student exam checklist.
+     * @path /teachers/{teacherId}/students/{studentId}/detailedExamChecklists/{checklistId}
+     * @allow (get, list): if isOwner(studentId) || (isSignedIn() && request.auth.uid == teacherId);
+     * @allow (create): if isSignedIn() && request.auth.uid == teacherId;
+     * @allow (update, delete): if isSignedIn() && request.auth.uid == teacherId && resource != null;
+     * @deny (create): if !isSignedIn();
+     * @deny (update, delete): if !isSignedIn();
+     * @principle Teacher-managed exam checklist.
+     */
+     match /teachers/{teacherId}/students/{studentId}/detailedExamChecklists/{checklistId} {
+        allow get, list: if isOwner(studentId) || (isSignedIn() && request.auth.uid == teacherId);
+        allow create: if isSignedIn() && request.auth.uid == teacherId;
+        allow update: if isSignedIn() && request.auth.uid == teacherId && resource != null;
+        allow delete: if isSignedIn() && request.auth.uid == teacherId && resource != null;
+    }
 
-  }
+    function isSignedIn() {
+      return request.auth != null;
+    }
 
-  function isSignedIn() {
-    return request.auth != null;
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    function isExistingOwner(userId) {
+        return isOwner(userId) && resource != null;
+    }
   }
 }
