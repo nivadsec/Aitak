@@ -13,6 +13,7 @@ import { useEffect } from 'react';
 const featureMap: Record<string, keyof Student> = {
     '/student/stats': 'canViewStats',
     '/student/schedule': 'canViewSchedule',
+    '/student/tests': 'canViewTests',
     '/student/questionnaires': 'canViewQuestionnaires',
     '/student/daily-report': 'canSubmitDailyReport',
     '/student/weekly-progress': 'canSubmitWeeklyReport',
