@@ -29,7 +29,7 @@ const allStudentNav = [
   { href: '/student/weekly-progress', label: 'گزارش هفتگی', icon: BookCopy, feature: 'canSubmitWeeklyReport' },
   { href: '/student/exam-analysis', label: 'تحلیل آزمون', icon: ClipboardPen, feature: 'canSubmitExamAnalysis' },
   { href: '/student/overall-exam-analysis', label: 'تحلیل آزمون کلی', icon: ClipboardCheck, feature: 'canSubmitOverallExamAnalysis' },
-  { href: '/student/topic-investment', label: 'سرمایه‌گذاری زمانی', icon: BarChart3, feature: 'canSubmitTopicInvestment' },
+  { href: '/student/topic-investment', label: 'روندنمای درسی', icon: BarChart3, feature: 'canSubmitTopicInvestment' },
   { href: '/student/focus', label: 'نردبان تمرکز', icon: BrainCircuit, feature: 'canSubmitFocusLadder' },
   { href: '/student/strategic-plans', label: 'برنامه راهبردی', icon: Map, feature: 'canViewStrategicPlans' },
   { href: '/student/quizzes', label: 'آزمون‌ها', icon: FileText, feature: 'canViewQuizzes' },
