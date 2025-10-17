@@ -1,4 +1,3 @@
-
 'use client'
 
 import React, { useMemo, useState } from 'react';
@@ -91,7 +90,7 @@ export default function TeacherDashboardPage() {
 
   const { data: students, isLoading: areStudentsLoading } = useCollection(studentsQuery);
 
-  // 2. Fetch all reports for all students & cleanup old reports
+  // 2. Fetch all reports for all students
   React.useEffect(() => {
     if (!user || !firestore || !students) {
       if (students === null && !areStudentsLoading) {
@@ -100,37 +99,8 @@ export default function TeacherDashboardPage() {
       return;
     }
 
-    const cleanupOldReports = async () => {
-        const sevenDaysAgo = subDays(new Date(), 7);
-        console.log(`Cleaning up reports older than ${sevenDaysAgo.toISOString()}`);
-        
-        // This is a client-side cleanup. A server-side TTL policy or Cloud Function is more reliable.
-        for (const student of students) {
-            try {
-                const reportsRef = collection(firestore, 'teachers', user.uid, 'students', student.id, 'dailyReports');
-                const q = query(reportsRef, where('date', '<', sevenDaysAgo));
-                const oldReportsSnapshot = await getDocs(q);
-
-                if (!oldReportsSnapshot.empty) {
-                    const batch = writeBatch(firestore);
-                    oldReportsSnapshot.forEach(doc => {
-                        console.log(`Scheduling deletion for report: ${doc.id}`);
-                        batch.delete(doc.ref);
-                    });
-                    await batch.commit();
-                    console.log(`Deleted ${oldReportsSnapshot.size} old reports for student ${student.id}`);
-                }
-            } catch (error) {
-                console.error(`Failed to clean up old reports for student ${student.id}:`, error);
-                // We don't show a toast here to avoid bothering the teacher with background task errors.
-            }
-        }
-    };
-
-
     const fetchAllReports = async () => {
       setAreReportsLoading(true);
-      await cleanupOldReports(); // Run cleanup before fetching
       const reportsPromises = students.map(student => {
         const reportsRef = collection(firestore, 'teachers', user.uid, 'students', student.id, 'dailyReports');
         return getDocs(query(reportsRef)).catch(serverError => {

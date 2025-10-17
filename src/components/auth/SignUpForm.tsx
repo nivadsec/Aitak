@@ -1,4 +1,3 @@
-
 'use client';
 
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -24,15 +23,17 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
-import { useAuth, useFirebase, FirestorePermissionError, errorEmitter } from '@/firebase';
+import { useAuth, useFirebase } from '@/firebase';
 import { setDocumentNonBlocking } from '@/firebase/non-blocking-updates';
-import { doc, getDoc } from 'firebase/firestore';
+import { doc } from 'firebase/firestore';
 import Link from 'next/link';
-import { getAdminTeacherId } from '@/lib/data';
 
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 import { Alert, AlertDescription, AlertTitle } from '../ui/alert';
 import { ROLES } from '@/lib/roles';
+
+// The hardcoded UID of the single admin/teacher.
+const ADMIN_TEACHER_ID = "05OiQevVDkNy9MmhveRs9h2w81y2";
 
 const formSchema = z.object({
   firstName: z.string().min(2, 'نام الزامی است.'),
@@ -66,8 +67,16 @@ export function SignUpForm() {
     },
   });
 
-  const handleUserCreation = async (data: FormValues, teacherId: string) => {
-    if (!auth || !firestore) return;
+  async function onSubmit(data: FormValues) {
+    if (!auth || !firestore) {
+        toast({
+            title: 'خطای سیستم',
+            description: 'سرویس‌های مورد نیاز بارگذاری نشده‌اند. لطفا دوباره تلاش کنید.',
+            variant: 'destructive',
+        });
+        return;
+    }
+    setIsLoading(true);
 
     try {
         const userCredential = await createUserWithEmailAndPassword(
@@ -77,18 +86,17 @@ export function SignUpForm() {
         );
         const user = userCredential.user;
 
-        const roleInfo = `${ROLES.STUDENT}:${teacherId}`;
+        const roleInfo = `${ROLES.STUDENT}:${ADMIN_TEACHER_ID}`;
 
         await updateProfile(user, {
             displayName: `${data.firstName} ${data.lastName}`,
             photoURL: roleInfo,
         });
-
         
-        const studentRef = doc(firestore, 'teachers', teacherId, 'students', user.uid);
+        const studentRef = doc(firestore, 'teachers', ADMIN_TEACHER_ID, 'students', user.uid);
         const studentData = {
             id: user.uid,
-            teacherId: teacherId,
+            teacherId: ADMIN_TEACHER_ID,
             firstName: data.firstName,
             lastName: data.lastName,
             email: data.email,
@@ -137,40 +145,11 @@ export function SignUpForm() {
             variant: 'destructive',
             className: 'font-body',
         });
-    }
-  };
-
-
-  async function onSubmit(data: FormValues) {
-    if (!firestore || !auth) return;
-    setIsLoading(true);
-
-    try {
-      const adminTeacherId = await getAdminTeacherId(firestore);
-      
-      if (!adminTeacherId) {
-          toast({
-              title: 'خطای سیستم',
-              description: 'حساب مدیر یافت نشد. لطفاً با پشتیبانی تماس بگیرید.',
-              variant: 'destructive',
-          });
-          setIsLoading(false);
-          return;
-      }
-      
-      await handleUserCreation(data, adminTeacherId);
-
-    } catch (error: any) {
-      console.error('Error during sign up process:', error);
-      toast({
-        title: 'خطای غیرمنتظره',
-        description: 'یک خطای غیرمنتظره در فرآیند ثبت‌نام رخ داد. لطفا دوباره تلاش کنید.',
-        variant: 'destructive',
-      });
     } finally {
         setIsLoading(false);
     }
   }
+
 
   if (isSuccess) {
     return (

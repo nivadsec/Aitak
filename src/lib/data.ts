@@ -1,6 +1,4 @@
 import type { Student, DailyReport } from './types';
-import { collection, getDocs, query, limit, getFirestore, getApp } from 'firebase/firestore';
-
 
 // This is now mock data. The app will use Firestore.
 export const students: Student[] = [
@@ -28,28 +26,4 @@ export const getDailyReportsForGenkit = (studentReports: DailyReport[]) => {
             mobileUsageHours: report.minutesOfMobileUsage,
         };
     });
-}
-
-/**
- * Fetches the UID of the first (and only) teacher in the 'teachers' collection.
- * This is used during student sign-up to automatically associate them with the admin.
- * @param firestore - The Firestore instance.
- * @returns The UID of the admin teacher, or null if not found.
- */
-export async function getAdminTeacherId(firestore: any): Promise<string | null> {
-    try {
-        const teachersRef = collection(firestore, 'teachers');
-        const q = query(teachersRef, limit(1));
-        const querySnapshot = await getDocs(q);
-
-        if (!querySnapshot.empty) {
-            // Returns the ID of the first document in the collection
-            return querySnapshot.docs[0].id;
-        }
-        console.warn("No teacher/admin account found in the 'teachers' collection.");
-        return null;
-    } catch (error) {
-        console.error("Error fetching admin teacher ID:", error);
-        return null;
-    }
 }
