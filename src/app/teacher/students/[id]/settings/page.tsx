@@ -78,7 +78,7 @@ export default function StudentSettingsPage({ params }: { params: { id: string }
     { featureKey: 'canViewQuestionnaires', label: 'پرسشنامه‌ها', description: 'امکان مشاهده و شرکت در پرسشنامه‌های تعریف شده.', icon: FileText },
     { featureKey: 'canSubmitDailyReport', label: 'گزارش روزانه', description: 'اجازه ثبت و ارسال فرم گزارش روزانه.', icon: ClipboardEdit },
     { featureKey: 'canSubmitWeeklyReport', label: 'گزارش هفتگی', description: 'اجازه ثبت و ارسال فرم گزارش پیشرفت هفتگی.', icon: BookCopy },
-    { featureKey: 'canSubmitExamAnalysis', label: 'تحلیل آزمون', description: 'اجازه ثبت و ارسال فرم تحلیل آزمون عددمحور.', icon: ClipboardPen },
+    { featureKey: 'canSubmitExamAnalysis', label: 'تحلیل آزمون عددمحور', description: 'اجازه ثبت و ارسال فرم تحلیل آزمون عددمحور.', icon: ClipboardPen },
     { featureKey: 'canSubmitOverallExamAnalysis', label: 'تحلیل آزمون کلی', description: 'اجازه ثبت فرم تحلیل آزمون کلی.', icon: ClipboardCheck },
     { featureKey: 'canSubmitFocusLadder', label: 'نردبان تمرکز', description: 'امکان ثبت امتیاز در نردبان و نمودار تمرکز.', icon: BrainCircuit },
     { featureKey: 'canSubmitTopicInvestment', label: 'روندنمای درسی', description: 'اجازه ثبت فرم روندنمای برنامه‌ریزی درسی.', icon: BarChart3 },

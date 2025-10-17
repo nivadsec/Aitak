@@ -26,7 +26,7 @@ const allStudentNav = [
   { href: '/student/dashboard', label: 'داشبورد', icon: Home, feature: 'core' },
   { href: '/student/daily-report', label: 'گزارش روزانه', icon: ClipboardEdit, feature: 'canSubmitDailyReport' },
   { href: '/student/weekly-progress', label: 'گزارش هفتگی', icon: BookCopy, feature: 'canSubmitWeeklyReport' },
-  { href: '/student/exam-analysis', label: 'تحلیل آزمون', icon: ClipboardPen, feature: 'canSubmitExamAnalysis' },
+  { href: '/student/exam-analysis', label: 'تحلیل آزمون عددمحور', icon: ClipboardPen, feature: 'canSubmitExamAnalysis' },
   { href: '/student/overall-exam-analysis', label: 'تحلیل آزمون کلی', icon: ClipboardCheck, feature: 'canSubmitOverallExamAnalysis' },
   { href: '/student/topic-investment', label: 'روندنمای درسی', icon: BarChart3, feature: 'canSubmitTopicInvestment' },
   { href: '/student/focus', label: 'نردبان تمرکز', icon: BrainCircuit, feature: 'canSubmitFocusLadder' },
