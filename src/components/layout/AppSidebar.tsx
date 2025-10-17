@@ -17,6 +17,7 @@ import { Separator } from '@/components/ui/separator';
 import { useDoc, useFirebase, useMemoFirebase } from '@/firebase';
 import type { Student } from '@/lib/types';
 import { doc } from 'firebase/firestore';
+import { cn } from '@/lib/utils';
 
 type AppSidebarProps = {
   role: 'student' | 'teacher';
@@ -74,36 +75,36 @@ function StudentSidebarNav() {
         return doc(firestore, 'teachers', teacherId, 'students', user.uid);
     }, [firestore, user, teacherId]);
 
-    const { data: student } = useDoc<Student>(studentRef);
+    const { data: student, isLoading: isStudentLoading } = useDoc<Student>(studentRef);
 
-    const availableNavs = React.useMemo(() => {
-        if (!student) {
-            // While loading or if student doc doesn't exist, only show core items
-            return allStudentNav.filter(item => item.feature === 'core' || item.type === 'separator');
-        }
-
-        return allStudentNav.filter(item => {
-            if (item.type === 'separator') return true;
-            if (item.feature === 'core') return true;
-            // The feature flag can be undefined, so we check for explicit false
-            return student[item.feature as keyof Student] !== false;
-        });
-    }, [student]);
+    const checkAccess = (feature: string) => {
+        if (isStudentLoading) return false; // Default to no access while loading to prevent premature clicks
+        if (feature === 'core') return true;
+        if (!student) return false; // If student doc doesn't exist, deny access
+        return student[feature as keyof Student] !== false;
+    }
 
     return (
          <SidebarMenu>
-          {availableNavs.map((item, index) => {
+          {allStudentNav.map((item, index) => {
             if (item.type === 'separator') {
               return <Separator key={`sep-${index}`} className="my-1" />;
             }
+            
+            const hasAccess = checkAccess(item.feature);
+            const isDisabled = !isStudentLoading && !hasAccess;
+
             return (
               <SidebarMenuItem key={item.href}>
                 <SidebarMenuButton
                   asChild
                   isActive={pathname.startsWith(item.href!)}
                   tooltip={{ children: item.label, side: 'left', className: 'font-body' }}
+                  className={cn(isDisabled && "text-muted-foreground/50 pointer-events-none")}
+                  aria-disabled={isDisabled}
+                  tabIndex={isDisabled ? -1 : undefined}
                 >
-                  <Link href={item.href!}>
+                  <Link href={isDisabled ? '#' : item.href!} aria-disabled={isDisabled}>
                     <item.icon />
                     <span>{item.label}</span>
                   </Link>
