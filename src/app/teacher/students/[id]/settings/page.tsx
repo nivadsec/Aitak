@@ -11,7 +11,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { useToast } from '@/hooks/use-toast';
-import { Settings, ArrowLeft, Bot, BarChart3, Calendar, FileText, BookCopy, ClipboardPen, BrainCircuit, Map } from 'lucide-react';
+import { Settings, ArrowLeft, Bot, BarChart3, Calendar, FileText, BookCopy, ClipboardPen, BrainCircuit, Map, ClipboardCheck } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 interface FeatureToggleProps {
@@ -78,6 +78,7 @@ export default function StudentSettingsPage({ params }: { params: { id: string }
     { featureKey: 'canViewQuizzes', label: 'آزمون‌ها', description: 'امکان مشاهده و شرکت در آزمون‌های تعریف شده.', icon: FileText },
     { featureKey: 'canSubmitWeeklyReport', label: 'گزارش هفتگی', description: 'اجازه ثبت و ارسال فرم گزارش پیشرفت هفتگی.', icon: BookCopy },
     { featureKey: 'canSubmitExamAnalysis', label: 'تحلیل آزمون', description: 'اجازه ثبت و ارسال فرم تحلیل آزمون عددمحور.', icon: ClipboardPen },
+    { featureKey: 'canSubmitOverallExamAnalysis', label: 'تحلیل آزمون کلی', description: 'اجازه ثبت فرم تحلیل آزمون کلی.', icon: ClipboardCheck },
     { featureKey: 'canSubmitFocusLadder', label: 'نردبان تمرکز', description: 'امکان ثبت امتیاز در نردبان و نمودار تمرکز.', icon: BrainCircuit },
     { featureKey: 'canSubmitTopicInvestment', label: 'سرمایه‌گذاری زمانی', description: 'اجازه ثبت فرم سرمایه‌گذاری زمانی مبحث‌محور.', icon: ClipboardPen },
   ];
@@ -140,5 +141,3 @@ export default function StudentSettingsPage({ params }: { params: { id: string }
     </div>
   );
 }
-
-    

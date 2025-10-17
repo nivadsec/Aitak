@@ -19,6 +19,7 @@ const featureMap: Record<string, keyof Student> = {
     '/student/focus': 'canSubmitFocusLadder',
     '/student/topic-investment': 'canSubmitTopicInvestment',
     '/student/strategic-plans': 'canViewStrategicPlans',
+    '/student/overall-exam-analysis': 'canSubmitOverallExamAnalysis',
 };
 
 

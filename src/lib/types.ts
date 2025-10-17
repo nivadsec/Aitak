@@ -1,3 +1,4 @@
+
 'use client';
 
 export interface Student {
@@ -22,6 +23,7 @@ export interface Student {
   canSubmitTopicInvestment?: boolean;
   canViewStrategicPlans?: boolean;
   canViewConsultingContent?: boolean;
+  canSubmitOverallExamAnalysis?: boolean;
 }
 
 
@@ -228,4 +230,24 @@ export interface LoginHistory {
     type: 'login' | 'logout';
     status: 'success' | 'failure';
     failureReason?: string;
+}
+
+export interface OverallExamEntry {
+    examNumber: number;
+    date: Date;
+    correctCount: number;
+    incorrectCount: number;
+    percentage: number;
+    questionsAnswered: number;
+    satisfaction: number;
+    notes?: string;
+}
+
+export interface OverallExamReport {
+    id: string;
+    studentId: string;
+    subjectName: string;
+    examEntries: OverallExamEntry[];
+    createdAt: any; // Firestore Timestamp
+    updatedAt: any; // Firestore Timestamp
 }

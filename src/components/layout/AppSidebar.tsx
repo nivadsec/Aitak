@@ -1,7 +1,8 @@
+
 'use client';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { BookCopy, Home, Users, BarChart3, MessageSquare, Megaphone, ClipboardPen, ClipboardEdit, BrainCircuit, Settings, Lightbulb, Bot, FileText, Calendar, BookOpen, Map, History, ShieldCheck } from 'lucide-react';
+import { BookCopy, Home, Users, BarChart3, MessageSquare, Megaphone, ClipboardPen, ClipboardEdit, BrainCircuit, Settings, Lightbulb, Bot, FileText, Calendar, BookOpen, Map, History, ShieldCheck, ClipboardCheck } from 'lucide-react';
 import React from 'react';
 import {
   Sidebar,
@@ -27,6 +28,7 @@ const allStudentNav = [
   { href: '/student/daily-report', label: 'گزارش روزانه', icon: ClipboardEdit, feature: 'core' },
   { href: '/student/weekly-progress', label: 'گزارش هفتگی', icon: BookCopy, feature: 'canSubmitWeeklyReport' },
   { href: '/student/exam-analysis', label: 'تحلیل آزمون', icon: ClipboardPen, feature: 'canSubmitExamAnalysis' },
+  { href: '/student/overall-exam-analysis', label: 'تحلیل آزمون کلی', icon: ClipboardCheck, feature: 'canSubmitOverallExamAnalysis' },
   { href: '/student/topic-investment', label: 'سرمایه‌گذاری زمانی', icon: BarChart3, feature: 'canSubmitTopicInvestment' },
   { href: '/student/focus', label: 'نردبان تمرکز', icon: BrainCircuit, feature: 'canSubmitFocusLadder' },
   { href: '/student/strategic-plans', label: 'برنامه راهبردی', icon: Map, feature: 'canViewStrategicPlans' },

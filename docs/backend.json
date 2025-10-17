@@ -24,7 +24,8 @@
         "canSubmitFocusLadder": { "type": "boolean", "description": "Controls access to the focus ladder form." },
         "canSubmitTopicInvestment": { "type": "boolean", "description": "Controls access to the topic investment form." },
         "canViewStrategicPlans": { "type": "boolean", "description": "Controls access to the strategic plans page." },
-        "canViewConsultingContent": { "type": "boolean", "description": "Controls access to the consulting content page." }
+        "canViewConsultingContent": { "type": "boolean", "description": "Controls access to the consulting content page." },
+        "canSubmitOverallExamAnalysis": { "type": "boolean", "description": "Controls access to the overall exam analysis form." }
       },
       "required": ["id", "firstName", "lastName", "email", "gradeLevel", "major", "isActive"]
     },
@@ -320,6 +321,36 @@
         "failureReason": { "type": "string", "description": "Reason for failure, e.g., 'wrong-password'." }
       },
       "required": ["id", "studentId", "email", "timestamp", "type", "status"]
+    },
+     "OverallExamReport": {
+      "title": "OverallExamReport",
+      "type": "object",
+      "description": "Represents a student's overall analysis report for a specific subject across multiple exams.",
+      "properties": {
+        "id": { "type": "string" },
+        "studentId": { "type": "string" },
+        "subjectName": { "type": "string" },
+        "examEntries": { "type": "array", "items": { "$ref": "#/entities/OverallExamEntry" } },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "studentId", "subjectName", "examEntries"]
+    },
+    "OverallExamEntry": {
+      "title": "OverallExamEntry",
+      "type": "object",
+      "description": "A single entry within an overall exam report.",
+      "properties": {
+        "examNumber": { "type": "number" },
+        "date": { "type": "string", "format": "date-time" },
+        "correctCount": { "type": "number" },
+        "incorrectCount": { "type": "number" },
+        "percentage": { "type": "number" },
+        "questionsAnswered": { "type": "number" },
+        "satisfaction": { "type": "number", "description": "Satisfaction score, e.g., 1 to 3 for emojis" },
+        "notes": { "type": "string" }
+      },
+      "required": ["examNumber", "date", "correctCount", "incorrectCount", "percentage"]
     }
   },
   "auth": {
@@ -337,6 +368,7 @@
       { "path": "/teachers/{teacherId}/students/{studentId}/examReports/{reportId}", "definition": { "entityName": "ExamReport", "schema": { "$ref": "#/entities/ExamReport" }, "description": "Stores exam analysis reports for a student." } },
       { "path": "/teachers/{teacherId}/students/{studentId}/weeklyProgress/{reportId}", "definition": { "entityName": "WeeklyProgressReport", "schema": { "$ref": "#/entities/WeeklyProgressReport" }, "description": "Stores weekly progress reports for a student." } },
       { "path": "/teachers/{teacherId}/students/{studentId}/topicInvestments/{reportId}", "definition": { "entityName": "TopicInvestmentReport", "schema": { "$ref": "#/entities/TopicInvestmentReport" }, "description": "Stores topic-based time investment plans for a student." } },
+      { "path": "/teachers/{teacherId}/students/{studentId}/overallExamReports/{reportId}", "definition": { "entityName": "OverallExamReport", "schema": { "$ref": "#/entities/OverallExamReport" }, "description": "Stores overall exam analysis reports for a student for a specific subject." } },
       { "path": "/teachers/{teacherId}/students/{studentId}/recommendations/{recommendationId}", "definition": { "entityName": "Recommendation", "schema": { "$ref": "#/entities/Recommendation" }, "description": "Stores recommendations from a teacher to a specific student." } },
       { "path": "/teachers/{teacherId}/students/{studentId}/focusIntervals/{intervalId}", "definition": { "entityName": "FocusInterval", "schema": { "$ref": "#/entities/FocusInterval" }, "description": "Stores focus intervals recorded by a student." } },
       { "path": "/teachers/{teacherId}/quizzes/{quizId}", "definition": { "entityName": "Quiz", "schema": { "$ref": "#/entities/Quiz" }, "description": "Stores quizzes created by a teacher." } },
