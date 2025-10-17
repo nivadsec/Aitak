@@ -2,7 +2,7 @@
 
 import React, { useMemo, useState } from 'react';
 import Link from 'next/link';
-import { collection, getDocs, query, where, writeBatch, doc } from 'firebase/firestore';
+import { collection, getDocs, query, writeBatch, doc } from 'firebase/firestore';
 import { ArrowLeft, Download, Megaphone, PlusCircle, RefreshCw } from 'lucide-react';
 import { subDays, format, eachDayOfInterval, isSameDay } from 'date-fns';
 
@@ -17,8 +17,6 @@ import { downloadJson } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import type { Student, StudentReport } from '@/lib/types';
-import { updateProfile } from 'firebase/auth';
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 
 
 // Helper function to process reports for analytics

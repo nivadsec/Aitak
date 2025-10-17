@@ -1,10 +1,9 @@
-
 'use client';
 
 import React, { useMemo, useState } from 'react';
 import { useCollection, useFirebase, useMemoFirebase } from '@/firebase';
 import { collection, query, where, orderBy, doc, serverTimestamp, updateDoc } from 'firebase/firestore';
-import type { QuestionAnswer, Student } from '@/lib/types';
+import type { QuestionAnswer, Student, Teacher } from '@/lib/types';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
@@ -26,7 +25,7 @@ function ChatInterface({ student, questions, teacher }: { student: Student; ques
     const studentQuestions = useMemo(() => {
         return questions
             .filter(q => q.studentId === student.id)
-            .sort((a, b) => a.createdAt.seconds - b.createdAt.seconds);
+            .sort((a, b) => (a.createdAt?.seconds || 0) - (b.createdAt?.seconds || 0));
     }, [questions, student.id]);
 
     React.useEffect(() => {
@@ -83,7 +82,7 @@ function ChatInterface({ student, questions, teacher }: { student: Student; ques
                                 </Avatar>
                                 <div className="rounded-xl bg-muted p-3 max-w-lg">
                                     <p className="text-sm">{q.question}</p>
-                                    <p className="text-xs text-muted-foreground mt-1 text-left">{new Date(q.createdAt?.seconds * 1000).toLocaleTimeString('fa-IR', { hour: '2-digit', minute: '2-digit' })}</p>
+                                    <p className="text-xs text-muted-foreground mt-1 text-left">{q.createdAt ? new Date(q.createdAt.seconds * 1000).toLocaleTimeString('fa-IR', { hour: '2-digit', minute: '2-digit' }) : ''}</p>
                                 </div>
                             </div>
                         );
@@ -93,7 +92,7 @@ function ChatInterface({ student, questions, teacher }: { student: Student; ques
                                 <div key={`a-${index}`} className="flex items-end gap-3 justify-end">
                                     <div className="rounded-xl bg-primary text-primary-foreground p-3 max-w-lg">
                                         <p className="text-sm">{q.answer}</p>
-                                        <p className="text-xs text-primary-foreground/70 mt-1 text-left">{q.answeredAt ? new Date(q.answeredAt?.seconds * 1000).toLocaleTimeString('fa-IR', { hour: '2-digit', minute: '2-digit' }) : ''}</p>
+                                        <p className="text-xs text-primary-foreground/70 mt-1 text-left">{q.answeredAt ? new Date(q.answeredAt.seconds * 1000).toLocaleTimeString('fa-IR', { hour: '2-digit', minute: '2-digit' }) : ''}</p>
                                     </div>
                                     <Avatar className="h-9 w-9">
                                         <AvatarImage src={teacher?.photoURL} />

@@ -14,6 +14,8 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { LoginForm } from '@/components/auth/LoginForm';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { ResetPasswordForm } from '@/components/auth/ResetPasswordForm';
 
 function AnnouncementCard() {
   const { firestore } = useFirebase();

@@ -2,11 +2,11 @@ import type { Student, DailyReport } from './types';
 
 // This is now mock data. The app will use Firestore.
 export const students: Student[] = [
-  { id: '1', teacherId: 'default-teacher', firstName: 'سارا', lastName: 'رضایی', gradeLevel: 'دهم', major: 'تجربی', isActive: true, avatarUrl: 'https://picsum.photos/seed/user-2/100/100', email: 'sara@example.com' },
-  { id: '2', teacherId: 'default-teacher', firstName: 'علی', lastName: 'محمدی', gradeLevel: 'یازدهم', major: 'ریاضی', isActive: true, avatarUrl: 'https://picsum.photos/seed/user-1/100/100', email: 'ali@example.com' },
-  { id: '3', teacherId: 'default-teacher', firstName: 'فاطمه', lastName: 'حسینی', gradeLevel: 'دوازدهم', major: 'انسانی', isActive: false, avatarUrl: 'https://picsum.photos/seed/user-5/100/100', email: 'fatemeh@example.com' },
-  { id: '4', teacherId: 'default-teacher', firstName: 'رضا', lastName: 'احمدی', gradeLevel: 'دهم', major: 'ریاضی', isActive: true, avatarUrl: 'https://picsum.photos/seed/user-3/100/100', email: 'reza@example.com' },
-  { id: '5', teacherId: 'default-teacher', firstName: 'محمد', lastName: 'اکبری', gradeLevel: 'یازدهم', major: 'تجربی', isActive: true, avatarUrl: 'https://picsum.photos/seed/user-6/100/100', email: 'mohammad@example.com' },
+  { id: '1', teacherId: '05OiQevVDkNy9MmhveRs9h2w81y2', firstName: 'سارا', lastName: 'رضایی', gradeLevel: 'دهم', major: 'تجربی', isActive: true, avatarUrl: 'https://picsum.photos/seed/user-2/100/100', email: 'sara@example.com' },
+  { id: '2', teacherId: '05OiQevVDkNy9MmhveRs9h2w81y2', firstName: 'علی', lastName: 'محمدی', gradeLevel: 'یازدهم', major: 'ریاضی', isActive: true, avatarUrl: 'https://picsum.photos/seed/user-1/100/100', email: 'ali@example.com' },
+  { id: '3', teacherId: '05OiQevVDkNy9MmhveRs9h2w81y2', firstName: 'فاطمه', lastName: 'حسینی', gradeLevel: 'دوازدهم', major: 'انسانی', isActive: false, avatarUrl: 'https://picsum.photos/seed/user-5/100/100', email: 'fatemeh@example.com' },
+  { id: '4', teacherId: '05OiQevVDkNy9MmhveRs9h2w81y2', firstName: 'رضا', lastName: 'احمدی', gradeLevel: 'دهم', major: 'ریاضی', isActive: true, avatarUrl: 'https://picsum.photos/seed/user-3/100/100', email: 'reza@example.com' },
+  { id: '5', teacherId: '05OiQevVDkNy9MmhveRs9h2w81y2', firstName: 'محمد', lastName: 'اکبری', gradeLevel: 'یازدهم', major: 'تجربی', isActive: true, avatarUrl: 'https://picsum.photos/seed/user-6/100/100', email: 'mohammad@example.com' },
 ];
 
 

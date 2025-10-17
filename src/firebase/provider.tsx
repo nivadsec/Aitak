@@ -3,14 +3,12 @@
 
 import React, { DependencyList, createContext, useContext, ReactNode, useMemo, useState, useEffect } from 'react';
 import { FirebaseApp } from 'firebase/app';
-import { Firestore, doc, getDoc, collection, serverTimestamp } from 'firebase/firestore';
+import { Firestore } from 'firebase/firestore';
 import { Auth, User, onAuthStateChanged } from 'firebase/auth';
 import { useRouter, usePathname } from 'next/navigation';
 
 import { FirebaseErrorListener } from '@/components/FirebaseErrorListener';
 import { ROLES } from '@/lib/roles';
-import { setDocumentNonBlocking } from './non-blocking-updates';
-import type { LoginHistory } from '@/lib/types';
 
 interface FirebaseProviderProps {
   children: ReactNode;
@@ -84,62 +82,29 @@ export const FirebaseProvider: React.FC<FirebaseProviderProps> = ({
   // Effect to subscribe to Firebase auth state changes
   useEffect(() => {
     if (!auth || !firestore) {
-      // If no Auth service instance, cannot determine user state
       setUserAuthState({ user: null, isUserLoading: false, userError: new Error("Auth or Firestore service not provided."), role: null });
       return;
-    }
-
-    const logLoginHistory = (user: User, roleInfo: string) => {
-        // const role = roleInfo.split(':')[0];
-        // const teacherId = roleInfo.split(':')[1];
-
-        // if (role === ROLES.STUDENT && teacherId) {
-        //     const historyCol = collection(firestore, 'teachers', teacherId, 'loginHistory');
-        //     const newHistoryRef = doc(historyCol);
-        //     const historyData: Omit<LoginHistory, 'id'> = {
-        //         studentId: user.uid,
-        //         studentName: user.displayName || 'نامشخص',
-        //         email: user.email || 'نامشخص',
-        //         timestamp: serverTimestamp(),
-        //         type: 'login',
-        //         status: 'success',
-        //     };
-        //     setDocumentNonBlocking(newHistoryRef, { ...historyData, id: newHistoryRef.id }, {});
-        // }
     }
 
     const unsubscribe = onAuthStateChanged(
       auth,
       async (firebaseUser) => { // Auth state determined
         if (firebaseUser) {
-           // Simplified role detection based on photoURL
-          const role = firebaseUser.photoURL || ROLES.STUDENT; // Default to student
+          const roleInfo = firebaseUser.photoURL || `${ROLES.STUDENT}:unknown`;
+          setUserAuthState({ user: firebaseUser, isUserLoading: false, userError: null, role: roleInfo });
 
-          // Log login event if it's a student and not just a state refresh
-          if (userAuthState.user?.uid !== firebaseUser.uid) {
-              logLoginHistory(firebaseUser, role);
-          }
-
-          setUserAuthState({ user: firebaseUser, isUserLoading: false, userError: null, role: role });
-
-          // Centralized Redirect Logic
-          const isAuthPage = pathname === '/' || pathname === '/signup' || pathname === '/teacher/login';
+          const isAuthPage = pathname === '/' || pathname === '/signup' || pathname.startsWith('/teacher/login');
           if (isAuthPage) {
-             if (role.startsWith(ROLES.TEACHER)) {
-                router.push('/teacher/dashboard');
-             } else if (role.startsWith(ROLES.STUDENT)) {
-                router.push('/student/dashboard');
-             }
+            if (roleInfo.startsWith(ROLES.TEACHER)) {
+              router.push('/teacher/dashboard');
+            } else if (roleInfo.startsWith(ROLES.STUDENT)) {
+              router.push('/student/dashboard');
+            }
           }
-
         } else {
           setUserAuthState({ user: null, isUserLoading: false, userError: null, role: null });
-          // If logged out, and on a protected route, redirect to login
           const isProtectedRoute = pathname.startsWith('/teacher/') || pathname.startsWith('/student/');
-          const isTeacherLogin = pathname === '/teacher/login';
-
-          // Do not redirect away from the teacher login page if they just logged out
-          if (isProtectedRoute && !isTeacherLogin) {
+          if (isProtectedRoute) {
             router.push('/');
           }
         }
@@ -150,9 +115,6 @@ export const FirebaseProvider: React.FC<FirebaseProviderProps> = ({
       }
     );
     return () => unsubscribe(); // Cleanup
-    // IMPORTANT: router and pathname are intentionally excluded from the dependency array
-    // to prevent re-subscribing on every route change. The logic inside handles redirection
-    // based on the current auth state and path.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [auth, firestore]);
 

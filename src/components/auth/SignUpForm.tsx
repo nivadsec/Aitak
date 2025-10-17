@@ -85,18 +85,19 @@ export function SignUpForm() {
             data.password
         );
         const user = userCredential.user;
+        const teacherId = ADMIN_TEACHER_ID;
 
-        const roleInfo = `${ROLES.STUDENT}:${ADMIN_TEACHER_ID}`;
+        const roleInfo = `${ROLES.STUDENT}:${teacherId}`;
 
         await updateProfile(user, {
             displayName: `${data.firstName} ${data.lastName}`,
             photoURL: roleInfo,
         });
         
-        const studentRef = doc(firestore, 'teachers', ADMIN_TEACHER_ID, 'students', user.uid);
+        const studentRef = doc(firestore, 'teachers', teacherId, 'students', user.uid);
         const studentData = {
             id: user.uid,
-            teacherId: ADMIN_TEACHER_ID,
+            teacherId: teacherId,
             firstName: data.firstName,
             lastName: data.lastName,
             email: data.email,
@@ -253,7 +254,7 @@ export function SignUpForm() {
                     <FormControl>
                       <SelectTrigger>
                         <SelectValue placeholder="رشته را انتخاب کنید" />
-                      </SelectTrigger>
+                      </Trigger>
                     </FormControl>
                     <SelectContent>
                       <SelectItem value="تجربی">تجربی</SelectItem>
