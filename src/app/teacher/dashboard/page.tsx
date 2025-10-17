@@ -82,8 +82,6 @@ export default function TeacherDashboardPage() {
   const [allReports, setAllReports] = React.useState<StudentReport[]>([]);
   const [areReportsLoading, setAreReportsLoading] = React.useState(true);
   const { toast } = useToast();
-  const [showMigrationButton, setShowMigrationButton] = useState(true);
-  const [isMigrating, setIsMigrating] = useState(false);
 
   // 1. Fetch students
   const studentsQuery = useMemoFirebase(() => {
@@ -213,74 +211,12 @@ export default function TeacherDashboardPage() {
     downloadJson(exportData, `itab_backup_all_${new Date().toISOString().split('T')[0]}.json`);
   };
 
-  const handleMigration = async () => {
-    if (!user || !firestore) return;
-    setIsMigrating(true);
-    toast({ title: 'شروع فرآیند همگام‌سازی', description: 'لطفاً تا پایان عملیات صبر کنید...' });
-  
-    try {
-      const oldStudentsRef = collection(firestore, 'teachers', 'default-teacher', 'students');
-      const oldStudentsSnap = await getDocs(oldStudentsRef);
-  
-      if (oldStudentsSnap.empty) {
-        toast({ title: 'انجام شد', description: 'هیچ دانش‌آموز قدیمی برای انتقال یافت نشد.' });
-        setShowMigrationButton(false);
-        setIsMigrating(false);
-        return;
-      }
-  
-      const batch = writeBatch(firestore);
-      let migratedCount = 0;
-  
-      oldStudentsSnap.forEach(oldDoc => {
-        const studentData = oldDoc.data() as Student;
-        // Point to the new location under the current teacher's UID
-        const newStudentRef = doc(firestore, 'teachers', user.uid, 'students', oldDoc.id);
-        
-        // Update teacherId in the data and set it in the new location
-        const updatedStudentData = { ...studentData, teacherId: user.uid };
-        batch.set(newStudentRef, updatedStudentData);
-        migratedCount++;
-      });
-  
-      await batch.commit();
-  
-      toast({ title: 'همگام‌سازی موفق', description: `${migratedCount} دانش‌آموز با موفقیت به پنل شما منتقل شدند. صفحه در حال بارگذاری مجدد است.` });
-      setShowMigrationButton(false);
-      // Reload the page to reflect the changes
-      window.location.reload();
-  
-    } catch (error: any) {
-      console.error("Migration Error:", error);
-      toast({
-        title: 'خطا در همگام‌سازی',
-        description: 'مشکلی در هنگام انتقال دانش‌آموزان رخ داد. لطفاً کنسول را برای جزئیات بررسی کنید.',
-        variant: 'destructive',
-      });
-    } finally {
-      setIsMigrating(false);
-    }
-  };
-  
   
   const isLoading = areStudentsLoading || areReportsLoading;
 
   return (
     <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
       <div className="space-y-6">
-        {showMigrationButton && (
-           <Alert>
-              <RefreshCw className="h-4 w-4" />
-              <AlertTitle className="font-headline">همگام‌سازی دانش‌آموزان</AlertTitle>
-              <AlertDescription>
-                اگر دانش‌آموزانی را که اخیراً ثبت‌نام کرده‌اند در لیست خود نمی‌بینید، روی این دکمه کلیک کنید تا اطلاعات آن‌ها به پنل شما منتقل شود. این دکمه پس از یک بار استفاده ناپدید می‌شود.
-                <Button onClick={handleMigration} disabled={isMigrating} className="mt-3" size="sm">
-                  {isMigrating ? 'در حال همگام‌سازی...' : 'همگام‌سازی دانش‌آموزان قدیمی'}
-                </Button>
-              </AlertDescription>
-            </Alert>
-        )}
-
         <AnalyticsDashboard 
           isLoading={isLoading} 
           analyticsData={analyticsData} 

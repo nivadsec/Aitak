@@ -28,6 +28,7 @@ import { useAuth, useFirebase, FirestorePermissionError, errorEmitter } from '@/
 import { setDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 import { doc, getDoc } from 'firebase/firestore';
 import Link from 'next/link';
+import { getAdminTeacherId } from '@/lib/data';
 
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 import { Alert, AlertDescription, AlertTitle } from '../ui/alert';
@@ -76,7 +77,6 @@ export function SignUpForm() {
         );
         const user = userCredential.user;
 
-        // Construct role info for photoURL
         const roleInfo = `${ROLES.STUDENT}:${teacherId}`;
 
         await updateProfile(user, {
@@ -95,24 +95,25 @@ export function SignUpForm() {
             gradeLevel: data.gradeLevel,
             major: data.major,
             isActive: true,
+            // Default feature flags
             assistantEnabled: true,
+            canViewDailyAnalysis: true,
             canViewStats: true,
             canViewSchedule: true,
-            canViewTests: true,
+            canSubmitDailyReport: true,
             canViewQuestionnaires: true,
-            canViewStrategicPlans: true,
-            canViewConsultingContent: true,
+            canViewTests: true,
             canSubmitWeeklyReport: true,
             canSubmitExamAnalysis: true,
             canSubmitFocusLadder: true,
             canSubmitTopicInvestment: true,
-            canSubmitDetailedExamChecklist: true,
+            canViewStrategicPlans: true,
+            canViewConsultingContent: true,
             canSubmitOverallExamAnalysis: true,
-            canViewDailyAnalysis: true,
+            canSubmitDetailedExamChecklist: true,
         };
         setDocumentNonBlocking(studentRef, studentData, {});
         
-        // Send verification email only after all backend setup is confirmed to be on track
         await sendEmailVerification(user);
 
         toast({
@@ -145,10 +146,19 @@ export function SignUpForm() {
     setIsLoading(true);
 
     try {
-      const teacherId = 'default-teacher'; // Hardcode the default teacher ID
+      const adminTeacherId = await getAdminTeacherId(firestore);
       
-      // Proceed to create the user with the default teacherId
-      await handleUserCreation(data, teacherId);
+      if (!adminTeacherId) {
+          toast({
+              title: 'خطای سیستم',
+              description: 'حساب مدیر یافت نشد. لطفاً با پشتیبانی تماس بگیرید.',
+              variant: 'destructive',
+          });
+          setIsLoading(false);
+          return;
+      }
+      
+      await handleUserCreation(data, adminTeacherId);
 
     } catch (error: any) {
       console.error('Error during sign up process:', error);
