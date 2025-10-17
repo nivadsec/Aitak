@@ -112,18 +112,19 @@ export const FirebaseProvider: React.FC<FirebaseProviderProps> = ({
       auth,
       async (firebaseUser) => { // Auth state determined
         if (firebaseUser) {
-           // Check if the user is a teacher first
+           // Check if the user is a teacher first by checking if a teacher document with their UID exists
           const teacherRef = doc(firestore, 'teachers', firebaseUser.uid);
           const teacherSnap = await getDoc(teacherRef);
           
-          let roleInfo: string;
           let role: string;
+          let roleInfo: string;
 
           if (teacherSnap.exists()) {
+             // If a teacher doc exists, their role is teacher.
             role = ROLES.TEACHER;
             roleInfo = ROLES.TEACHER;
           } else {
-             // Fallback to student role detection via photoURL
+             // Otherwise, check the photoURL for student role information.
             roleInfo = firebaseUser.photoURL || ROLES.STUDENT; // Default to student
             role = roleInfo.split(':')[0];
           }
