@@ -90,22 +90,22 @@ export const FirebaseProvider: React.FC<FirebaseProviderProps> = ({
     }
 
     const logLoginHistory = (user: User, roleInfo: string) => {
-        const role = roleInfo.split(':')[0];
-        const teacherId = roleInfo.split(':')[1];
+        // const role = roleInfo.split(':')[0];
+        // const teacherId = roleInfo.split(':')[1];
 
-        if (role === ROLES.STUDENT && teacherId) {
-            const historyCol = collection(firestore, 'teachers', teacherId, 'loginHistory');
-            const newHistoryRef = doc(historyCol);
-            const historyData: Omit<LoginHistory, 'id'> = {
-                studentId: user.uid,
-                studentName: user.displayName || 'نامشخص',
-                email: user.email || 'نامشخص',
-                timestamp: serverTimestamp(),
-                type: 'login',
-                status: 'success',
-            };
-            setDocumentNonBlocking(newHistoryRef, { ...historyData, id: newHistoryRef.id }, {});
-        }
+        // if (role === ROLES.STUDENT && teacherId) {
+        //     const historyCol = collection(firestore, 'teachers', teacherId, 'loginHistory');
+        //     const newHistoryRef = doc(historyCol);
+        //     const historyData: Omit<LoginHistory, 'id'> = {
+        //         studentId: user.uid,
+        //         studentName: user.displayName || 'نامشخص',
+        //         email: user.email || 'نامشخص',
+        //         timestamp: serverTimestamp(),
+        //         type: 'login',
+        //         status: 'success',
+        //     };
+        //     setDocumentNonBlocking(newHistoryRef, { ...historyData, id: newHistoryRef.id }, {});
+        // }
     }
 
     const unsubscribe = onAuthStateChanged(
