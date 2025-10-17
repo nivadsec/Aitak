@@ -1,3 +1,4 @@
+
 'use server';
 /**
  * @fileOverview A study assistant AI agent that can answer student's questions.
@@ -5,7 +6,7 @@
  * - studyAssistant - A function that handles the conversation with the study assistant.
  */
 
-import {ai} from './genkit-study-assistant';
+import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
 
 const StudyAssistantInputSchema = z.object({

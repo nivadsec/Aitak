@@ -1,3 +1,4 @@
+
 'use server';
 
 /**
@@ -6,7 +7,7 @@
  * - generatePersonalStatsDashboard - A function that generates a personal stats dashboard.
  */
 
-import {ai} from './genkit-personal-stats';
+import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
 
 const PersonalStatsDashboardInputSchema = z.object({

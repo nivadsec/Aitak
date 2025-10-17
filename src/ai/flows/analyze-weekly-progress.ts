@@ -1,3 +1,4 @@
+
 'use server';
 /**
  * @fileOverview An AI agent for analyzing a student's weekly progress report.
@@ -5,7 +6,7 @@
  * - analyzeWeeklyProgress - A function that handles the weekly progress analysis.
  */
 
-import {ai} from './genkit-analyze-weekly';
+import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
 
 const AnalyzeWeeklyProgressInputSchema = z.object({

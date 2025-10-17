@@ -1,3 +1,4 @@
+
 'use server';
 
 /**
@@ -6,7 +7,7 @@
  * - analyzeStudentPerformance - A function that handles the student performance analysis process.
  */
 
-import {ai} from './genkit-analyze-student';
+import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
 
 const DailyReportInputSchema = z.object({
