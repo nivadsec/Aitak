@@ -27,40 +27,41 @@ export default function StudentDetailPage({ params }: { params: { id: string } }
   const { firestore, user } = useFirebase();
   const { toast } = useToast();
   const [isPdfLoading, setIsPdfLoading] = useState(false);
+  const { id } = params;
 
 
   const studentRef = useMemoFirebase(() => {
-    if (!user) return null;
-    return doc(firestore, 'teachers', user.uid, 'students', params.id);
-  }, [firestore, user, params.id]);
+    if (!user || !id) return null;
+    return doc(firestore, 'teachers', user.uid, 'students', id);
+  }, [firestore, user, id]);
 
   const reportsQuery = useMemoFirebase(() => {
-    if(!user) return null;
+    if(!user || !id) return null;
     return query(
-      collection(firestore, 'teachers', user.uid, 'students', params.id, 'dailyReports'),
+      collection(firestore, 'teachers', user.uid, 'students', id, 'dailyReports'),
       orderBy('date', 'desc')
     );
-  }, [firestore, user, params.id]);
+  }, [firestore, user, id]);
 
   const recommendationsQuery = useMemoFirebase(() => {
-    if (!user) return null;
+    if (!user || !id) return null;
     return query(
-        collection(firestore, 'teachers', user.uid, 'students', params.id, 'recommendations'),
+        collection(firestore, 'teachers', user.uid, 'students', id, 'recommendations'),
         orderBy('createdAt', 'desc'),
         limit(5)
     );
-  }, [firestore, user, params.id]);
+  }, [firestore, user, id]);
 
   const focusIntervalsQuery = useMemoFirebase(() => {
-    if (!user) return null;
+    if (!user || !id) return null;
     const oneWeekAgo = new Date();
     oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
     return query(
-        collection(firestore, 'teachers', user.uid, 'students', params.id, 'focusIntervals'),
+        collection(firestore, 'teachers', user.uid, 'students', id, 'focusIntervals'),
         where('timestamp', '>=', oneWeekAgo),
         orderBy('timestamp', 'desc')
     );
-  }, [firestore, user, params.id]);
+  }, [firestore, user, id]);
 
   const { data: student, isLoading: isStudentLoading } = useDoc<Student>(studentRef);
   const { data: reports, isLoading: areReportsLoading } = useCollection<StudentReport>(reportsQuery);
@@ -87,7 +88,7 @@ export default function StudentDetailPage({ params }: { params: { id: string } }
     const exportData: any = { ...student, dailyReports: [] };
     
     for (const report of reports) {
-      const reportRef = doc(firestore, 'teachers', user.uid, 'students', params.id, 'dailyReports', (report as any).id);
+      const reportRef = doc(firestore, 'teachers', user.uid, 'students', id, 'dailyReports', (report as any).id);
       const subjectItemsQueryRef = query(collection(reportRef, 'subjectItems'));
       
       try {
@@ -308,3 +309,5 @@ export default function StudentDetailPage({ params }: { params: { id: string } }
     </>
   );
 }
+
+    

@@ -13,11 +13,12 @@ import { Calendar } from 'lucide-react';
 export default function EditScheduleItemPage({ params }: { params: { id: string } }) {
     const { firestore, user } = useFirebase();
     const router = useRouter();
+    const { id } = params;
 
     const itemRef = useMemoFirebase(() => {
-        if (!user) return null;
-        return doc(firestore, 'teachers', user.uid, 'schedule', params.id);
-    }, [firestore, user, params.id]);
+        if (!user || !id) return null;
+        return doc(firestore, 'teachers', user.uid, 'schedule', id);
+    }, [firestore, user, id]);
 
     const { data: item, isLoading } = useDoc<ScheduleItem>(itemRef);
 
@@ -58,3 +59,5 @@ export default function EditScheduleItemPage({ params }: { params: { id: string 
         </Card>
     );
 }
+
+    

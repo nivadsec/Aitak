@@ -1,4 +1,3 @@
-
 'use client';
 
 import React from 'react';
@@ -14,16 +13,17 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 
 export default function QuizResultsPage({ params }: { params: { id: string } }) {
     const { firestore, user } = useFirebase();
+    const { id } = params;
 
     const quizRef = useMemoFirebase(() => {
-        if (!user) return null;
-        return doc(firestore, 'teachers', user.uid, 'quizzes', params.id);
-    }, [firestore, user, params.id]);
+        if (!user || !id) return null;
+        return doc(firestore, 'teachers', user.uid, 'quizzes', id);
+    }, [firestore, user, id]);
 
     const submissionsQuery = useMemoFirebase(() => {
-        if (!user) return null;
-        return query(collection(firestore, 'teachers', user.uid, 'quizzes', params.id, 'submissions'), orderBy('submittedAt', 'desc'));
-    }, [firestore, user, params.id]);
+        if (!user || !id) return null;
+        return query(collection(firestore, 'teachers', user.uid, 'quizzes', id, 'submissions'), orderBy('submittedAt', 'desc'));
+    }, [firestore, user, id]);
 
     const studentsQuery = useMemoFirebase(() => {
         if (!user) return null;
@@ -130,5 +130,7 @@ export default function QuizResultsPage({ params }: { params: { id: string } }) 
         </div>
     );
 }
+
+    
 
     

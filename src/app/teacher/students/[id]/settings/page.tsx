@@ -61,11 +61,12 @@ function FeatureToggle({ student, featureKey, label, description, icon: Icon }: 
 export default function StudentSettingsPage({ params }: { params: { id: string } }) {
   const { firestore, user } = useFirebase();
   const router = useRouter();
+  const { id } = params;
 
   const studentRef = useMemoFirebase(() => {
-    if (!user) return null;
-    return doc(firestore, 'teachers', user.uid, 'students', params.id);
-  }, [firestore, user, params.id]);
+    if (!user || !id) return null;
+    return doc(firestore, 'teachers', user.uid, 'students', id);
+  }, [firestore, user, id]);
 
   const { data: student, isLoading } = useDoc<Student>(studentRef);
   
@@ -139,3 +140,5 @@ export default function StudentSettingsPage({ params }: { params: { id: string }
     </div>
   );
 }
+
+    

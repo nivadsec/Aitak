@@ -104,7 +104,7 @@ const QuizTaker = ({ quiz }: { quiz: Quiz }) => {
         const submissionData: Omit<QuizSubmission, 'id'> = {
             quizId: quiz.id,
             studentId: user.uid,
-            answers: answers,
+            answers: answers as (number | null)[],
             score: score,
             submittedAt: serverTimestamp(),
         }
@@ -247,11 +247,12 @@ const QuizTaker = ({ quiz }: { quiz: Quiz }) => {
 export default function TakeQuizPage({ params }: { params: { id: string } }) {
     const { firestore, role } = useFirebase();
     const teacherId = role?.split(':')[1];
+    const { id } = params;
 
     const quizRef = useMemoFirebase(() => {
-        if (!teacherId) return null;
-        return doc(firestore, 'teachers', teacherId, 'quizzes', params.id);
-    }, [firestore, teacherId, params.id]);
+        if (!teacherId || !id) return null;
+        return doc(firestore, 'teachers', teacherId, 'quizzes', id);
+    }, [firestore, teacherId, id]);
 
     const { data: quiz, isLoading } = useDoc<Quiz>(quizRef);
 
@@ -282,3 +283,5 @@ export default function TakeQuizPage({ params }: { params: { id: string } }) {
         </div>
     );
 }
+
+    

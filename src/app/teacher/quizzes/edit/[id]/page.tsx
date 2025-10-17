@@ -12,11 +12,12 @@ import { FileText } from 'lucide-react';
 export default function EditQuizPage({ params }: { params: { id: string } }) {
     const { firestore, user } = useFirebase();
     const router = useRouter();
+    const { id } = params;
 
     const quizRef = useMemoFirebase(() => {
-        if (!user) return null;
-        return doc(firestore, 'teachers', user.uid, 'quizzes', params.id);
-    }, [firestore, user, params.id]);
+        if (!user || !id) return null;
+        return doc(firestore, 'teachers', user.uid, 'quizzes', id);
+    }, [firestore, user, id]);
 
     const { data: quiz, isLoading } = useDoc<Quiz>(quizRef);
 
@@ -61,3 +62,5 @@ export default function EditQuizPage({ params }: { params: { id: string } }) {
         </Card>
     );
 }
+
+    
