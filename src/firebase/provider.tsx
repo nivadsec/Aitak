@@ -113,22 +113,21 @@ export const FirebaseProvider: React.FC<FirebaseProviderProps> = ({
       async (firebaseUser) => { // Auth state determined
         if (firebaseUser) {
            // Simplified role detection based on photoURL
-          const roleInfo = firebaseUser.photoURL || ROLES.STUDENT; // Default to student
-          const role = roleInfo.split(':')[0];
+          const role = firebaseUser.photoURL || ROLES.STUDENT; // Default to student
 
           // Log login event if it's a student and not just a state refresh
           if (userAuthState.user?.uid !== firebaseUser.uid) {
-              logLoginHistory(firebaseUser, roleInfo);
+              logLoginHistory(firebaseUser, role);
           }
 
-          setUserAuthState({ user: firebaseUser, isUserLoading: false, userError: null, role: roleInfo });
+          setUserAuthState({ user: firebaseUser, isUserLoading: false, userError: null, role: role });
 
           // Centralized Redirect Logic
           const isAuthPage = pathname === '/' || pathname === '/signup' || pathname === '/teacher/login';
           if (isAuthPage) {
-             if (role === ROLES.TEACHER) {
+             if (role.startsWith(ROLES.TEACHER)) {
                 router.push('/teacher/dashboard');
-             } else if (role === ROLES.STUDENT) {
+             } else if (role.startsWith(ROLES.STUDENT)) {
                 router.push('/student/dashboard');
              }
           }

@@ -19,7 +19,8 @@ export default function TeacherSettingsPage() {
   const [hasCopied, setHasCopied] = React.useState(false);
 
   const handleCopy = () => {
-    const teacherCode = 'default-teacher';
+    if (!user) return;
+    const teacherCode = user.uid;
     copyToClipboard(teacherCode).then((success) => {
         if (success) {
             setHasCopied(true);
@@ -105,7 +106,7 @@ export default function TeacherSettingsPage() {
           </CardDescription>
         </CardHeader>
         <CardContent className="flex items-center gap-2">
-            <Input readOnly value="default-teacher" className="font-mono bg-muted" />
+            <Input readOnly value={user.uid} className="font-mono bg-muted" />
             <Button variant="outline" size="icon" onClick={handleCopy}>
                 {hasCopied ? <Check className="h-4 w-4 text-green-600" /> : <Copy className="h-4 w-4" />}
             </Button>

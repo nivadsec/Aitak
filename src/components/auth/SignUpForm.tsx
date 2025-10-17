@@ -106,6 +106,9 @@ export function SignUpForm() {
             canSubmitExamAnalysis: true,
             canSubmitFocusLadder: true,
             canSubmitTopicInvestment: true,
+            canSubmitDetailedExamChecklist: true,
+            canSubmitOverallExamAnalysis: true,
+            canViewDailyAnalysis: true,
         };
         setDocumentNonBlocking(studentRef, studentData, {});
         
