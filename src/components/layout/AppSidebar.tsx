@@ -1,7 +1,7 @@
 'use client';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { BookCopy, Home, Users, BarChart3, MessageSquare, Megaphone, ClipboardPen, ClipboardEdit, BrainCircuit, Settings, Lightbulb, Bot, FileText, Calendar, BookOpen, Map, History, ShieldCheck, ClipboardCheck, HelpCircle, ClipboardList } from 'lucide-react';
+import { BookCopy, Home, Users, BarChart3, MessageSquare, Megaphone, ClipboardPen, ClipboardEdit, BrainCircuit, Settings, Lightbulb, Bot, FileText, Calendar, BookOpen, Map, History, ShieldCheck, ClipboardCheck, HelpCircle, ClipboardList, Book } from 'lucide-react';
 import React from 'react';
 import {
   Sidebar,
@@ -78,7 +78,7 @@ function StudentSidebarNav() {
     const { data: student, isLoading: isStudentLoading } = useDoc<Student>(studentRef);
 
     const checkAccess = (feature: string) => {
-        if (isStudentLoading) return false; // Default to no access while loading to prevent premature clicks
+        if (isStudentLoading) return true; // Default to access while loading to prevent UI flicker
         if (feature === 'core') return true;
         if (!student) return false; // If student doc doesn't exist, deny access
         return student[feature as keyof Student] !== false;
@@ -92,7 +92,7 @@ function StudentSidebarNav() {
             }
             
             const hasAccess = checkAccess(item.feature);
-            const isDisabled = !isStudentLoading && !hasAccess;
+            const isDisabled = !hasAccess;
 
             return (
               <SidebarMenuItem key={item.href}>
