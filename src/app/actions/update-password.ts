@@ -1,6 +1,7 @@
 'use server';
 
 import * as admin from 'firebase-admin';
+import { ROLES } from '@/lib/roles';
 
 // Initialize Firebase Admin SDK
 // This should only be done once. The check `admin.apps.length` ensures that.
@@ -18,6 +19,44 @@ if (!admin.apps.length) {
     // Make sure GOOGLE_APPLICATION_CREDENTIALS environment variable is set.
   }
 }
+
+/**
+ * A Server Action to create a new Firebase Authentication user for a student.
+ * @param email The student's email.
+ * @param password The student's password.
+ * @param displayName The student's full name.
+ * @param teacherId The teacher's UID.
+ * @returns {Promise<{success: boolean, uid?: string, error?: string}>}
+ */
+export async function createStudentAuth(email: string, password: string, displayName: string, teacherId: string) {
+    if (!admin.apps.length) {
+      return { success: false, error: 'Firebase Admin SDK مقداردهی اولیه نشده است.' };
+    }
+     if (!email || !password || password.length < 8 || !displayName || !teacherId) {
+        return { success: false, error: 'اطلاعات ورودی نامعتبر است.' };
+    }
+
+    try {
+        const userRecord = await admin.auth().createUser({
+            email,
+            password,
+            displayName,
+            emailVerified: true, // Automatically verify email for teacher-created accounts
+            photoURL: `${ROLES.STUDENT}:${teacherId}`
+        });
+        return { success: true, uid: userRecord.uid };
+    } catch (error: any) {
+        console.error('Error creating student auth user:', error);
+        let errorMessage = 'یک خطای ناشناخته در سرور رخ داد.';
+        if (error.code === 'auth/email-already-exists') {
+            errorMessage = 'این ایمیل قبلاً در سیستم ثبت شده است.';
+        } else if (error.code === 'auth/invalid-password') {
+            errorMessage = 'رمز عبور انتخاب شده ضعیف است. لطفاً از رمز قوی‌تری استفاده کنید.';
+        }
+        return { success: false, error: errorMessage };
+    }
+}
+
 
 /**
  * A Server Action to update a student's password using the Firebase Admin SDK.

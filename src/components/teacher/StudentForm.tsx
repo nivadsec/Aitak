@@ -4,7 +4,7 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import * as z from 'zod';
-import { Save, Loader2, Bot, BarChart3, Calendar, FileText, BookCopy, ClipboardPen, BrainCircuit, Map, ClipboardCheck, ClipboardEdit, ClipboardList, Brain } from 'lucide-react';
+import { Save, Loader2, Bot, BarChart3, Calendar, FileText, BookCopy, ClipboardPen, BrainCircuit, Map, ClipboardCheck, ClipboardEdit, ClipboardList, Brain, BookOpen } from 'lucide-react';
 import React from 'react';
 
 import { Button } from '@/components/ui/button';
@@ -18,13 +18,14 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
-import { addDocumentNonBlocking, setDocumentNonBlocking } from '@/firebase/non-blocking-updates';
+import { setDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 import { useFirebase } from '@/firebase/provider';
-import { collection, doc } from 'firebase/firestore';
+import { doc } from 'firebase/firestore';
 import type { Student } from '@/lib/types';
 import { Switch } from '../ui/switch';
 import { Label } from '../ui/label';
 import { ScrollArea } from '../ui/scroll-area';
+import { createStudentAuth } from '@/app/actions/update-password';
 
 
 const formSchema = z.object({
@@ -33,7 +34,7 @@ const formSchema = z.object({
   email: z.string().email('ایمیل معتبر نیست.'),
   gradeLevel: z.string().min(1, 'پایه تحصیلی الزامی است.'),
   major: z.string().min(1, 'رشته تحصیلی الزامی است.'),
-  password: z.string().optional(),
+  password: z.string().min(8, 'رمز عبور باید حداقل ۸ کاراکتر باشد.').optional().or(z.literal('')),
   isActive: z.boolean().default(true),
   // Feature flags
   assistantEnabled: z.boolean().default(true),
@@ -74,9 +75,9 @@ const permissionFields: { key: keyof FormValues, label: string, icon: React.Elem
     { key: 'canSubmitOverallExamAnalysis', label: 'تحلیل کلی آزمون', icon: ClipboardCheck },
     { key: 'canSubmitDetailedExamChecklist', label: 'چک‌لیست آزمون', icon: ClipboardCheck },
     { key: 'canSubmitFocusLadder', label: 'نردبان تمرکز', icon: BrainCircuit },
-    { key: 'canSubmitTopicInvestment', label: 'روندنمای درسی', icon: Map },
-    { key: 'canViewStrategicPlans', label: 'برنامه‌های راهبردی', icon: BarChart3 },
-    { key: 'canViewConsultingContent', label: 'محتوای مشاوره‌ای', icon: BookCopy },
+    { key: 'canSubmitTopicInvestment', label: 'روندنمای درسی', icon: BarChart3 },
+    { key: 'canViewStrategicPlans', label: 'برنامه‌های راهبردی', icon: Map },
+    { key: 'canViewConsultingContent', label: 'محتوای مشاوره‌ای', icon: BookOpen },
 ];
 
 
@@ -130,7 +131,6 @@ export function StudentForm({ student, onSuccess, onCancel }: StudentFormProps) 
     try {
         if (isEditMode && student) {
             const studentRef = doc(firestore, 'teachers', user.uid, 'students', student.id);
-            // We don't update password or email here as it requires special handling
             const { password, email, ...updateData } = data;
             setDocumentNonBlocking(studentRef, updateData, { merge: true });
             toast({
@@ -139,17 +139,35 @@ export function StudentForm({ student, onSuccess, onCancel }: StudentFormProps) 
                 className: 'font-body',
             });
         } else {
-            // Note: In a real app, creating a user should be a secure backend operation.
-            // This is a simplified client-side example.
-            const studentsCollection = collection(firestore, 'teachers', user.uid, 'students');
-            // A real ID would be the UID from Firebase Auth, here we generate a placeholder.
-            const newDocRef = doc(studentsCollection);
+            if (!data.password) {
+                 form.setError("password", { type: "manual", message: "رمز عبور برای کاربر جدید الزامی است." });
+                 setIsLoading(false);
+                 return;
+            }
+            // 1. Create the auth user via server action
+            const authResult = await createStudentAuth(
+                data.email,
+                data.password,
+                `${data.firstName} ${data.lastName}`,
+                user.uid
+            );
+
+            if (!authResult.success || !authResult.uid) {
+                throw new Error(authResult.error || 'خطا در ایجاد حساب کاربری');
+            }
+            
+            // 2. Create the Firestore document with the new UID
+            const studentUid = authResult.uid;
+            const studentRef = doc(firestore, 'teachers', user.uid, 'students', studentUid);
+            const { password, ...studentProfileData } = data;
+            
             const studentData: Student = {
-                id: newDocRef.id, // using the generated doc id
+                id: studentUid,
                 teacherId: user.uid,
-                ...data
+                ...studentProfileData
             };
-            setDocumentNonBlocking(newDocRef, studentData, {});
+            
+            setDocumentNonBlocking(studentRef, studentData, {});
             toast({
                 title: "دانش‌آموز اضافه شد",
                 description: "دانش‌آموز جدید با موفقیت در سیستم ثبت شد.",
