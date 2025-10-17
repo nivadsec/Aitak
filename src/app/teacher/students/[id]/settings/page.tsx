@@ -60,7 +60,7 @@ function FeatureToggle({ student, featureKey, label, description, icon: Icon }: 
 export default function StudentSettingsPage({ params }: { params: { id: string } }) {
   const { firestore, user } = useFirebase();
   const router = useRouter();
-  const id = React.use(params);
+  const id = params.id;
 
   const studentRef = useMemoFirebase(() => {
     if (!user || !id) return null;
