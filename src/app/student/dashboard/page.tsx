@@ -116,6 +116,13 @@ const actionCards = [
       href: "/student/strategic-plans",
       buttonText: "مشاهده برنامه‌ها"
     },
+     {
+      title: "برنامه کلاسی",
+      description: "برنامه‌های کلاسی و جلسات مشاوره خود را مشاهده کنید.",
+      icon: Calendar,
+      href: "/student/schedule",
+      buttonText: "مشاهده برنامه"
+    },
     {
       title: "آزمون‌های آنلاین",
       description: "در آزمون‌های آنلاین درسی که توسط معلم طراحی شده شرکت کنید.",
