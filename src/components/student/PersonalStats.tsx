@@ -163,8 +163,8 @@ export default function PersonalStats({ children, report, isLoading }: { childre
 
     return {
       avgStudyHours,
-      disasterLevel: report.disasterLevel,
-      mobileHours: report.minutesOfMobileUsage,
+      disasterLevel: report.disasterLevel ?? 0,
+      mobileHours: (report.minutesOfMobileUsage / 60).toFixed(1), // Corrected calculation
       accuracy: accuracy.toFixed(1),
     }
   }, [report]);

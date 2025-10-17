@@ -151,7 +151,7 @@ export function ExamAnalysisForm() {
     return (
         <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
-                <Card className="bg-muted/30 border-none shadow-none">
+                <Card>
                     <CardHeader>
                         <CardTitle className="font-headline text-2xl flex items-center gap-3">
                             <ClipboardPen className="h-7 w-7 text-primary" />

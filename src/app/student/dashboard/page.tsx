@@ -6,13 +6,12 @@ import { Button } from '@/components/ui/button';
 import { useCollection, useFirebase, useMemoFirebase, FirestorePermissionError, errorEmitter } from '@/firebase';
 import { downloadJson } from '@/lib/utils';
 import { collection, doc, getDocs, query, orderBy, limit, getDoc, where } from 'firebase/firestore';
-import { Download, ClipboardEdit, BrainCircuit, ClipboardPen, BookCopy, BarChart3, HelpCircle } from 'lucide-react';
+import { Download, ClipboardEdit, BrainCircuit, ClipboardPen, BookCopy, BarChart3, HelpCircle, FileText, Map, Calendar, BookOpen, ClipboardCheck, ClipboardList } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import type { StudentRecommendation, DailyReport } from '@/lib/types';
 import React from 'react';
 import Link from 'next/link';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { FocusLadder } from '@/components/student/FocusLadder';
 
 // Helper function to create a simple trend description
 const createTrendDescription = (reports: DailyReport[]): string => {
@@ -66,6 +65,65 @@ function ActionCard({ title, description, icon: Icon, href, buttonText }) {
         </Card>
     );
 }
+
+const actionCards = [
+    {
+      title: "گزارش روزانه",
+      description: "ثبت و تحلیل عملکرد روزانه در مطالعه و فعالیت‌ها.",
+      icon: ClipboardEdit,
+      href: "/student/daily-report",
+      buttonText: "ثبت گزارش روزانه"
+    },
+    {
+      title: "نردبان تمرکز",
+      description: "امتیاز تمرکز خود را در هر بازه مطالعه ثبت کنید.",
+      icon: BrainCircuit,
+      href: "/student/focus",
+      buttonText: "ورود به نردبان"
+    },
+    {
+      title: "گزارش هفتگی",
+      description: "پیشرفت هفتگی خود را ارزیابی و ثبت کنید.",
+      icon: BookCopy,
+      href: "/student/weekly-progress",
+      buttonText: "ثبت گزارش هفتگی"
+    },
+    {
+      title: "تحلیل آزمون عددمحور",
+      description: "عملکرد خود را در آزمون‌ها به صورت کمی وارد کنید.",
+      icon: ClipboardPen,
+      href: "/student/exam-analysis",
+      buttonText: "شروع تحلیل"
+    },
+     {
+      title: "تحلیل آزمون کلی",
+      description: "روند پیشرفت خود را در هر درس در طول زمان تحلیل کنید.",
+      icon: ClipboardCheck,
+      href: "/student/overall-exam-analysis",
+      buttonText: "شروع تحلیل کلی"
+    },
+    {
+      title: "آزمون‌های آنلاین",
+      description: "در آزمون‌های آنلاین درسی که توسط معلم طراحی شده شرکت کنید.",
+      icon: ClipboardList,
+      href: "/student/tests",
+      buttonText: "مشاهده آزمون‌ها"
+    },
+    {
+      title: "پرسشنامه‌ها",
+      description: "در پرسشنامه‌های هوش و شخصیت‌شناسی شرکت کنید.",
+      icon: FileText,
+      href: "/student/questionnaires",
+      buttonText: "مشاهده پرسشنامه‌ها"
+    },
+    {
+      title: "پرسش و پاسخ",
+      description: "سوالات خود را مستقیماً از معلم خود بپرسید.",
+      icon: HelpCircle,
+      href: "/student/qa",
+      buttonText: "ورود به پرسش و پاسخ"
+    }
+  ];
 
 
 export default function StudentDashboardPage() {
@@ -180,42 +238,10 @@ export default function StudentDashboardPage() {
         {unreadRecommendation && (
             <StudentRecommendationCard recommendation={unreadRecommendation} />
         )}
-        <ActionCard
-          title="گزارش روزانه"
-          description="ثبت و تحلیل عملکرد روزانه در مطالعه و فعالیت‌ها."
-          icon={ClipboardEdit}
-          href="/student/daily-report"
-          buttonText="ثبت گزارش روزانه"
-        />
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-           <ActionCard 
-                title="نردبان تمرکز"
-                description="امتیاز تمرکز خود را در هر بازه ثبت کنید."
-                icon={BrainCircuit}
-                href="/student/focus"
-                buttonText="ورود به نردبان"
-            />
-            <ActionCard 
-                title="تحلیل آزمون عددمحور"
-                description="عملکرد خود را در آزمون‌ها تحلیل کنید."
-                icon={ClipboardPen}
-                href="/student/exam-analysis"
-                buttonText="شروع تحلیل"
-            />
-             <ActionCard 
-                title="گزارش هفتگی"
-                description="پیشرفت هفتگی خود را ارزیابی کنید."
-                icon={BookCopy}
-                href="/student/weekly-progress"
-                buttonText="ثبت گزارش هفتگی"
-            />
-             <ActionCard 
-                title="پرسش و پاسخ"
-                description="سوالات خود را مستقیماً از معلم بپرسید."
-                icon={HelpCircle}
-                href="/student/qa"
-                buttonText="ورود به پرسش و پاسخ"
-            />
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            {actionCards.map(card => (
+                <ActionCard key={card.href} {...card} />
+            ))}
         </div>
       </div>
       <div className="lg:col-span-2 space-y-6">
