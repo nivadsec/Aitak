@@ -25,21 +25,21 @@ type AppSidebarProps = {
 const allStudentNav = [
   { href: '/student/dashboard', label: 'داشبورد', icon: Home, feature: 'core' },
   { href: '/student/daily-report', label: 'گزارش روزانه', icon: ClipboardEdit, feature: 'canSubmitDailyReport' },
-  { href: '/student/focus', label: 'نردبان تمرکز', icon: BrainCircuit, feature: 'canSubmitFocusLadder' },
   { href: '/student/weekly-progress', label: 'گزارش هفتگی', icon: BookCopy, feature: 'canSubmitWeeklyReport' },
-  { href: '/student/topic-investment', label: 'روندنمای درسی', icon: BarChart3, feature: 'canSubmitTopicInvestment' },
+  { href: '/student/focus', label: 'نردبان تمرکز', icon: BrainCircuit, feature: 'canSubmitFocusLadder' },
   { type: 'separator' },
   { href: '/student/exam-analysis', label: 'تحلیل آزمون عددمحور', icon: ClipboardPen, feature: 'canSubmitExamAnalysis' },
   { href: '/student/overall-exam-analysis', label: 'تحلیل آزمون کلی', icon: ClipboardCheck, feature: 'canSubmitOverallExamAnalysis' },
   { href: '/student/tests', label: 'آزمون‌های آنلاین', icon: ClipboardList, feature: 'canViewTests' },
   { href: '/student/questionnaires', label: 'پرسشنامه‌ها', icon: FileText, feature: 'canViewQuestionnaires' },
   { type: 'separator' },
-  { href: '/student/stats', label: 'آمار عملکرد', icon: BarChart3, feature: 'canViewStats' },
+  { href: '/student/topic-investment', label: 'روندنمای درسی', icon: BarChart3, feature: 'canSubmitTopicInvestment' },
   { href: '/student/strategic-plans', label: 'برنامه راهبردی', icon: Map, feature: 'canViewStrategicPlans' },
   { href: '/student/schedule', label: 'برنامه کلاسی', icon: Calendar, feature: 'canViewSchedule' },
+  { href: '/student/stats', label: 'آمار عملکرد', icon: BarChart3, feature: 'canViewStats' },
+  { type: 'separator' },
   { href: '/student/consulting', label: 'محتوای مشاوره‌ای', icon: BookOpen, feature: 'canViewConsultingContent' },
   { href: '/student/qa', label: 'پرسش و پاسخ', icon: HelpCircle, feature: 'core' },
-  { type: 'separator' },
   { href: '/student/settings', label: 'تنظیمات', icon: Settings, feature: 'core' },
 ];
 
@@ -47,16 +47,19 @@ const teacherNav = [
   { href: '/teacher/dashboard', label: 'داشبورد', icon: Home },
   { href: '/teacher/students', label: 'دانش‌آموزان', icon: Users },
   { href: '/teacher/permissions', label: 'دسترسی‌ها', icon: ShieldCheck },
+  { type: 'separator' },
   { href: '/teacher/qa', label: 'پرسش و پاسخ', icon: HelpCircle },
-  { href: '/teacher/strategic-plans', label: 'برنامه راهبردی', icon: Map },
-  { href: '/teacher/tests', label: 'آزمون‌های آنلاین', icon: ClipboardList },
-  { href: '/teacher/questionnaires', label: 'پرسشنامه‌ها', icon: FileText },
   { href: '/teacher/recommendations', label: 'توصیه‌ها', icon: Lightbulb },
   { href: '/teacher/messages', label: 'پیام‌ها', icon: MessageSquare },
   { href: '/teacher/announcements', label: 'اطلاعیه‌ها', icon: Megaphone },
-  { href: '/teacher/assistant', label: 'ربات هوشمند', icon: Bot },
-  { href: '/teacher/schedule', label: 'برنامه کلاسی', icon: Calendar },
+   { type: 'separator' },
+  { href: '/teacher/tests', label: 'آزمون‌های آنلاین', icon: ClipboardList },
+  { href: '/teacher/questionnaires', label: 'پرسشنامه‌ها', icon: FileText },
+  { href: '/teacher/strategic-plans', label: 'برنامه راهبردی', icon: Map },
   { href: '/teacher/consulting', label: 'مطالب مشاوره‌ای', icon: BookOpen },
+  { href: '/teacher/schedule', label: 'برنامه کلاسی', icon: Calendar },
+   { type: 'separator' },
+  { href: '/teacher/assistant', label: 'ربات هوشمند', icon: Bot },
   { href: '/teacher/history', label: 'تاریخچه ورود', icon: History },
   { href: '/teacher/settings', label: 'تنظیمات', icon: Settings },
 ];
@@ -129,20 +132,25 @@ export function AppSidebar({ role }: AppSidebarProps) {
             <StudentSidebarNav />
         ) : (
             <SidebarMenu>
-            {navItems.map((item) => (
+            {navItems.map((item, index) => {
+              if (item.type === 'separator') {
+                return <Separator key={`sep-${index}`} className="my-1" />;
+              }
+              return (
                 <SidebarMenuItem key={item.href}>
                 <SidebarMenuButton
                     asChild
-                    isActive={pathname.startsWith(item.href)}
+                    isActive={pathname.startsWith(item.href!)}
                     tooltip={{ children: item.label, side: 'left', className: 'font-body' }}
                 >
-                    <Link href={item.href}>
+                    <Link href={item.href!}>
                     <item.icon />
                     <span>{item.label}</span>
                     </Link>
                 </SidebarMenuButton>
                 </SidebarMenuItem>
-            ))}
+              )
+            })}
             </SidebarMenu>
         )}
       </SidebarContent>

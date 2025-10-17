@@ -1,3 +1,4 @@
+
 'use server';
 
 /**
@@ -6,7 +7,7 @@
  * - generateMotivationalTips - A function that generates motivational tips.
  */
 
-import {ai} from './genkit-motivational-tips';
+import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
 
 const GenerateMotivationalTipsInputSchema = z.object({
