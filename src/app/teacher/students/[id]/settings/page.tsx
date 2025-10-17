@@ -82,6 +82,7 @@ export default function StudentSettingsPage({ params }: { params: { id: string }
     { featureKey: 'canSubmitOverallExamAnalysis', label: 'تحلیل آزمون کلی', description: 'اجازه ثبت فرم تحلیل آزمون کلی.', icon: ClipboardCheck },
     { featureKey: 'canSubmitFocusLadder', label: 'نردبان تمرکز', description: 'امکان ثبت امتیاز در نردبان و نمودار تمرکز.', icon: BrainCircuit },
     { featureKey: 'canSubmitTopicInvestment', label: 'روندنمای درسی', description: 'اجازه ثبت فرم روندنمای برنامه‌ریزی درسی.', icon: BarChart3 },
+    { featureKey: 'canViewConsultingContent', label: 'محتوای مشاوره‌ای', description: 'امکان مشاهده محتوای مشاوره‌ای (مقالات و ویدیوها).', icon: BookOpen },
   ];
 
   if (isLoading) {

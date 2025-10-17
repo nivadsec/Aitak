@@ -25,18 +25,21 @@ type AppSidebarProps = {
 const allStudentNav = [
   { href: '/student/dashboard', label: 'داشبورد', icon: Home, feature: 'core' },
   { href: '/student/daily-report', label: 'گزارش روزانه', icon: ClipboardEdit, feature: 'canSubmitDailyReport' },
+  { href: '/student/focus', label: 'نردبان تمرکز', icon: BrainCircuit, feature: 'canSubmitFocusLadder' },
   { href: '/student/weekly-progress', label: 'گزارش هفتگی', icon: BookCopy, feature: 'canSubmitWeeklyReport' },
+  { href: '/student/topic-investment', label: 'روندنمای درسی', icon: BarChart3, feature: 'canSubmitTopicInvestment' },
+  { type: 'separator' },
   { href: '/student/exam-analysis', label: 'تحلیل آزمون عددمحور', icon: ClipboardPen, feature: 'canSubmitExamAnalysis' },
   { href: '/student/overall-exam-analysis', label: 'تحلیل آزمون کلی', icon: ClipboardCheck, feature: 'canSubmitOverallExamAnalysis' },
-  { href: '/student/topic-investment', label: 'روندنمای درسی', icon: BarChart3, feature: 'canSubmitTopicInvestment' },
-  { href: '/student/focus', label: 'نردبان تمرکز', icon: BrainCircuit, feature: 'canSubmitFocusLadder' },
-  { href: '/student/strategic-plans', label: 'برنامه راهبردی', icon: Map, feature: 'canViewStrategicPlans' },
   { href: '/student/tests', label: 'آزمون‌های آنلاین', icon: ClipboardList, feature: 'canViewTests' },
   { href: '/student/questionnaires', label: 'پرسشنامه‌ها', icon: FileText, feature: 'canViewQuestionnaires' },
+  { type: 'separator' },
+  { href: '/student/stats', label: 'آمار عملکرد', icon: BarChart3, feature: 'canViewStats' },
+  { href: '/student/strategic-plans', label: 'برنامه راهبردی', icon: Map, feature: 'canViewStrategicPlans' },
   { href: '/student/schedule', label: 'برنامه کلاسی', icon: Calendar, feature: 'canViewSchedule' },
   { href: '/student/consulting', label: 'محتوای مشاوره‌ای', icon: BookOpen, feature: 'canViewConsultingContent' },
   { href: '/student/qa', label: 'پرسش و پاسخ', icon: HelpCircle, feature: 'core' },
-  { href: '/student/stats', label: 'آمار عملکرد', icon: BarChart3, feature: 'canViewStats' },
+  { type: 'separator' },
   { href: '/student/settings', label: 'تنظیمات', icon: Settings, feature: 'core' },
 ];
 
@@ -73,10 +76,11 @@ function StudentSidebarNav() {
     const availableNavs = React.useMemo(() => {
         if (!student) {
             // While loading or if student doc doesn't exist, only show core items
-            return allStudentNav.filter(item => item.feature === 'core');
+            return allStudentNav.filter(item => item.feature === 'core' || item.type === 'separator');
         }
 
         return allStudentNav.filter(item => {
+            if (item.type === 'separator') return true;
             if (item.feature === 'core') return true;
             // The feature flag can be undefined, so we check for explicit false
             return student[item.feature as keyof Student] !== false;
@@ -85,20 +89,25 @@ function StudentSidebarNav() {
 
     return (
          <SidebarMenu>
-          {availableNavs.map((item) => (
-            <SidebarMenuItem key={item.href}>
-              <SidebarMenuButton
-                asChild
-                isActive={pathname.startsWith(item.href)}
-                tooltip={{ children: item.label, side: 'left', className: 'font-body' }}
-              >
-                <Link href={item.href}>
-                  <item.icon />
-                  <span>{item.label}</span>
-                </Link>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-          ))}
+          {availableNavs.map((item, index) => {
+            if (item.type === 'separator') {
+              return <Separator key={`sep-${index}`} className="my-1" />;
+            }
+            return (
+              <SidebarMenuItem key={item.href}>
+                <SidebarMenuButton
+                  asChild
+                  isActive={pathname.startsWith(item.href!)}
+                  tooltip={{ children: item.label, side: 'left', className: 'font-body' }}
+                >
+                  <Link href={item.href!}>
+                    <item.icon />
+                    <span>{item.label}</span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+            );
+          })}
         </SidebarMenu>
     )
 }
