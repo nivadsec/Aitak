@@ -59,11 +59,9 @@ function ActionCard({ title, description, icon: Icon, href, buttonText }) {
           </div>
         </CardHeader>
         <CardFooter>
-          <Link href={href} passHref legacyBehavior>
-            <Button as="a" className="w-full">
-              {buttonText}
+            <Button asChild className="w-full">
+              <Link href={href}>{buttonText}</Link>
             </Button>
-          </Link>
         </CardFooter>
       </Card>
     );
