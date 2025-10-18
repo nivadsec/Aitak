@@ -1,4 +1,3 @@
-
 'use client';
 
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -25,7 +24,7 @@ import type { Student } from '@/lib/types';
 import { Switch } from '../ui/switch';
 import { Label } from '../ui/label';
 import { ScrollArea } from '../ui/scroll-area';
-import { createStudentAuth } from '@/app/actions/update-password';
+import { createStudentAuth } from '@/app/actions/auth';
 
 
 const formSchema = z.object({

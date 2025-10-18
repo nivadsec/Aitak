@@ -2,25 +2,16 @@
 
 import * as admin from 'firebase-admin';
 import { ROLES } from '@/lib/roles';
+import serviceAccount from '../../../firebase-service-account.json';
 
 // In environments like Firebase Hosting, the SDK can discover credentials
 // automatically. In a local environment, we need to load them manually.
-const serviceAccountKey = process.env.SERVICE_ACCOUNT_KEY;
 
 if (!admin.apps.length) {
   try {
-    if (serviceAccountKey) {
-      // Running in a local or CI environment with an explicit key
-      const serviceAccount = JSON.parse(serviceAccountKey);
       admin.initializeApp({
-        credential: admin.credential.cert(serviceAccount),
+        credential: admin.credential.cert(serviceAccount as admin.ServiceAccount),
       });
-    } else {
-      // Running on Google Cloud (e.g., Firebase App Hosting)
-      admin.initializeApp({
-        credential: admin.credential.applicationDefault(),
-      });
-    }
   } catch (error: any) {
     console.error('Firebase Admin Initialization Error:', error);
     // We don't throw an error here, but the functions below will fail
