@@ -1,4 +1,3 @@
-
 'use client';
 
 import Link from 'next/link';
@@ -71,25 +70,22 @@ function AnnouncementCard() {
 
 export default function LoginPage() {
   const { user, isUserLoading } = useUser();
-  const [isLoading, setIsLoading] = useState(true);
+  const [showLoading, setShowLoading] = useState(true);
   const [progressValue, setProgressValue] = useState(0);
 
-
   useEffect(() => {
-    // The loading screen should only be shown while the user state is being determined.
+    // Show loading screen as long as Firebase is checking the auth state.
     if (!isUserLoading) {
-      setIsLoading(false);
+      // If there is a logged-in (non-anonymous) user, the provider will redirect.
+      // Keep the loading screen on to prevent flicker during redirect.
+      if (user && !user.isAnonymous) {
+        setShowLoading(true);
+      } else {
+        // If there's no user or an anonymous user, show the login page.
+        setShowLoading(false);
+      }
     }
-  }, [isUserLoading]);
-
-  // This effect handles the case where a logged-in user lands on this page.
-  // The redirect logic is now primarily in FirebaseProvider, but this acts as
-  // an additional check and keeps the loading screen visible during the redirect.
-  useEffect(() => {
-    if (!isUserLoading && user) {
-        setIsLoading(true); // Keep loading screen on if user exists, provider will redirect.
-    }
-  }, [isUserLoading, user])
+  }, [isUserLoading, user]);
 
   // This effect ensures Math.random is only called on the client after mount, preventing hydration errors.
   useEffect(() => {
@@ -97,7 +93,7 @@ export default function LoginPage() {
   }, []);
 
 
-  if (isLoading) {
+  if (showLoading) {
     return (
         <div className="flex min-h-screen w-full flex-col items-center justify-center bg-background gap-6">
           <div className="flex items-center justify-center">

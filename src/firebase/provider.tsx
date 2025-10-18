@@ -12,6 +12,7 @@ import { ROLES } from '@/lib/roles';
 import { setDocumentNonBlocking } from './non-blocking-updates';
 import type { LoginHistory } from '@/lib/types';
 import { serverTimestamp } from 'firebase/firestore';
+import { initiateAnonymousSignIn } from './non-blocking-login';
 
 interface FirebaseProviderProps {
   children: ReactNode;
@@ -93,11 +94,13 @@ export const FirebaseProvider: React.FC<FirebaseProviderProps> = ({
       auth,
       async (firebaseUser) => { // Auth state determined
         if (firebaseUser) {
-          const roleInfo = firebaseUser.photoURL || `${ROLES.STUDENT}:unknown`;
+           // If the user is anonymous, don't assign a role. The role will be set upon full login.
+          const roleInfo = firebaseUser.isAnonymous ? null : (firebaseUser.photoURL || `${ROLES.STUDENT}:unknown`);
+          
           setUserAuthState({ user: firebaseUser, isUserLoading: false, userError: null, role: roleInfo });
 
           const isAuthPage = pathname === '/' || pathname === '/signup' || pathname.startsWith('/teacher/login');
-          if (isAuthPage) {
+          if (isAuthPage && roleInfo) { // Only redirect if not an anonymous user on an auth page
             if (roleInfo.startsWith(ROLES.TEACHER)) {
               router.push('/teacher/dashboard');
             } else if (roleInfo.startsWith(ROLES.STUDENT)) {
@@ -105,11 +108,9 @@ export const FirebaseProvider: React.FC<FirebaseProviderProps> = ({
             }
           }
         } else {
-          setUserAuthState({ user: null, isUserLoading: false, userError: null, role: null });
-          const isProtectedRoute = (pathname.startsWith('/teacher/') && pathname !== '/teacher/login') || pathname.startsWith('/student/');
-          if (isProtectedRoute) {
-            router.push('/');
-          }
+          // If no user, sign in anonymously to allow access to public data like announcements
+          initiateAnonymousSignIn(auth);
+          // State will be updated in the next onAuthStateChanged cycle
         }
       },
       (error) => { // Auth listener error
@@ -120,6 +121,21 @@ export const FirebaseProvider: React.FC<FirebaseProviderProps> = ({
     return () => unsubscribe(); // Cleanup
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [auth, firestore]);
+
+  // Effect to handle redirection for protected routes
+  useEffect(() => {
+    // Wait until the initial auth state is resolved
+    if (userAuthState.isUserLoading) return;
+
+    const isProtectedRoute = (pathname.startsWith('/teacher/') && pathname !== '/teacher/login') || pathname.startsWith('/student/');
+    
+    // If on a protected route and there's no real user (not anonymous), redirect to login
+    if (isProtectedRoute && (!userAuthState.user || userAuthState.user.isAnonymous)) {
+        router.push('/');
+    }
+
+  }, [pathname, userAuthState.isUserLoading, userAuthState.user, router]);
+
 
   // Memoize the context value
   const contextValue = useMemo((): FirebaseContextState => {
