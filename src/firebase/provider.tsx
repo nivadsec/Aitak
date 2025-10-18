@@ -128,7 +128,7 @@ export const FirebaseProvider: React.FC<FirebaseProviderProps> = ({
           // Redirect after successful login
           const isAuthPage = pathname === '/login' || pathname === '/signup' || pathname === '/teacher/login';
           if (isAuthPage && roleInfo) {
-            if (roleInfo.startsWith(ROLES.TEACHER)) {
+            if (roleInfo === ROLES.TEACHER) {
               router.push('/teacher/dashboard');
             } else if (roleInfo.startsWith(ROLES.STUDENT)) {
               router.push('/student/dashboard');
@@ -160,15 +160,20 @@ export const FirebaseProvider: React.FC<FirebaseProviderProps> = ({
     // Wait until the initial auth state is resolved
     if (userAuthState.isUserLoading) return;
 
-    const isProtectedRoute = (pathname.startsWith('/teacher/') && pathname !== '/teacher/login') || pathname.startsWith('/student/');
-    
-    // If on a protected route and there's no real user (no role), redirect to login
-    if (isProtectedRoute && !userAuthState.role) {
-        if(pathname.startsWith('/teacher/')) {
-            router.push('/teacher/login');
-        } else {
-            router.push('/login');
-        }
+    const currentRole = userAuthState.role;
+    const isTeacherRoute = pathname.startsWith('/teacher/') && pathname !== '/teacher/login';
+    const isStudentRoute = pathname.startsWith('/student/');
+
+    // Rule 1: If on a teacher route, role MUST be teacher.
+    if (isTeacherRoute && currentRole !== ROLES.TEACHER) {
+      router.push('/login'); // Redirect to main login, not teacher login, to avoid loops.
+      return;
+    }
+
+    // Rule 2: If on a student route, role MUST be student.
+    if (isStudentRoute && !currentRole?.startsWith(ROLES.STUDENT)) {
+      router.push('/login');
+      return;
     }
 
   }, [pathname, userAuthState.isUserLoading, userAuthState.role, router]);
@@ -275,3 +280,4 @@ export const useUser = (): UserHookResult => { // Renamed from useAuthUser
   const { user, isUserLoading, userError, role } = useFirebase(); // Leverages the main hook
   return { user, isUserLoading, userError, role };
 };
+
