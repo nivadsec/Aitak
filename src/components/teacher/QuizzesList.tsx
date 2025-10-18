@@ -1,140 +1,114 @@
-'use client';
+'use server';
 
-import * as React from 'react';
-import { doc } from 'firebase/firestore';
-import { Edit, MoreVertical, Trash2, AlertTriangle, FileText, BarChart2 } from 'lucide-react';
+import * as admin from 'firebase-admin';
+import { ROLES } from '@/lib/roles';
 
-import { deleteDocumentNonBlocking } from '@/firebase/non-blocking-updates';
-import { useFirebase } from '@/firebase/provider';
-import { useToast } from '@/hooks/use-toast';
-import type { Questionnaire } from '@/lib/types';
+// In environments like Firebase Hosting, the SDK can discover credentials
+// automatically. In a local environment, we need to load them manually.
+const serviceAccountKey = process.env.SERVICE_ACCOUNT_KEY;
 
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
-import { Button } from '@/components/ui/button';
-import { Card, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
-import Link from 'next/link';
-
-interface QuestionnairesListProps {
-  questionnaires: Questionnaire[];
+if (!admin.apps.length) {
+  try {
+    if (serviceAccountKey) {
+      // Running in a local or CI environment with an explicit key
+      const serviceAccount = JSON.parse(serviceAccountKey);
+      admin.initializeApp({
+        credential: admin.credential.cert(serviceAccount),
+      });
+    } else {
+      // Running on Google Cloud (e.g., Firebase App Hosting)
+      admin.initializeApp({
+        credential: admin.credential.applicationDefault(),
+      });
+    }
+  } catch (error: any) {
+    console.error('Firebase Admin Initialization Error:', error);
+    // We don't throw an error here, but the functions below will fail
+    // and return a user-friendly error to the client.
+  }
 }
 
-export function QuestionnairesList({ questionnaires }: QuestionnairesListProps) {
-  const { firestore, user } = useFirebase();
-  const { toast } = useToast();
-  const [deletingQuestionnaire, setDeletingQuestionnaire] = React.useState<Questionnaire | null>(null);
+/**
+ * A Server Action to create a new Firebase Authentication user for a student.
+ * @param email The student's email.
+ * @param password The student's password.
+ * @param displayName The student's full name.
+ * @param teacherId The teacher's UID.
+ * @returns {Promise<{success: boolean, uid?: string, error?: string}>}
+ */
+export async function createStudentAuth(email: string, password: string, displayName: string, teacherId: string) {
+    if (!admin.apps.length) {
+      return { success: false, error: 'Firebase Admin SDK مقداردهی اولیه نشده است.' };
+    }
+     if (!email || !password || password.length < 8 || !displayName || !teacherId) {
+        return { success: false, error: 'اطلاعات ورودی نامعتبر است.' };
+    }
 
-  const handleDelete = (questionnaireId: string) => {
-    if (!user) return;
-    // Note: Deleting a questionnaire should also delete its subcollections (submissions)
-    // This requires a Cloud Function for robust implementation. The current client-side
-    // delete will only remove the questionnaire document itself.
-    const questionnaireRef = doc(firestore, 'teachers', user.uid, 'questionnaires', questionnaireId);
-    deleteDocumentNonBlocking(questionnaireRef);
-    setDeletingQuestionnaire(null);
-    toast({
-      title: "پرسشنامه حذف شد",
-      description: "پرسشنامه مورد نظر با موفقیت حذف شد.",
-      variant: 'destructive',
-      className: 'font-body',
-    });
-  };
+    try {
+        const userRecord = await admin.auth().createUser({
+            email,
+            password,
+            displayName,
+            emailVerified: true, // Automatically verify email for teacher-created accounts
+            photoURL: `${ROLES.STUDENT}:${teacherId}`
+        });
+        return { success: true, uid: userRecord.uid };
+    } catch (error: any) {
+        console.error('Error creating student auth user:', error);
+        let errorMessage = 'یک خطای ناشناخته در سرور رخ داد.';
+        if (error.code === 'auth/email-already-exists') {
+            errorMessage = 'این ایمیل قبلاً در سیستم ثبت شده است.';
+        } else if (error.code === 'auth/invalid-password') {
+            errorMessage = 'رمز عبور انتخاب شده ضعیف است. لطفاً از رمز قوی‌تری استفاده کنید.';
+        }
+        return { success: false, error: errorMessage };
+    }
+}
 
-  if (questionnaires.length === 0) {
-    return (
-      <div className="flex flex-col items-center justify-center rounded-md border-2 border-dashed p-12 text-center">
-        <FileText className="h-10 w-10 text-muted-foreground" />
-        <h3 className="mt-4 text-lg font-semibold">هیچ پرسشنامه‌ای یافت نشد</h3>
-        <p className="mt-2 text-sm text-muted-foreground">
-          برای ایجاد اولین پرسشنامه، روی دکمه "پرسشنامه جدید" کلیک کنید.
-        </p>
-      </div>
-    );
+
+/**
+ * A Server Action to update a student's password using the Firebase Admin SDK.
+ * This is a secure way to perform privileged operations.
+ *
+ * @param {string} studentUid The UID of the student whose password needs to be changed.
+ * @param {string} newPassword The new password for the student.
+ * @returns {Promise<{success: boolean, error?: string}>} An object indicating success or failure.
+ */
+export async function updateStudentPassword(
+  studentUid: string,
+  newPassword: string
+): Promise<{ success: boolean; error?: string }> {
+  // Basic validation
+  if (!studentUid || !newPassword || newPassword.length < 8) {
+    return {
+      success: false,
+      error: 'شناسه دانش‌آموز یا رمز عبور نامعتبر است. رمز عبور باید حداقل ۸ کاراکتر باشد.',
+    };
+  }
+  
+  if (!admin.apps.length) {
+      return { success: false, error: 'Firebase Admin SDK مقداردهی اولیه نشده است.' };
   }
 
-  return (
-    <>
-      <div className="space-y-4">
-        {questionnaires.map((q) => (
-          <Card key={q.id}>
-            <CardHeader className="flex-row items-start justify-between">
-              <div>
-                <CardTitle className="text-lg font-headline">{q.title}</CardTitle>
-                <CardDescription>
-                  {q.questions.length} سوال | ساخته شده در: {new Date(q.createdAt?.seconds * 1000).toLocaleDateString('fa-IR')}
-                </CardDescription>
-              </div>
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" size="icon">
-                    <MoreVertical className="h-5 w-5" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
-                  <DropdownMenuItem asChild>
-                     <Link href={`/teacher/questionnaires/results/${q.id}`}>
-                        <BarChart2 className="ml-2 h-4 w-4" />
-                        مشاهده نتایج
-                    </Link>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem asChild>
-                    <Link href={`/teacher/questionnaires/edit/${q.id}`}>
-                      <Edit className="ml-2 h-4 w-4" />
-                      ویرایش
-                    </Link>
-                  </DropdownMenuItem>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem
-                    className="text-destructive focus:text-destructive focus:bg-destructive/10"
-                    onClick={() => setDeletingQuestionnaire(q)}
-                  >
-                    <Trash2 className="ml-2 h-4 w-4" />
-                    حذف
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            </CardHeader>
-          </Card>
-        ))}
-      </div>
-      
-      <AlertDialog open={!!deletingQuestionnaire} onOpenChange={(open) => !open && setDeletingQuestionnaire(null)}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle className="font-headline flex items-center gap-2">
-              <AlertTriangle className="text-destructive" />
-              آیا از حذف پرسشنامه مطمئن هستید؟
-            </AlertDialogTitle>
-            <AlertDialogDescription>
-              این عمل قابل بازگشت نیست و پرسشنامه برای همیشه حذف خواهد شد. تمام نتایج ثبت شده توسط دانش‌آموزان نیز حذف می‌شود.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>انصراف</AlertDialogCancel>
-            <AlertDialogAction
-              className="bg-destructive hover:bg-destructive/90"
-              onClick={() => handleDelete(deletingQuestionnaire!.id)}
-            >
-              حذف کن
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-    </>
-  );
+  try {
+    // Use the Admin SDK to update the user's password
+    await admin.auth().updateUser(studentUid, {
+      password: newPassword,
+    });
+    
+    return { success: true };
+
+  } catch (error: any) {
+    console.error(`Failed to update password for UID ${studentUid}:`, error);
+
+    // Provide a more user-friendly error message
+    let errorMessage = 'یک خطای ناشناخته در سرور رخ داد.';
+    if (error.code === 'auth/user-not-found') {
+      errorMessage = 'کاربر مورد نظر یافت نشد.';
+    } else if (error.code === 'auth/invalid-password') {
+        errorMessage = 'رمز عبور انتخاب شده ضعیف است. لطفاً از رمز قوی‌تری استفاده کنید.'
+    }
+
+    return { success: false, error: errorMessage };
+  }
 }

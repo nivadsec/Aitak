@@ -1,4 +1,3 @@
-
 'use client';
 
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -6,13 +5,7 @@ import { useForm } from 'react-hook-form';
 import * as z from 'zod';
 import { Loader2, UserPlus } from 'lucide-react';
 import React from 'react';
-import {
-  createUserWithEmailAndPassword,
-  sendEmailVerification,
-  updateProfile,
-} from 'firebase/auth';
 import Link from 'next/link';
-import { doc } from 'firebase/firestore';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -25,13 +18,13 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
-import { useAuth, useFirebase } from '@/firebase';
-import { setDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 import { Alert, AlertDescription, AlertTitle } from '../ui/alert';
-import { ROLES } from '@/lib/roles';
+import { createStudentAuth } from '@/app/actions/update-password';
+import { setDocumentNonBlocking } from '@/firebase';
+import { doc, serverTimestamp } from 'firebase/firestore';
+import { useFirebase } from '@/firebase';
 
-const ADMIN_TEACHER_ID = "05OiQevVDkNy9MmhveRs9h2w81y2";
 
 const formSchema = z.object({
   firstName: z.string().min(2, 'نام الزامی است.'),
@@ -48,9 +41,10 @@ const formSchema = z.object({
 
 type FormValues = z.infer<typeof formSchema>;
 
+const ADMIN_TEACHER_ID = "05OiQevVDkNy9MmhveRs9h2w81y2";
+
 export function SignUpForm() {
   const { toast } = useToast();
-  const auth = useAuth();
   const { firestore } = useFirebase();
   const [isLoading, setIsLoading] = React.useState(false);
   const [isSuccess, setIsSuccess] = React.useState(false);
@@ -66,7 +60,7 @@ export function SignUpForm() {
   });
 
   async function onSubmit(data: FormValues) {
-    if (!auth || !firestore) {
+    if (!firestore) {
         toast({
             title: 'خطای سیستم',
             description: 'سرویس‌های مورد نیاز بارگذاری نشده‌اند. لطفا دوباره تلاش کنید.',
@@ -79,23 +73,24 @@ export function SignUpForm() {
     try {
         const teacherId = ADMIN_TEACHER_ID;
         
-        const userCredential = await createUserWithEmailAndPassword(
-            auth,
+        // Step 1: Create Auth user and Firestore profile via Server Action
+        const authResult = await createStudentAuth(
             data.email,
-            data.password
+            data.password,
+            `${data.firstName} ${data.lastName}`,
+            teacherId
         );
-        const user = userCredential.user;
 
-        const roleInfo = `${ROLES.STUDENT}:${teacherId}`;
+        if (!authResult.success || !authResult.uid) {
+            throw new Error(authResult.error || 'خطا در ایجاد حساب کاربری');
+        }
 
-        await updateProfile(user, {
-            displayName: `${data.firstName} ${data.lastName}`,
-            photoURL: roleInfo,
-        });
+        const studentUid = authResult.uid;
         
-        const studentRef = doc(firestore, 'teachers', teacherId, 'students', user.uid);
+        // Step 2: Create the student document in Firestore
+        const studentRef = doc(firestore, 'teachers', teacherId, 'students', studentUid);
         const studentData = {
-            id: user.uid,
+            id: studentUid,
             teacherId: teacherId,
             firstName: data.firstName,
             lastName: data.lastName,
@@ -103,7 +98,6 @@ export function SignUpForm() {
             gradeLevel: data.gradeLevel,
             major: data.major,
             isActive: true,
-            // Default feature flags
             assistantEnabled: true,
             canViewDailyAnalysis: true,
             canViewStats: true,
@@ -120,13 +114,14 @@ export function SignUpForm() {
             canSubmitOverallExamAnalysis: true,
             canSubmitDetailedExamChecklist: true,
         };
-        setDocumentNonBlocking(studentRef, studentData, {});
-        
-        await sendEmailVerification(user);
+
+        // We use setDocumentNonBlocking because the security rules will handle validation.
+        // The user doesn't need to wait for this to finish.
+        setDocumentNonBlocking(studentRef, studentData, { merge: true });
 
         toast({
             title: 'ثبت‌نام موفق',
-            description: 'ایمیل تأیید برای شما ارسال شد. لطفاً صندوق ورودی خود را بررسی کنید.',
+            description: 'حساب کاربری شما ایجاد شد. لطفاً از صفحه ورود وارد شوید.',
             className: 'font-body',
         });
 
@@ -134,10 +129,12 @@ export function SignUpForm() {
     } catch (error: any) {
         console.error('Error signing up:', error);
         let description = 'مشکلی در هنگام ثبت‌نام پیش آمد. لطفاً دوباره تلاش کنید.';
-        if (error.code === 'auth/email-already-in-use') {
+        if (error.message.includes('auth/email-already-exists') || error.message.includes('این ایمیل قبلاً در سیستم ثبت شده است')) {
             description = 'این ایمیل قبلاً در سیستم ثبت شده است.';
-        } else if (error.code === 'auth/invalid-email') {
+        } else if (error.message.includes('auth/invalid-email')) {
             description = 'فرمت ایمیل وارد شده صحیح نیست.';
+        } else {
+            description = error.message;
         }
         toast({
             title: 'خطا در ثبت‌نام',
@@ -156,7 +153,7 @@ export function SignUpForm() {
             <UserPlus className="h-4 w-4 !text-green-600" />
             <AlertTitle className="font-headline text-green-800">ثبت‌نام با موفقیت انجام شد!</AlertTitle>
             <AlertDescription className="text-green-700">
-                یک ایمیل برای تایید حساب کاربری به آدرس شما ارسال شد. لطفاً پس از تایید ایمیل، از طریق <Link href="/login" className="font-bold hover:underline">صفحه ورود</Link> وارد پنل خود شوید.
+                حساب کاربری شما ایجاد شد. اکنون می‌توانید از <Link href="/login" className="font-bold hover:underline">صفحه ورود</Link> وارد پنل خود شوید.
             </AlertDescription>
         </Alert>
     )

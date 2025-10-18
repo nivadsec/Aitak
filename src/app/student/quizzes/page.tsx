@@ -1,77 +1,114 @@
-'use client';
+'use server';
 
-import React from 'react';
-import { useCollection, useFirebase, useMemoFirebase } from '@/firebase';
-import { collection, query, orderBy } from 'firebase/firestore';
-import type { Questionnaire } from '@/lib/types';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Skeleton } from '@/components/ui/skeleton';
-import { FileText, ArrowLeft } from 'lucide-react';
-import Link from 'next/link';
+import * as admin from 'firebase-admin';
+import { ROLES } from '@/lib/roles';
 
-function QuestionnaireItem({ questionnaire }: { questionnaire: Questionnaire }) {
-    return (
-        <Link href={`/student/questionnaires/${questionnaire.id}`} className="block">
-            <Card className="hover:border-primary/50 hover:bg-muted/50 transition-all">
-                <CardHeader>
-                    <div className="flex justify-between items-start">
-                        <div>
-                            <CardTitle className="font-headline text-lg">{questionnaire.title}</CardTitle>
-                            <CardDescription>{questionnaire.questions.length} سوال</CardDescription>
-                        </div>
-                        <ArrowLeft className="h-5 w-5 text-muted-foreground" />
-                    </div>
-                </CardHeader>
-            </Card>
-        </Link>
-    );
+// In environments like Firebase Hosting, the SDK can discover credentials
+// automatically. In a local environment, we need to load them manually.
+const serviceAccountKey = process.env.SERVICE_ACCOUNT_KEY;
+
+if (!admin.apps.length) {
+  try {
+    if (serviceAccountKey) {
+      // Running in a local or CI environment with an explicit key
+      const serviceAccount = JSON.parse(serviceAccountKey);
+      admin.initializeApp({
+        credential: admin.credential.cert(serviceAccount),
+      });
+    } else {
+      // Running on Google Cloud (e.g., Firebase App Hosting)
+      admin.initializeApp({
+        credential: admin.credential.applicationDefault(),
+      });
+    }
+  } catch (error: any) {
+    console.error('Firebase Admin Initialization Error:', error);
+    // We don't throw an error here, but the functions below will fail
+    // and return a user-friendly error to the client.
+  }
 }
 
-export default function StudentQuestionnairesPage() {
-    const { firestore, role } = useFirebase();
-    const teacherId = role?.split(':')[1];
+/**
+ * A Server Action to create a new Firebase Authentication user for a student.
+ * @param email The student's email.
+ * @param password The student's password.
+ * @param displayName The student's full name.
+ * @param teacherId The teacher's UID.
+ * @returns {Promise<{success: boolean, uid?: string, error?: string}>}
+ */
+export async function createStudentAuth(email: string, password: string, displayName: string, teacherId: string) {
+    if (!admin.apps.length) {
+      return { success: false, error: 'Firebase Admin SDK مقداردهی اولیه نشده است.' };
+    }
+     if (!email || !password || password.length < 8 || !displayName || !teacherId) {
+        return { success: false, error: 'اطلاعات ورودی نامعتبر است.' };
+    }
 
-    const questionnairesQuery = useMemoFirebase(() => {
-        if (!teacherId) return null;
-        return query(collection(firestore, 'teachers', teacherId, 'questionnaires'), orderBy('createdAt', 'desc'));
-    }, [firestore, teacherId]);
+    try {
+        const userRecord = await admin.auth().createUser({
+            email,
+            password,
+            displayName,
+            emailVerified: true, // Automatically verify email for teacher-created accounts
+            photoURL: `${ROLES.STUDENT}:${teacherId}`
+        });
+        return { success: true, uid: userRecord.uid };
+    } catch (error: any) {
+        console.error('Error creating student auth user:', error);
+        let errorMessage = 'یک خطای ناشناخته در سرور رخ داد.';
+        if (error.code === 'auth/email-already-exists') {
+            errorMessage = 'این ایمیل قبلاً در سیستم ثبت شده است.';
+        } else if (error.code === 'auth/invalid-password') {
+            errorMessage = 'رمز عبور انتخاب شده ضعیف است. لطفاً از رمز قوی‌تری استفاده کنید.';
+        }
+        return { success: false, error: errorMessage };
+    }
+}
 
-    const { data: questionnaires, isLoading } = useCollection<Questionnaire>(questionnairesQuery);
 
-    return (
-        <div className="space-y-6 max-w-4xl mx-auto">
-            <Card className="bg-muted/30 border-none shadow-none">
-                <CardHeader>
-                    <CardTitle className="font-headline text-2xl flex items-center gap-3">
-                        <FileText className="h-7 w-7 text-primary" />
-                        پرسشنامه‌ها
-                    </CardTitle>
-                    <CardDescription>
-                        در این بخش می‌توانید در پرسشنامه‌هایی که توسط معلم شما تعریف شده شرکت کنید.
-                    </CardDescription>
-                </CardHeader>
-            </Card>
+/**
+ * A Server Action to update a student's password using the Firebase Admin SDK.
+ * This is a secure way to perform privileged operations.
+ *
+ * @param {string} studentUid The UID of the student whose password needs to be changed.
+ * @param {string} newPassword The new password for the student.
+ * @returns {Promise<{success: boolean, error?: string}>} An object indicating success or failure.
+ */
+export async function updateStudentPassword(
+  studentUid: string,
+  newPassword: string
+): Promise<{ success: boolean; error?: string }> {
+  // Basic validation
+  if (!studentUid || !newPassword || newPassword.length < 8) {
+    return {
+      success: false,
+      error: 'شناسه دانش‌آموز یا رمز عبور نامعتبر است. رمز عبور باید حداقل ۸ کاراکتر باشد.',
+    };
+  }
+  
+  if (!admin.apps.length) {
+      return { success: false, error: 'Firebase Admin SDK مقداردهی اولیه نشده است.' };
+  }
 
-            {isLoading ? (
-                <div className="space-y-4">
-                    <Skeleton className="h-24 w-full" />
-                    <Skeleton className="h-24 w-full" />
-                </div>
-            ) : (
-                questionnaires && questionnaires.length > 0 ? (
-                    <div className="space-y-4">
-                        {questionnaires.map(q => (
-                            <QuestionnaireItem key={q.id} questionnaire={q} />
-                        ))}
-                    </div>
-                ) : (
-                    <Card>
-                        <CardContent className="p-12 text-center text-muted-foreground">
-                            هنوز هیچ پرسشنامه‌ای توسط معلم شما تعریف نشده است.
-                        </CardContent>
-                    </Card>
-                )
-            )}
-        </div>
-    );
+  try {
+    // Use the Admin SDK to update the user's password
+    await admin.auth().updateUser(studentUid, {
+      password: newPassword,
+    });
+    
+    return { success: true };
+
+  } catch (error: any) {
+    console.error(`Failed to update password for UID ${studentUid}:`, error);
+
+    // Provide a more user-friendly error message
+    let errorMessage = 'یک خطای ناشناخته در سرور رخ داد.';
+    if (error.code === 'auth/user-not-found') {
+      errorMessage = 'کاربر مورد نظر یافت نشد.';
+    } else if (error.code === 'auth/invalid-password') {
+        errorMessage = 'رمز عبور انتخاب شده ضعیف است. لطفاً از رمز قوی‌تری استفاده کنید.'
+    }
+
+    return { success: false, error: errorMessage };
+  }
 }

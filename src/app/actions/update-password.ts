@@ -3,15 +3,14 @@
 import * as admin from 'firebase-admin';
 import { ROLES } from '@/lib/roles';
 
-// In environments like Firebase Hosting or other GCP services, the SDK can discover credentials
-// automatically. In a local environment, Next.js automatically loads variables from .env.
-// We check for the existence of the service account key to determine the environment.
+// In environments like Firebase Hosting, the SDK can discover credentials
+// automatically. In a local environment, we need to load them manually.
 const serviceAccountKey = process.env.SERVICE_ACCOUNT_KEY;
 
 if (!admin.apps.length) {
   try {
     if (serviceAccountKey) {
-      // Running in a local or CI environment with an explicit key from .env
+      // Running in a local or CI environment with an explicit key
       const serviceAccount = JSON.parse(serviceAccountKey);
       admin.initializeApp({
         credential: admin.credential.cert(serviceAccount),
@@ -28,7 +27,6 @@ if (!admin.apps.length) {
     // and return a user-friendly error to the client.
   }
 }
-
 
 /**
  * A Server Action to create a new Firebase Authentication user for a student.
