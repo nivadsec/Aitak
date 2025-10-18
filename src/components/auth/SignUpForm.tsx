@@ -34,6 +34,7 @@ const formSchema = z.object({
   major: z.enum(['انسانی', 'تجربی', 'ریاضی'], {
     required_error: 'انتخاب رشته تحصیلی الزامی است.',
   }),
+  teacherCode: z.string().min(1, "کد معلم الزامی است."),
 });
 
 type FormValues = z.infer<typeof formSchema>;
@@ -51,6 +52,7 @@ export function SignUpForm() {
       lastName: '',
       email: '',
       password: '',
+      teacherCode: '',
     },
   });
 
@@ -62,8 +64,7 @@ export function SignUpForm() {
             data.email,
             data.password,
             `${data.firstName} ${data.lastName}`,
-            data.gradeLevel,
-            data.major,
+            data.teacherCode,
         );
 
         if (!authResult.success || !authResult.uid) {
@@ -224,6 +225,19 @@ export function SignUpForm() {
             )}
           />
         </div>
+         <FormField
+            control={form.control}
+            name="teacherCode"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>کد معلم</FormLabel>
+                <FormControl>
+                  <Input placeholder="کد معلم خود را وارد کنید" {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
         
         <div className="flex justify-end pt-4">
           <Button type="submit" disabled={isLoading} size="lg">
