@@ -17,7 +17,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { CalendarIcon, ClipboardTick, Save, Loader2 } from 'lucide-react';
+import { CalendarIcon, ClipboardCheck, Save, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { ChecklistStatus } from '@/lib/types';
 
@@ -138,7 +138,7 @@ export function DetailedExamChecklistForm() {
         <Card className="bg-muted/30 border-none shadow-none">
           <CardHeader>
             <CardTitle className="font-headline text-2xl flex items-center gap-3">
-              <ClipboardTick className="h-7 w-7 text-primary" />
+              <ClipboardCheck className="h-7 w-7 text-primary" />
               چک‌لیست تفصیلی آمادگی آزمون
             </CardTitle>
             <CardDescription>
