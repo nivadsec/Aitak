@@ -252,7 +252,7 @@ export function SignUpForm() {
                     <FormControl>
                       <SelectTrigger>
                         <SelectValue placeholder="رشته را انتخاب کنید" />
-                      </Trigger>
+                      </SelectTrigger>
                     </FormControl>
                     <SelectContent>
                       <SelectItem value="تجربی">تجربی</SelectItem>
