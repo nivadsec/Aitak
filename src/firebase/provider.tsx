@@ -1,4 +1,3 @@
-
 'use client';
 
 import React, { DependencyList, createContext, useContext, ReactNode, useMemo, useState, useEffect } from 'react';
@@ -131,18 +130,19 @@ export const FirebaseProvider: React.FC<FirebaseProviderProps> = ({
   
   const { user, isUserLoading, role } = userAuthState;
   
-  useEffect(() => {
+   useEffect(() => {
     if (isUserLoading) {
       return; // Wait until auth state is determined
     }
 
-    const isAuthPage = pathname.startsWith('/login') || pathname.startsWith('/signup') || pathname.startsWith('/teacher/login');
+    const isAuthPage = pathname.startsWith('/login') || pathname.startsWith('/signup');
+    const isTeacherLoginPage = pathname.startsWith('/teacher/login');
     const isStudentPage = pathname.startsWith('/student');
-    const isTeacherPage = pathname.startsWith('/teacher');
+    const isTeacherPage = pathname.startsWith('/teacher') && !isTeacherLoginPage;
 
     if (user && role) {
       // User is logged in
-      if (role === ROLES.TEACHER && isAuthPage) {
+      if (role === ROLES.TEACHER && (isAuthPage || isTeacherLoginPage)) {
         router.push('/teacher/dashboard');
       } else if (role.startsWith(ROLES.STUDENT) && isAuthPage) {
         router.push('/student/dashboard');
