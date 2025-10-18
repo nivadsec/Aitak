@@ -82,8 +82,6 @@ export function LoginForm({ role }: LoginFormProps) {
         variant: 'destructive',
         className: 'font-body',
       });
-       // Reload to clear any anonymous user state
-       window.location.reload();
     }
   }
 

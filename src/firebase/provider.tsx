@@ -126,7 +126,7 @@ export const FirebaseProvider: React.FC<FirebaseProviderProps> = ({
           }
 
           // Redirect after successful login
-          const isAuthPage = pathname === '/login' || pathname === '/signup' || pathname === '/teacher/login';
+          const isAuthPage = ['/login', '/signup', '/teacher/login'].includes(pathname);
           if (isAuthPage && roleInfo) {
             if (roleInfo === ROLES.TEACHER) {
               router.push('/teacher/dashboard');
@@ -153,7 +153,7 @@ export const FirebaseProvider: React.FC<FirebaseProviderProps> = ({
     );
     return () => unsubscribe(); // Cleanup
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [auth, firestore]);
+  }, [auth, firestore, pathname, router]);
 
   // Effect to handle redirection for protected routes
   useEffect(() => {
@@ -280,4 +280,3 @@ export const useUser = (): UserHookResult => { // Renamed from useAuthUser
   const { user, isUserLoading, userError, role } = useFirebase(); // Leverages the main hook
   return { user, isUserLoading, userError, role };
 };
-
