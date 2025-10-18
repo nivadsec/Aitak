@@ -105,7 +105,7 @@ export const FirebaseProvider: React.FC<FirebaseProviderProps> = ({
   const router = useRouter();
   const pathname = usePathname();
 
-  // Effect to subscribe to Firebase auth state changes
+  // Effect to subscribe to Firebase auth state changes and handle routing
   useEffect(() => {
     if (!auth || !firestore) {
       setUserAuthState({ user: null, isUserLoading: false, userError: new Error("Auth or Firestore service not provided."), role: null });
@@ -114,7 +114,7 @@ export const FirebaseProvider: React.FC<FirebaseProviderProps> = ({
 
     const unsubscribe = onAuthStateChanged(
       auth,
-      async (firebaseUser) => { // Auth state determined
+      async (firebaseUser) => {
         if (firebaseUser && !firebaseUser.isAnonymous) {
           const idTokenResult = await getIdTokenResult(firebaseUser);
           const roleInfo = (idTokenResult.claims.role as string) || null;
@@ -123,18 +123,29 @@ export const FirebaseProvider: React.FC<FirebaseProviderProps> = ({
 
           if (roleInfo) {
               initiateLoginHistory(firestore, firebaseUser, roleInfo);
+              // --- REDIRECTION LOGIC ---
+              const isAuthPage = ['/login', '/signup', '/teacher/login'].includes(pathname);
+              if (isAuthPage) {
+                if (roleInfo === ROLES.TEACHER) {
+                  router.push('/teacher/dashboard');
+                } else if (roleInfo.startsWith(ROLES.STUDENT)) {
+                  router.push('/student/dashboard');
+                }
+              }
           }
-
         } else {
            // User is either logged out or is anonymous.
-           if (!firebaseUser && userAuthState.user) { // A real user just logged out
-                setUserAuthState({ user: null, isUserLoading: false, userError: null, role: null });
-                router.push('/login');
-           } else if (firebaseUser?.isAnonymous) { // Is anonymous
-                setUserAuthState({ user: firebaseUser, isUserLoading: false, userError: null, role: null });
-           } else { // Initial load, no user
+           setUserAuthState({ user: null, isUserLoading: false, userError: null, role: null });
+           const isProtectedRoute = pathname.startsWith('/teacher/') || pathname.startsWith('/student/');
+           if(firebaseUser?.isAnonymous) { // Is anonymous
+               if (isProtectedRoute) {
+                   router.push('/login');
+               }
+           } else { // Truly logged out
                initiateAnonymousSignIn(auth);
-               setUserAuthState({ user: null, isUserLoading: false, userError: null, role: null });
+               if (isProtectedRoute) {
+                   router.push('/login');
+               }
            }
         }
       },
@@ -145,39 +156,7 @@ export const FirebaseProvider: React.FC<FirebaseProviderProps> = ({
     );
     return () => unsubscribe(); // Cleanup
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [auth, firestore]);
-
-  // Effect to handle redirection for protected routes
-  useEffect(() => {
-    if (userAuthState.isUserLoading) return; // Wait until auth state is resolved
-
-    const currentRole = userAuthState.role;
-    const isAuthPage = ['/login', '/signup', '/teacher/login'].includes(pathname);
-    const isTeacherRoute = pathname.startsWith('/teacher/') && pathname !== '/teacher/login';
-    const isStudentRoute = pathname.startsWith('/student/');
-
-    if (currentRole) { // User is logged in with a specific role
-        if (isAuthPage) {
-            // Redirect logged-in users away from auth pages
-            if (currentRole === ROLES.TEACHER) {
-                router.push('/teacher/dashboard');
-            } else if (currentRole.startsWith(ROLES.STUDENT)) {
-                router.push('/student/dashboard');
-            }
-        } else {
-            // Enforce role-based access to protected routes
-            if (isTeacherRoute && currentRole !== ROLES.TEACHER) {
-                router.push('/login'); // Student trying to access teacher route
-            } else if (isStudentRoute && !currentRole.startsWith(ROLES.STUDENT)) {
-                router.push('/teacher/login'); // Teacher trying to access student route
-            }
-        }
-    } else { // User is not logged in (or is anonymous)
-        if (isTeacherRoute || isStudentRoute) {
-            router.push('/login'); // Redirect to main login page if trying to access any protected route
-        }
-    }
-  }, [pathname, userAuthState, router]);
+  }, [auth, firestore, pathname, router]);
 
 
   // Memoize the context value
@@ -281,3 +260,5 @@ export const useUser = (): UserHookResult => { // Renamed from useAuthUser
   const { user, isUserLoading, userError, role } = useFirebase(); // Leverages the main hook
   return { user, isUserLoading, userError, role };
 };
+
+    
