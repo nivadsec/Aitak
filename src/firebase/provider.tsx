@@ -125,19 +125,11 @@ export const FirebaseProvider: React.FC<FirebaseProviderProps> = ({
               initiateLoginHistory(firestore, firebaseUser, roleInfo);
           }
 
-          // Redirect after successful login
-          const isAuthPage = ['/login', '/signup', '/teacher/login'].includes(pathname);
-          if (isAuthPage && roleInfo) {
-            if (roleInfo === ROLES.TEACHER) {
-              router.push('/teacher/dashboard');
-            } else if (roleInfo.startsWith(ROLES.STUDENT)) {
-              router.push('/student/dashboard');
-            }
-          }
         } else {
            // User is either logged out or is anonymous.
            if (!firebaseUser && userAuthState.user) { // A real user just logged out
                 setUserAuthState({ user: null, isUserLoading: false, userError: null, role: null });
+                router.push('/login');
            } else if (firebaseUser?.isAnonymous) { // Is anonymous
                 setUserAuthState({ user: firebaseUser, isUserLoading: false, userError: null, role: null });
            } else { // Initial load, no user
@@ -157,26 +149,35 @@ export const FirebaseProvider: React.FC<FirebaseProviderProps> = ({
 
   // Effect to handle redirection for protected routes
   useEffect(() => {
-    // Wait until the initial auth state is resolved
-    if (userAuthState.isUserLoading) return;
+    if (userAuthState.isUserLoading) return; // Wait until auth state is resolved
 
     const currentRole = userAuthState.role;
+    const isAuthPage = ['/login', '/signup', '/teacher/login'].includes(pathname);
     const isTeacherRoute = pathname.startsWith('/teacher/') && pathname !== '/teacher/login';
     const isStudentRoute = pathname.startsWith('/student/');
 
-    // Rule 1: If on a teacher route, role MUST be teacher.
-    if (isTeacherRoute && currentRole !== ROLES.TEACHER) {
-      router.push('/login'); // Redirect to main login, not teacher login, to avoid loops.
-      return;
+    if (currentRole) { // User is logged in with a specific role
+        if (isAuthPage) {
+            // Redirect logged-in users away from auth pages
+            if (currentRole === ROLES.TEACHER) {
+                router.push('/teacher/dashboard');
+            } else if (currentRole.startsWith(ROLES.STUDENT)) {
+                router.push('/student/dashboard');
+            }
+        } else {
+            // Enforce role-based access to protected routes
+            if (isTeacherRoute && currentRole !== ROLES.TEACHER) {
+                router.push('/login'); // Student trying to access teacher route
+            } else if (isStudentRoute && !currentRole.startsWith(ROLES.STUDENT)) {
+                router.push('/teacher/login'); // Teacher trying to access student route
+            }
+        }
+    } else { // User is not logged in (or is anonymous)
+        if (isTeacherRoute || isStudentRoute) {
+            router.push('/login'); // Redirect to main login page if trying to access any protected route
+        }
     }
-
-    // Rule 2: If on a student route, role MUST be student.
-    if (isStudentRoute && !currentRole?.startsWith(ROLES.STUDENT)) {
-      router.push('/login');
-      return;
-    }
-
-  }, [pathname, userAuthState.isUserLoading, userAuthState.role, router]);
+  }, [pathname, userAuthState, router]);
 
 
   // Memoize the context value
