@@ -1,63 +1,16 @@
-
 'use client';
 
 import Link from 'next/link';
 import { UserPlus, ShieldCheck } from 'lucide-react';
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Logo } from '@/components/icons/logo';
-import { useUser } from '@/firebase';
 import { Separator } from '@/components/ui/separator';
 import { LoginForm } from '@/components/auth/LoginForm';
 import { Button } from '@/components/ui/button';
-import { Progress } from '@/components/ui/progress';
 
 export default function LoginPage() {
-  const { user, isUserLoading } = useUser();
-  const [showLoading, setShowLoading] = useState(true);
-  const [progressValue, setProgressValue] = useState(0);
-
-  useEffect(() => {
-    // Show loading screen as long as Firebase is checking the auth state.
-    if (!isUserLoading) {
-      // If there is a logged-in (non-anonymous) user, the provider will redirect.
-      // Keep the loading screen on to prevent flicker during redirect.
-      if (user && !user.isAnonymous) {
-        setShowLoading(true);
-      } else {
-        // If there's no user or an anonymous user, show the login page.
-        setShowLoading(false);
-      }
-    }
-  }, [isUserLoading, user]);
-
-  // This effect ensures Math.random is only called on the client after mount, preventing hydration errors.
-  useEffect(() => {
-    setProgressValue(Math.floor(Math.random() * 100));
-  }, []);
-
-
-  if (showLoading) {
-    return (
-        <div className="flex min-h-screen w-full flex-col items-center justify-center bg-background gap-6">
-          <div className="flex items-center justify-center">
-            <div className="relative flex items-center justify-center h-24 w-24">
-                <div className="absolute inset-0 rounded-full bg-primary/10 animate-pulse"></div>
-                <div className="absolute inset-2 rounded-full bg-primary/20 animate-pulse" style={{ animationDelay: '0.2s' }}></div>
-                <Logo className="h-12 w-12 text-primary" />
-            </div>
-          </div>
-          <div className='w-64 text-center space-y-4'>
-            <p className="text-sm text-muted-foreground animate-pulse flex items-center justify-center gap-2">
-                در حال بارگذاری...
-            </p>
-            <Progress value={progressValue} className="h-2" />
-          </div>
-        </div>
-    );
-  }
-
   return (
      <main className="flex min-h-screen w-full items-center justify-center bg-background p-4">
       <div className="absolute inset-0 -z-10 h-full w-full bg-white bg-[linear-gradient(to_right,#f0f0f0_1px,transparent_1px),linear-gradient(to_bottom,#f0f0f0_1px,transparent_1px)] bg-[size:6rem_4rem]"><div className="absolute bottom-0 left-0 right-0 top-0 bg-[radial-gradient(circle_800px_at_100%_200px,rgba(116,188,198,0.2),transparent)]"></div></div>
