@@ -21,10 +21,11 @@ import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 import { Alert, AlertDescription, AlertTitle } from '../ui/alert';
-import { createStudentAuth } from '@/app/actions/auth';
+import { createAuthUser } from '@/app/actions/auth';
 import { useFirebase } from '@/firebase';
 import { setDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 import type { Student } from '@/lib/types';
+import { ROLES } from '@/lib/roles';
 
 
 const formSchema = z.object({
@@ -65,11 +66,11 @@ export function SignUpForm() {
     setIsLoading(true);
 
     try {
-        const authResult = await createStudentAuth(
+        const authResult = await createAuthUser(
             data.email,
             data.password,
             `${data.firstName} ${data.lastName}`,
-            STATIC_TEACHER_ID,
+            `${ROLES.STUDENT}:${STATIC_TEACHER_ID}`
         );
 
         if (!authResult.success || !authResult.uid) {

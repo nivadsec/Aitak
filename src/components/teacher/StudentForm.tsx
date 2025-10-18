@@ -24,7 +24,8 @@ import type { Student } from '@/lib/types';
 import { Switch } from '../ui/switch';
 import { Label } from '../ui/label';
 import { ScrollArea } from '../ui/scroll-area';
-import { createStudentAuth } from '@/app/actions/auth';
+import { createAuthUser } from '@/app/actions/auth';
+import { ROLES } from '@/lib/roles';
 
 
 const formSchema = z.object({
@@ -144,11 +145,11 @@ export function StudentForm({ student, onSuccess, onCancel }: StudentFormProps) 
                  return;
             }
             // 1. Create the auth user via server action
-            const authResult = await createStudentAuth(
+            const authResult = await createAuthUser(
                 data.email,
                 data.password,
                 `${data.firstName} ${data.lastName}`,
-                user.uid
+                `${ROLES.STUDENT}:${user.uid}`
             );
 
             if (!authResult.success || !authResult.uid) {

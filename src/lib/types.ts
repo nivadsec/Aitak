@@ -30,6 +30,13 @@ export interface Student {
   canSubmitDetailedExamChecklist: boolean;
 }
 
+export interface Teacher {
+    id: string;
+    firstName: string;
+    lastName: string;
+    email: string;
+}
+
 
 export interface SubjectItem {
   id: string;

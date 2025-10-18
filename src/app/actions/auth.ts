@@ -4,9 +4,6 @@ import * as admin from 'firebase-admin';
 import { ROLES } from '@/lib/roles';
 import serviceAccount from '../../../firebase-service-account.json';
 
-// In environments like Firebase Hosting, the SDK can discover credentials
-// automatically. In a local environment, we need to load them manually.
-
 if (!admin.apps.length) {
   try {
       admin.initializeApp({
@@ -14,25 +11,23 @@ if (!admin.apps.length) {
       });
   } catch (error: any) {
     console.error('Firebase Admin Initialization Error:', error);
-    // We don't throw an error here, but the functions below will fail
-    // and return a user-friendly error to the client.
   }
 }
 
 /**
- * A Server Action to create a new Firebase Authentication user for a student
+ * A Server Action to create a new Firebase Authentication user
  * and set their custom role claim.
- * @param email The student's email.
- * @param password The student's password.
- * @param displayName The student's full name.
- * @param teacherId The teacher's UID.
+ * @param email The user's email.
+ * @param password The user's password.
+ * @param displayName The user's full name.
+ * @param role The user's role (e.g., 'teacher' or 'student:teacherId').
  * @returns {Promise<{success: boolean, uid?: string, error?: string}>}
  */
-export async function createStudentAuth(email: string, password: string, displayName: string, teacherId: string) {
+export async function createAuthUser(email: string, password: string, displayName: string, role: string) {
     if (!admin.apps.length) {
       return { success: false, error: 'Firebase Admin SDK مقداردهی اولیه نشده است.' };
     }
-     if (!email || !password || password.length < 8 || !displayName || !teacherId) {
+     if (!email || !password || password.length < 8 || !displayName || !role) {
         return { success: false, error: 'اطلاعات ورودی نامعتبر است.' };
     }
 
@@ -41,16 +36,14 @@ export async function createStudentAuth(email: string, password: string, display
             email,
             password,
             displayName,
-            emailVerified: true, // Automatically verify email for teacher-created accounts
+            emailVerified: true,
         });
 
-        // Set a custom claim for the student role
-        const studentRole = `${ROLES.STUDENT}:${teacherId}`;
-        await admin.auth().setCustomUserClaims(userRecord.uid, { role: studentRole });
+        await admin.auth().setCustomUserClaims(userRecord.uid, { role: role });
 
         return { success: true, uid: userRecord.uid };
     } catch (error: any) {
-        console.error('Error creating student auth user:', error);
+        console.error('Error creating auth user:', error);
         let errorMessage = 'یک خطای ناشناخته در سرور رخ داد.';
         if (error.code === 'auth/email-already-exists') {
             errorMessage = 'این ایمیل قبلاً در سیستم ثبت شده است.';

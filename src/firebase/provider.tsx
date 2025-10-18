@@ -3,16 +3,17 @@
 
 import React, { DependencyList, createContext, useContext, ReactNode, useMemo, useState, useEffect } from 'react';
 import { FirebaseApp } from 'firebase/app';
-import { Firestore, collection, doc } from 'firebase/firestore';
+import { Firestore, collection, doc, getDoc, setDoc } from 'firebase/firestore';
 import { Auth, User, onAuthStateChanged, getIdTokenResult } from 'firebase/auth';
 import { useRouter, usePathname } from 'next/navigation';
 
 import { FirebaseErrorListener } from '@/components/FirebaseErrorListener';
 import { ROLES } from '@/lib/roles';
 import { setDocumentNonBlocking } from './non-blocking-updates';
-import type { LoginHistory } from '@/lib/types';
+import type { LoginHistory, Teacher } from '@/lib/types';
 import { serverTimestamp } from 'firebase/firestore';
 import { initiateAnonymousSignIn } from './non-blocking-login';
+import { createAuthUser } from '@/app/actions/auth';
 
 interface FirebaseProviderProps {
   children: ReactNode;
@@ -105,61 +106,88 @@ export const FirebaseProvider: React.FC<FirebaseProviderProps> = ({
   const router = useRouter();
   const pathname = usePathname();
 
-  // Effect to subscribe to Firebase auth state changes and handle routing
   useEffect(() => {
     if (!auth || !firestore) {
       setUserAuthState({ user: null, isUserLoading: false, userError: new Error("Auth or Firestore service not provided."), role: null });
       return;
     }
 
-    const unsubscribe = onAuthStateChanged(
-      auth,
-      async (firebaseUser) => {
-        if (firebaseUser && !firebaseUser.isAnonymous) {
-          const idTokenResult = await getIdTokenResult(firebaseUser);
-          const roleInfo = (idTokenResult.claims.role as string) || null;
-          
-          setUserAuthState({ user: firebaseUser, isUserLoading: false, userError: null, role: roleInfo });
+    const ensureAdminExists = async () => {
+        // This is a temporary solution for the demo to ensure the admin user exists.
+        // In a real application, you'd have a proper admin creation flow.
+        const adminEmail = 'admin@example.com';
+        const adminPassword = 'password'; // Use a strong password in production!
+        const teacherId = '05OiQevVDkNy9MmhveRs9h2w81y2';
 
-          if (roleInfo) {
-              initiateLoginHistory(firestore, firebaseUser, roleInfo);
-              // --- REDIRECTION LOGIC ---
-              const isAuthPage = ['/login', '/signup', '/teacher/login'].includes(pathname);
-              if (isAuthPage) {
-                if (roleInfo === ROLES.TEACHER) {
-                  router.push('/teacher/dashboard');
-                } else if (roleInfo.startsWith(ROLES.STUDENT)) {
-                  router.push('/student/dashboard');
+        try {
+            // Check if teacher document exists in Firestore.
+            const teacherRef = doc(firestore, 'teachers', teacherId);
+            const teacherSnap = await getDoc(teacherRef);
+
+            if (!teacherSnap.exists()) {
+                console.log("Admin user does not exist, creating...");
+                const result = await createAuthUser(
+                    adminEmail,
+                    adminPassword,
+                    'ادمین',
+                    ROLES.TEACHER
+                );
+
+                if (result.success && result.uid === teacherId) {
+                     const teacherData: Teacher = {
+                        id: result.uid,
+                        firstName: 'ادمین',
+                        lastName: 'سیستم',
+                        email: adminEmail,
+                    };
+                    await setDoc(teacherRef, teacherData);
+                    console.log("Admin user created successfully.");
+                } else if (!result.error?.includes('email-already-exists')) {
+                   console.error("Failed to create admin user:", result.error);
                 }
-              }
-          }
-        } else {
-           // User is either logged out or is anonymous.
-           setUserAuthState({ user: null, isUserLoading: false, userError: null, role: null });
-           const isProtectedRoute = pathname.startsWith('/teacher/') || pathname.startsWith('/student/');
-           if(firebaseUser?.isAnonymous) { // Is anonymous
-               if (isProtectedRoute) {
-                   router.push('/login');
-               }
-           } else { // Truly logged out
-               initiateAnonymousSignIn(auth);
-               if (isProtectedRoute) {
-                   router.push('/login');
-               }
-           }
+            }
+        } catch (error) {
+            // This might fail if the user is not authenticated with sufficient permissions,
+            // or if the rules prevent this check. We log it but don't block.
+            console.warn("Could not check/create admin user:", error);
         }
-      },
-      (error) => { // Auth listener error
+    };
+    
+    ensureAdminExists();
+
+    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
+        if (firebaseUser) {
+            const idTokenResult = await getIdTokenResult(firebaseUser);
+            const roleInfo = (idTokenResult.claims.role as string) || null;
+            
+            setUserAuthState({ user: firebaseUser, isUserLoading: false, userError: null, role: roleInfo });
+
+            if (roleInfo) {
+                initiateLoginHistory(firestore, firebaseUser, roleInfo);
+                const isAuthPage = ['/login', '/signup', '/teacher/login'].includes(pathname);
+                if (isAuthPage) {
+                    if (roleInfo === ROLES.TEACHER) {
+                        router.push('/teacher/dashboard');
+                    } else if (roleInfo.startsWith(ROLES.STUDENT)) {
+                        router.push('/student/dashboard');
+                    }
+                }
+            }
+        } else {
+            setUserAuthState({ user: null, isUserLoading: false, userError: null, role: null });
+            const isProtectedRoute = pathname.startsWith('/teacher/') || pathname.startsWith('/student/');
+            if (isProtectedRoute) {
+                router.push('/login');
+            }
+        }
+    }, (error) => {
         console.error("FirebaseProvider: onAuthStateChanged error:", error);
         setUserAuthState({ user: null, isUserLoading: false, userError: error, role: null });
-      }
-    );
-    return () => unsubscribe(); // Cleanup
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    });
+
+    return () => unsubscribe();
   }, [auth, firestore, pathname, router]);
 
-
-  // Memoize the context value
   const contextValue = useMemo((): FirebaseContextState => {
     const servicesAvailable = !!(firebaseApp && firestore && auth);
     return {
@@ -179,10 +207,6 @@ export const FirebaseProvider: React.FC<FirebaseProviderProps> = ({
   );
 };
 
-/**
- * Hook to access core Firebase services and user authentication state.
- * Throws error if core services are not available or used outside provider.
- */
 export const useFirebase = (): FirebaseServicesAndUser => {
   const context = useContext(FirebaseContext);
 
@@ -205,19 +229,16 @@ export const useFirebase = (): FirebaseServicesAndUser => {
   };
 };
 
-/** Hook to access Firebase Auth instance. */
 export const useAuth = (): Auth => {
   const { auth } = useFirebase();
   return auth;
 };
 
-/** Hook to access Firestore instance. */
 export const useFirestore = (): Firestore => {
   const { firestore } = useFirebase();
   return firestore;
 };
 
-/** Hook to access Firebase App instance. */
 export const useFirebaseApp = (): FirebaseApp => {
   const { firebaseApp } = useFirebase();
   return firebaseApp;
@@ -225,22 +246,12 @@ export const useFirebaseApp = (): FirebaseApp => {
 
 type MemoFirebase <T> = T & {__memo?: boolean};
 
-/**
- * A wrapper around `React.useMemo` that adds a non-enumerable property
- * to the memoized object. This helps `useCollection` and `useDoc` to verify
- * that their inputs have been correctly memoized, preventing performance issues.
- * @template T
- * @param {() => T} factory The function to compute the memoized value.
- * @param {DependencyList} deps An array of dependencies.
- * @returns {T} The memoized value.
- */
 export function useMemoFirebase<T>(factory: () => T, deps: DependencyList): T | (MemoFirebase<T>) {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const memoized = useMemo(factory, deps);
   
   if(typeof memoized !== 'object' || memoized === null) return memoized;
 
-  // Add a non-enumerable property to mark this object as memoized
   Object.defineProperty(memoized, '__memo', {
       value: true,
       writable: false,
@@ -251,14 +262,7 @@ export function useMemoFirebase<T>(factory: () => T, deps: DependencyList): T | 
   return memoized;
 }
 
-/**
- * Hook specifically for accessing the authenticated user's state.
- * This provides the User object, loading status, and any auth errors.
- * @returns {UserHookResult} Object with user, isUserLoading, userError.
- */
-export const useUser = (): UserHookResult => { // Renamed from useAuthUser
-  const { user, isUserLoading, userError, role } = useFirebase(); // Leverages the main hook
+export const useUser = (): UserHookResult => {
+  const { user, isUserLoading, userError, role } = useFirebase();
   return { user, isUserLoading, userError, role };
 };
-
-    
