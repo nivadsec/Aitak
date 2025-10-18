@@ -20,7 +20,7 @@ export default function SignUpPage() {
             <SignUpForm />
              <div className="mt-6 text-center text-sm">
                 حساب کاربری دارید؟{' '}
-                <Link href="/" className="font-semibold text-primary hover:underline">
+                <Link href="/login" className="font-semibold text-primary hover:underline">
                     وارد شوید
                 </Link>
             </div>
