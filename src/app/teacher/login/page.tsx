@@ -16,7 +16,9 @@ export default function TeacherLoginPage() {
       <div className="w-full max-w-md">
         <Card className="shadow-2xl shadow-primary/10">
           <CardHeader className="items-center text-center">
-            <Logo className="mb-4 h-12 w-12 text-primary" />
+            <Link href="/">
+              <Logo className="mb-4 h-12 w-12 text-primary" />
+            </Link>
             <CardTitle className="font-headline text-2xl">ورود معلم / مدیر</CardTitle>
             <CardDescription className="pt-2">
               برای ورود به پنل مدیریت، ایمیل و رمز عبور خود را وارد کنید.
