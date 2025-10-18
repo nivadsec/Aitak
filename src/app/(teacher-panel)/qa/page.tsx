@@ -60,7 +60,7 @@ function ChatInterface({ student, questions, teacher }: { student: Student; ques
 
     return (
         <Card className="flex flex-col h-full">
-            <CardHeader className="flex-row items-center gap-3 border-b">
+            <CardHeader className="flex-row items-center gap-3 border-b p-4">
                  <Avatar>
                     <AvatarImage src={student.avatarUrl} />
                     <AvatarFallback>{student.firstName?.[0]}{student.lastName?.[0]}</AvatarFallback>
@@ -69,7 +69,7 @@ function ChatInterface({ student, questions, teacher }: { student: Student; ques
                     <CardTitle className="text-base font-headline">{student.firstName} {student.lastName}</CardTitle>
                 </div>
             </CardHeader>
-            <ScrollArea className="flex-1 p-6" ref={scrollAreaRef}>
+            <ScrollArea className="flex-1 p-4 sm:p-6" ref={scrollAreaRef}>
                  <div className="space-y-6">
                     {studentQuestions.flatMap((q, index) => {
                         const messages = [];
@@ -189,7 +189,7 @@ export default function TeacherQAPage() {
         <div className="h-[calc(100vh-6rem)]">
             <div className="grid grid-cols-1 lg:grid-cols-4 h-full gap-6">
                 <Card className="lg:col-span-1 h-full flex flex-col">
-                    <CardHeader>
+                    <CardHeader className="p-4 border-b">
                         <CardTitle className="font-headline text-lg flex items-center gap-2"><HelpCircle /> گفتگوها</CardTitle>
                     </CardHeader>
                     <ScrollArea className="flex-1">

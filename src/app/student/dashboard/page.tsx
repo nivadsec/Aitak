@@ -47,7 +47,7 @@ const createTrendDescription = (reports: DailyReport[]): string => {
     return trend + ".";
 };
 
-function ActionCard({ title, description, icon: Icon, href, buttonText }) {
+function ActionCard({ title, description, icon: Icon, href, buttonText }: {title: string, description: string, icon: React.ElementType, href: string, buttonText: string}) {
     return (
       <Card className="hover:shadow-lg transition-shadow duration-300 h-full flex flex-col">
         <CardHeader className="flex-row items-start gap-4 pb-4 flex-grow">
@@ -284,15 +284,13 @@ export default function StudentDashboardPage() {
 
         <div className="grid gap-6 lg:grid-cols-5">
             <div className="lg:col-span-3 space-y-6">
-                {/* This column is now for other potential items or can be removed */}
+                 <PersonalStats report={latestReport} isLoading={isReportLoading || isRecommendationLoading || isStudentLoading} />
             </div>
             <div className="lg:col-span-2 space-y-6">
-                <PersonalStats report={latestReport} isLoading={isReportLoading || isRecommendationLoading || isStudentLoading}>
-                    <MotivationTip 
-                        reportTrends={trendDescription} 
-                        studentName={user?.displayName?.split(' ')[0]} 
-                    />
-                </PersonalStats>
+                 <MotivationTip 
+                    reportTrends={trendDescription} 
+                    studentName={user?.displayName?.split(' ')[0]} 
+                />
                 <div className="text-center">
                     <Button variant="outline" onClick={handleExportData} disabled={!user || !teacherId}>
                         <Download className="ml-2 h-4 w-4" />

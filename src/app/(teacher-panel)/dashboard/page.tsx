@@ -16,11 +16,11 @@ import { AnnouncementForm } from '@/components/teacher/AnnouncementForm';
 import { downloadJson } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import type { Student, StudentReport } from '@/lib/types';
+import type { Student, DailyReport } from '@/lib/types';
 
 
 // Helper function to process reports for analytics
-const processReportsForAnalytics = (reports: StudentReport[]) => {
+const processReportsForAnalytics = (reports: DailyReport[]) => {
   // Weekly Study Trend
   const last7Days = eachDayOfInterval({ start: subDays(new Date(), 6), end: new Date() });
   const weeklyStudyData = last7Days.map(day => {
@@ -53,8 +53,8 @@ const processReportsForAnalytics = (reports: StudentReport[]) => {
 
   // Aggregated stats
    const totalStudyMinutes = reports.reduce((sum, report) => sum + (report.items || []).reduce((itemSum, item) => itemSum + (item.studyTime || 0), 0), 0);
-   const totalMobileHours = reports.reduce((sum, report) => sum + (report.mobileHours || 0), 0);
-   const totalMoodScore = reports.reduce((sum, report) => sum + (report.moodScore || 0), 0);
+   const totalMobileHours = reports.reduce((sum, report) => sum + (report.minutesOfMobileUsage || 0), 0);
+   const totalMoodScore = reports.reduce((sum, report) => sum + (report.disasterLevel || 0), 0);
    const uniqueReportDays = new Set(reports.map(r => r.date)).size;
 
    const avgDailyStudyHours = uniqueReportDays > 0 ? (totalStudyMinutes / uniqueReportDays) / 60 : 0;
@@ -76,7 +76,7 @@ const processReportsForAnalytics = (reports: StudentReport[]) => {
 export default function TeacherDashboardPage() {
   const { firestore, user } = useFirebase();
   const [isDialogOpen, setIsDialogOpen] = React.useState(false);
-  const [allReports, setAllReports] = React.useState<StudentReport[]>([]);
+  const [allReports, setAllReports] = React.useState<DailyReport[]>([]);
   const [areReportsLoading, setAreReportsLoading] = React.useState(true);
   const { toast } = useToast();
 
@@ -86,7 +86,7 @@ export default function TeacherDashboardPage() {
     return query(collection(firestore, 'teachers', user.uid, 'students'));
   }, [firestore, user]);
 
-  const { data: students, isLoading: areStudentsLoading } = useCollection(studentsQuery);
+  const { data: students, isLoading: areStudentsLoading } = useCollection<Student>(studentsQuery);
 
   // 2. Fetch all reports for all students
   React.useEffect(() => {
@@ -111,7 +111,7 @@ export default function TeacherDashboardPage() {
         });
       });
       const reportsSnapshots = await Promise.all(reportsPromises);
-      const reports = reportsSnapshots.flatMap(snapshot => snapshot.docs.map(doc => doc.data() as StudentReport));
+      const reports = reportsSnapshots.flatMap(snapshot => snapshot.docs.map(doc => doc.data() as DailyReport));
       setAllReports(reports);
       setAreReportsLoading(false);
     };
@@ -227,7 +227,7 @@ export default function TeacherDashboardPage() {
         
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
             <Card>
-                <CardHeader className="flex-row items-center justify-between">
+                <CardHeader className="flex-col md:flex-row items-start md:items-center justify-between gap-4">
                     <div>
                         <CardTitle className="font-headline text-xl flex items-center gap-2">
                             <Megaphone />

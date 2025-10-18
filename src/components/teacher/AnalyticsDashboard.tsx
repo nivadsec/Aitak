@@ -33,7 +33,7 @@ function LoadingSkeleton() {
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
                 {[...Array(4)].map((_, i) => <Skeleton key={i} className="h-28 w-full" />)}
             </div>
-            <div className="grid gap-6 md:grid-cols-2">
+            <div className="grid gap-6 md:grid-cols-1 lg:grid-cols-2">
                 <Skeleton className="h-[350px] w-full" />
                 <Skeleton className="h-[350px] w-full" />
             </div>
@@ -104,7 +104,7 @@ export function AnalyticsDashboard({ isLoading, studentCount, analyticsData }: A
                 </Card>
             </div>
     
-            <div className="grid gap-6 md:grid-cols-2">
+            <div className="grid gap-6 md:grid-cols-1 lg:grid-cols-2">
                 <Card>
                     <CardHeader>
                         <CardTitle className="font-headline flex items-center gap-2">
