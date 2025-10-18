@@ -2,6 +2,7 @@
 import { SignUpForm } from '@/components/auth/SignUpForm';
 import { Logo } from '@/components/icons/logo';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Home } from 'lucide-react';
 import Link from 'next/link';
 
 export default function SignUpPage() {
@@ -22,6 +23,12 @@ export default function SignUpPage() {
                 حساب کاربری دارید؟{' '}
                 <Link href="/login" className="font-semibold text-primary hover:underline">
                     وارد شوید
+                </Link>
+            </div>
+             <div className="mt-4 text-center text-sm">
+                <Link href="/" className="font-semibold text-primary hover:underline flex items-center justify-center gap-1">
+                    <Home className="h-4 w-4" />
+                    بازگشت به صفحه اصلی
                 </Link>
             </div>
         </CardContent>
