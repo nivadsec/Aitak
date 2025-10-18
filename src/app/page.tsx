@@ -1,156 +1,138 @@
+
 'use client';
 
+import React from 'react';
 import Link from 'next/link';
-import { UserPlus, Megaphone, ShieldCheck } from 'lucide-react';
-import React, { useEffect, useState } from 'react';
-
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Logo } from '@/components/icons/logo';
-import { useUser, useCollection, useFirebase, useMemoFirebase } from '@/firebase';
-import { Separator } from '@/components/ui/separator';
-import { collection, query, orderBy, limit } from 'firebase/firestore';
-import { Skeleton } from '@/components/ui/skeleton';
-import { LoginForm } from '@/components/auth/LoginForm';
 import { Button } from '@/components/ui/button';
-import { Progress } from '@/components/ui/progress';
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { ResetPasswordForm } from '@/components/auth/ResetPasswordForm';
+import { Logo } from '@/components/icons/logo';
+import { ArrowLeft, BookOpen, Newspaper, Sparkles } from 'lucide-react';
+import { useCollection, useFirebase, useMemoFirebase } from '@/firebase';
+import { collection, query, orderBy, limit } from 'firebase/firestore';
+import type { ConsultingContent } from '@/lib/types';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { Skeleton } from '@/components/ui/skeleton';
 
-function AnnouncementCard() {
-  const { firestore } = useFirebase();
+const ArticleCard = ({ article }: { article: ConsultingContent }) => {
+  const contentSnippet = article.content.substring(0, 150);
 
-  const announcementsQuery = useMemoFirebase(() => {
-    if (!firestore) return null;
-    return query(collection(firestore, 'announcements'), orderBy('timestamp', 'desc'), limit(1));
-  }, [firestore]);
-
-  const { data: announcements, isLoading } = useCollection(announcementsQuery);
-  const latestAnnouncement = announcements?.[0];
-
-  if (isLoading) {
-    return (
-      <Card className="mt-6 animate-fade-in-up">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2 font-headline">
-            <Skeleton className="h-6 w-6 rounded-full" />
-            <Skeleton className="h-6 w-48" />
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <Skeleton className="h-4 w-full" />
-          <Skeleton className="h-4 w-2/3 mt-2" />
-        </CardContent>
-      </Card>
-    )
-  }
-
-  if (!latestAnnouncement) {
-    return null; // Don't render anything if there are no announcements
-  }
-  
   return (
-    <Card className="mt-6 animate-fade-in-up bg-secondary/50 border-primary/20">
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2 font-headline text-lg text-primary">
-          <Megaphone className="h-5 w-5" />
-          اطلاعیه مهم
-        </CardTitle>
-      </CardHeader>
-      <CardContent>
-        <p className="text-sm text-foreground/90 leading-relaxed">
-          {latestAnnouncement.content}
-        </p>
-         <p className="text-xs text-muted-foreground mt-3 pt-3 border-t">
-          تاریخ انتشار: {new Date((latestAnnouncement.timestamp as any)?.seconds * 1000).toLocaleDateString('fa-IR')}
-        </p>
-      </CardContent>
-    </Card>
-  )
-}
-
-export default function LoginPage() {
-  const { user, isUserLoading } = useUser();
-  const [showLoading, setShowLoading] = useState(true);
-  const [progressValue, setProgressValue] = useState(0);
-
-  useEffect(() => {
-    // Show loading screen as long as Firebase is checking the auth state.
-    if (!isUserLoading) {
-      // If there is a logged-in (non-anonymous) user, the provider will redirect.
-      // Keep the loading screen on to prevent flicker during redirect.
-      if (user && !user.isAnonymous) {
-        setShowLoading(true);
-      } else {
-        // If there's no user or an anonymous user, show the login page.
-        setShowLoading(false);
-      }
-    }
-  }, [isUserLoading, user]);
-
-  // This effect ensures Math.random is only called on the client after mount, preventing hydration errors.
-  useEffect(() => {
-    setProgressValue(Math.floor(Math.random() * 100));
-  }, []);
-
-
-  if (showLoading) {
-    return (
-        <div className="flex min-h-screen w-full flex-col items-center justify-center bg-background gap-6">
-          <div className="flex items-center justify-center">
-            <div className="relative flex items-center justify-center h-24 w-24">
-                <div className="absolute inset-0 rounded-full bg-primary/10 animate-pulse"></div>
-                <div className="absolute inset-2 rounded-full bg-primary/20 animate-pulse" style={{ animationDelay: '0.2s' }}></div>
-                <Logo className="h-12 w-12 text-primary" />
+    <Card className="flex flex-col h-full overflow-hidden transition-all duration-300 hover:border-primary/30 hover:shadow-lg hover:-translate-y-1">
+        <CardHeader>
+            <div className="flex items-center gap-3">
+                <div className="flex-shrink-0 bg-primary/10 text-primary p-2 rounded-lg">
+                    <Newspaper className="h-5 w-5" />
+                </div>
+                <CardTitle className="font-headline text-lg">{article.title}</CardTitle>
             </div>
-          </div>
-          <div className='w-64 text-center space-y-4'>
-            <p className="text-sm text-muted-foreground animate-pulse flex items-center justify-center gap-2">
-                در حال بارگذاری...
+        </CardHeader>
+        <CardContent className="flex-grow">
+            <CardDescription className="leading-relaxed">{contentSnippet}...</CardDescription>
+        </CardContent>
+        <CardFooter>
+            <p className="text-xs text-muted-foreground">
+                تاریخ انتشار: {new Date(article.createdAt?.seconds * 1000).toLocaleDateString('fa-IR')}
             </p>
-            <Progress value={progressValue} className="h-2" />
-          </div>
+        </CardFooter>
+    </Card>
+  );
+};
+
+export default function LandingPage() {
+    const { firestore } = useFirebase();
+
+    // The content is public, so we fetch it from the teacher with the known ID
+    const ADMIN_TEACHER_ID = '05OiQevVDkNy9MmhveRs9h2w81y2';
+    const contentQuery = useMemoFirebase(() => {
+        if (!firestore) return null;
+        return query(collection(firestore, 'teachers', ADMIN_TEACHER_ID, 'consultingContent'), orderBy('createdAt', 'desc'), limit(3));
+    }, [firestore]);
+
+    const { data: articles, isLoading } = useCollection<ConsultingContent>(contentQuery);
+
+    return (
+        <div className="flex flex-col min-h-screen">
+            <header className="sticky top-0 z-40 w-full border-b bg-background/95 backdrop-blur-sm">
+                <div className="container mx-auto flex h-16 items-center justify-between px-4 md:px-6">
+                    <Link href="/" className="flex items-center gap-2">
+                        <Logo className="h-8 w-8 text-primary" />
+                        <span className="font-headline text-xl font-bold">آی‌تاک</span>
+                    </Link>
+                    <div className="flex items-center gap-2">
+                        <Button asChild>
+                            <Link href="/login">ورود</Link>
+                        </Button>
+                        <Button asChild variant="outline">
+                            <Link href="/signup">ثبت‌نام</Link>
+                        </Button>
+                    </div>
+                </div>
+            </header>
+
+            <main className="flex-1">
+                <section className="relative py-20 md:py-32">
+                    <div className="absolute inset-0 -z-10 h-full w-full bg-white bg-[linear-gradient(to_right,#f0f0f0_1px,transparent_1px),linear-gradient(to_bottom,#f0f0f0_1px,transparent_1px)] bg-[size:6rem_4rem]"><div className="absolute bottom-0 left-0 right-0 top-0 bg-[radial-gradient(circle_800px_at_100%_200px,rgba(116,188,198,0.2),transparent)]"></div></div>
+                    <div className="container mx-auto px-4 md:px-6 text-center">
+                        <div className="max-w-3xl mx-auto">
+                            <div className="inline-block rounded-full bg-primary/10 px-4 py-1 text-sm font-medium text-primary font-headline mb-4">
+                                پلتفرم هوشمند خودارزیابی و نظم شخصی
+                            </div>
+                            <h1 className="text-4xl md:text-5xl lg:text-6xl font-headline font-extrabold tracking-tight">
+                                مسیر موفقیت تحصیلی خود را با آی‌تاک هوشمندانه طی کنید
+                            </h1>
+                            <p className="mt-6 max-w-2xl mx-auto text-lg text-muted-foreground">
+                                آی‌تاک با ابزارهای هوشمند و تحلیل داده، به شما کمک می‌کند تا نقاط ضعف و قوت خود را بشناسید، برنامه‌ریزی دقیقی داشته باشید و به اهداف تحصیلی خود برسید.
+                            </p>
+                            <div className="mt-8 flex justify-center gap-4">
+                                <Button asChild size="lg">
+                                    <Link href="/signup">شروع کنید <ArrowLeft className="mr-2 h-5 w-5" /></Link>
+                                </Button>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <section className="bg-muted/50 py-16 md:py-24">
+                    <div className="container mx-auto px-4 md:px-6">
+                        <div className="text-center max-w-2xl mx-auto mb-12">
+                             <h2 className="text-3xl md:text-4xl font-headline font-bold flex items-center justify-center gap-3">
+                                <BookOpen className="h-8 w-8 text-primary"/>
+                                آخرین مقالات و اخبار
+                            </h2>
+                            <p className="mt-4 text-muted-foreground">
+                                جدیدترین مطالب مشاوره‌ای و اطلاعیه‌ها را در اینجا دنبال کنید.
+                            </p>
+                        </div>
+                        
+                        {isLoading ? (
+                             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                                <Skeleton className="h-64 w-full" />
+                                <Skeleton className="h-64 w-full" />
+                                <Skeleton className="h-64 w-full" />
+                            </div>
+                        ) : articles && articles.length > 0 ? (
+                             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                                {articles.map((article) => (
+                                    <ArticleCard key={article.id} article={article} />
+                                ))}
+                            </div>
+                        ) : (
+                            <Card className="text-center p-12">
+                                <p className="text-muted-foreground">در حال حاضر مقاله یا خبر جدیدی منتشر نشده است.</p>
+                            </Card>
+                        )}
+                    </div>
+                </section>
+            </main>
+            
+            <footer className="border-t">
+                <div className="container mx-auto py-6 px-4 md:px-6">
+                <div className="flex flex-col md:flex-row items-center justify-between gap-4">
+                    <p className="text-sm text-muted-foreground text-center md:text-left">
+                        © 1404 آی‌تاک. تمام حقوق محفوظ است. | طراحی و توسعه توسط <span className="font-semibold text-foreground">حسین طاهری</span>
+                    </p>
+                </div>
+                </div>
+            </footer>
         </div>
     );
-  }
-
-  return (
-     <main className="flex min-h-screen w-full items-center justify-center bg-background p-4">
-      <div className="absolute inset-0 -z-10 h-full w-full bg-white bg-[linear-gradient(to_right,#f0f0f0_1px,transparent_1px),linear-gradient(to_bottom,#f0f0f0_1px,transparent_1px)] bg-[size:6rem_4rem]"><div className="absolute bottom-0 left-0 right-0 top-0 bg-[radial-gradient(circle_800px_at_100%_200px,rgba(116,188,198,0.2),transparent)]"></div></div>
-      <div className="w-full max-w-md">
-        <Card className="shadow-2xl shadow-primary/10">
-          <CardHeader className="items-center text-center">
-            <Logo className="mb-4 h-12 w-12 text-primary" />
-            <CardTitle className="font-headline text-2xl">ورود دانش‌آموز</CardTitle>
-            <CardDescription className="pt-2">
-              به آی‌تاب خوش آمدید. برای ورود، ایمیل و رمز عبور خود را وارد کنید.
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <LoginForm role="student" />
-            <div className="relative my-6">
-                <Separator />
-                <span className="absolute left-1/2 -translate-x-1/2 -translate-y-1/2 bg-card px-2 text-sm text-muted-foreground">
-                    یا
-                </span>
-            </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <Button asChild variant="outline" className="w-full">
-                <Link href="/signup">
-                  <UserPlus className="ml-2 h-5 w-5" />
-                  ایجاد حساب دانش‌آموزی
-                </Link>
-              </Button>
-              <Button asChild variant="secondary" className="w-full">
-                <Link href="/teacher/login">
-                  <ShieldCheck className="ml-2 h-5 w-5" />
-                  ورود معلمان
-                </Link>
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-        <AnnouncementCard />
-      </div>
-    </main>
-  )
 }

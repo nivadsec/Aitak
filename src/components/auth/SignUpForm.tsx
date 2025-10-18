@@ -156,7 +156,7 @@ export function SignUpForm() {
             <UserPlus className="h-4 w-4 !text-green-600" />
             <AlertTitle className="font-headline text-green-800">ثبت‌نام با موفقیت انجام شد!</AlertTitle>
             <AlertDescription className="text-green-700">
-                یک ایمیل برای تایید حساب کاربری به آدرس شما ارسال شد. لطفاً پس از تایید ایمیل، از طریق <Link href="/" className="font-bold hover:underline">صفحه ورود</Link> وارد پنل خود شوید.
+                یک ایمیل برای تایید حساب کاربری به آدرس شما ارسال شد. لطفاً پس از تایید ایمیل، از طریق <Link href="/login" className="font-bold hover:underline">صفحه ورود</Link> وارد پنل خود شوید.
             </AlertDescription>
         </Alert>
     )

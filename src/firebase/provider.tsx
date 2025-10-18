@@ -99,7 +99,7 @@ export const FirebaseProvider: React.FC<FirebaseProviderProps> = ({
           
           setUserAuthState({ user: firebaseUser, isUserLoading: false, userError: null, role: roleInfo });
 
-          const isAuthPage = pathname === '/' || pathname === '/signup' || pathname.startsWith('/teacher/login');
+          const isAuthPage = pathname === '/login' || pathname === '/signup' || pathname.startsWith('/teacher/login');
           if (isAuthPage && roleInfo) { // Only redirect if not an anonymous user on an auth page
             if (roleInfo.startsWith(ROLES.TEACHER)) {
               router.push('/teacher/dashboard');
@@ -131,7 +131,7 @@ export const FirebaseProvider: React.FC<FirebaseProviderProps> = ({
     
     // If on a protected route and there's no real user (not anonymous), redirect to login
     if (isProtectedRoute && (!userAuthState.user || userAuthState.user.isAnonymous)) {
-        router.push('/');
+        router.push('/login');
     }
 
   }, [pathname, userAuthState.isUserLoading, userAuthState.user, router]);

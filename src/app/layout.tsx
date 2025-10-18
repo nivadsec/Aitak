@@ -22,19 +22,10 @@ export default function RootLayout({
         <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;500;700&display=swap" rel="stylesheet" />
         <link href="https://cdn.font-tour.com/api/font/YekanBakh-VF.css" rel="stylesheet" />
       </head>
-      <body className="font-body antialiased flex-1 flex flex-col">
+      <body className="font-body antialiased flex-1 flex flex-col bg-background">
         <FirebaseClientProvider>
-          <main className="flex-1 flex flex-col">{children}</main>
+          {children}
           <Toaster />
-          <footer className="bg-muted/50 border-t">
-            <div className="container mx-auto py-6 px-4 md:px-6">
-              <div className="flex flex-col md:flex-row items-center justify-between gap-4">
-                  <p className="text-sm text-muted-foreground text-center md:text-left">
-                      © 1404 آی‌تاب. تمام حقوق محفوظ است. | طراحی و توسعه توسط <span className="font-semibold text-foreground">حسین طاهری</span>
-                  </p>
-              </div>
-            </div>
-          </footer>
         </FirebaseClientProvider>
       </body>
     </html>
