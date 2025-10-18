@@ -153,7 +153,7 @@ export const FirebaseProvider: React.FC<FirebaseProviderProps> = ({
     );
     return () => unsubscribe(); // Cleanup
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [auth, firestore, pathname, router]);
+  }, [auth, firestore]);
 
   // Effect to handle redirection for protected routes
   useEffect(() => {
