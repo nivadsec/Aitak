@@ -10,7 +10,7 @@ import { useRouter, usePathname } from 'next/navigation';
 import { FirebaseErrorListener } from '@/components/FirebaseErrorListener';
 import { ROLES } from '@/lib/roles';
 import { setDocumentNonBlocking } from './non-blocking-updates';
-import type { LoginHistory, Teacher } from '@/lib/types';
+import type { LoginHistory } from '@/lib/types';
 import { serverTimestamp } from 'firebase/firestore';
 import { initiateAnonymousSignIn } from './non-blocking-login';
 import { createAuthUser } from '@/app/actions/auth';
@@ -111,49 +111,6 @@ export const FirebaseProvider: React.FC<FirebaseProviderProps> = ({
       setUserAuthState({ user: null, isUserLoading: false, userError: new Error("Auth or Firestore service not provided."), role: null });
       return;
     }
-
-    const ensureAdminExists = async () => {
-        // This is a temporary solution for the demo to ensure the admin user exists.
-        // In a real application, you'd have a proper admin creation flow.
-        const adminEmail = 'admin@example.com';
-        const adminPassword = 'password'; // Use a strong password in production!
-        const teacherId = '05OiQevVDkNy9MmhveRs9h2w81y2';
-
-        try {
-            // Check if teacher document exists in Firestore.
-            const teacherRef = doc(firestore, 'teachers', teacherId);
-            const teacherSnap = await getDoc(teacherRef);
-
-            if (!teacherSnap.exists()) {
-                console.log("Admin user does not exist, creating...");
-                const result = await createAuthUser(
-                    adminEmail,
-                    adminPassword,
-                    'ادمین',
-                    ROLES.TEACHER
-                );
-
-                if (result.success && result.uid === teacherId) {
-                     const teacherData: Teacher = {
-                        id: result.uid,
-                        firstName: 'ادمین',
-                        lastName: 'سیستم',
-                        email: adminEmail,
-                    };
-                    await setDoc(teacherRef, teacherData);
-                    console.log("Admin user created successfully.");
-                } else if (!result.error?.includes('email-already-exists')) {
-                   console.error("Failed to create admin user:", result.error);
-                }
-            }
-        } catch (error) {
-            // This might fail if the user is not authenticated with sufficient permissions,
-            // or if the rules prevent this check. We log it but don't block.
-            console.warn("Could not check/create admin user:", error);
-        }
-    };
-    
-    ensureAdminExists();
 
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
         if (firebaseUser) {
