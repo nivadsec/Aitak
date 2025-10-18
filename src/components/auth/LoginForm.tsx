@@ -3,8 +3,8 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import * as z from 'zod';
-import { Loader2, LogIn } from 'lucide-react';
-import React from 'react';
+import { Loader2, LogIn, Eye, EyeOff } from 'lucide-react';
+import React, { useState } from 'react';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -38,6 +38,8 @@ export function LoginForm({ role }: LoginFormProps) {
   const { toast } = useToast();
   const auth = useAuth();
   const [isResetOpen, setIsResetOpen] = React.useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -117,9 +119,20 @@ export function LoginForm({ role }: LoginFormProps) {
                         </DialogTrigger>
                     )}
                 </div>
-                <FormControl>
-                  <Input type="password" placeholder="••••••••" {...field} />
-                </FormControl>
+                <div className="relative">
+                    <FormControl>
+                      <Input type={showPassword ? 'text' : 'password'} placeholder="••••••••" {...field} />
+                    </FormControl>
+                    <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        className="absolute left-1 top-1/2 -translate-y-1/2 h-7 w-7 text-muted-foreground"
+                        onClick={() => setShowPassword(prev => !prev)}
+                    >
+                        {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                    </Button>
+                </div>
                 <FormMessage />
               </FormItem>
             )}

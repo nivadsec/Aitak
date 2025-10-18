@@ -3,8 +3,8 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import * as z from 'zod';
-import { Loader2, UserPlus } from 'lucide-react';
-import React from 'react';
+import { Loader2, UserPlus, Eye, EyeOff } from 'lucide-react';
+import React, { useState } from 'react';
 import Link from 'next/link';
 
 import { Button } from '@/components/ui/button';
@@ -21,9 +21,6 @@ import { useToast } from '@/hooks/use-toast';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 import { Alert, AlertDescription, AlertTitle } from '../ui/alert';
 import { createStudentAuth } from '@/app/actions/update-password';
-import { setDocumentNonBlocking } from '@/firebase';
-import { doc, serverTimestamp } from 'firebase/firestore';
-import { useFirebase } from '@/firebase';
 
 
 const formSchema = z.object({
@@ -41,13 +38,11 @@ const formSchema = z.object({
 
 type FormValues = z.infer<typeof formSchema>;
 
-const ADMIN_TEACHER_ID = "05OiQevVDkNy9MmhveRs9h2w81y2";
-
 export function SignUpForm() {
   const { toast } = useToast();
-  const { firestore } = useFirebase();
   const [isLoading, setIsLoading] = React.useState(false);
   const [isSuccess, setIsSuccess] = React.useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -60,65 +55,21 @@ export function SignUpForm() {
   });
 
   async function onSubmit(data: FormValues) {
-    if (!firestore) {
-        toast({
-            title: 'خطای سیستم',
-            description: 'سرویس‌های مورد نیاز بارگذاری نشده‌اند. لطفا دوباره تلاش کنید.',
-            variant: 'destructive',
-        });
-        return;
-    }
     setIsLoading(true);
 
     try {
-        const teacherId = ADMIN_TEACHER_ID;
-        
-        // Step 1: Create Auth user and Firestore profile via Server Action
         const authResult = await createStudentAuth(
             data.email,
             data.password,
             `${data.firstName} ${data.lastName}`,
-            teacherId
+            data.gradeLevel,
+            data.major,
         );
 
         if (!authResult.success || !authResult.uid) {
             throw new Error(authResult.error || 'خطا در ایجاد حساب کاربری');
         }
-
-        const studentUid = authResult.uid;
         
-        // Step 2: Create the student document in Firestore
-        const studentRef = doc(firestore, 'teachers', teacherId, 'students', studentUid);
-        const studentData = {
-            id: studentUid,
-            teacherId: teacherId,
-            firstName: data.firstName,
-            lastName: data.lastName,
-            email: data.email,
-            gradeLevel: data.gradeLevel,
-            major: data.major,
-            isActive: true,
-            assistantEnabled: true,
-            canViewDailyAnalysis: true,
-            canViewStats: true,
-            canViewSchedule: true,
-            canSubmitDailyReport: true,
-            canViewQuestionnaires: true,
-            canViewTests: true,
-            canSubmitWeeklyReport: true,
-            canSubmitExamAnalysis: true,
-            canSubmitFocusLadder: true,
-            canSubmitTopicInvestment: true,
-            canViewStrategicPlans: true,
-            canViewConsultingContent: true,
-            canSubmitOverallExamAnalysis: true,
-            canSubmitDetailedExamChecklist: true,
-        };
-
-        // We use setDocumentNonBlocking because the security rules will handle validation.
-        // The user doesn't need to wait for this to finish.
-        setDocumentNonBlocking(studentRef, studentData, { merge: true });
-
         toast({
             title: 'ثبت‌نام موفق',
             description: 'حساب کاربری شما ایجاد شد. لطفاً از صفحه ورود وارد شوید.',
@@ -209,9 +160,20 @@ export function SignUpForm() {
           render={({ field }) => (
             <FormItem>
               <FormLabel>رمز عبور</FormLabel>
-              <FormControl>
-                <Input type="password" {...field} />
-              </FormControl>
+              <div className="relative">
+                <FormControl>
+                    <Input type={showPassword ? 'text' : 'password'} {...field} />
+                </FormControl>
+                <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    className="absolute left-1 top-1/2 -translate-y-1/2 h-7 w-7 text-muted-foreground"
+                    onClick={() => setShowPassword(prev => !prev)}
+                >
+                    {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                </Button>
+              </div>
               <FormMessage />
             </FormItem>
           )}
