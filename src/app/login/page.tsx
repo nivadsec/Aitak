@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { UserPlus, ShieldCheck } from 'lucide-react';
+import { UserPlus, ShieldCheck, Home } from 'lucide-react';
 import React from 'react';
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -46,6 +46,12 @@ export default function LoginPage() {
                   ورود معلمان
                 </Link>
               </Button>
+            </div>
+             <div className="mt-6 text-center text-sm">
+                <Link href="/" className="font-semibold text-primary hover:underline flex items-center justify-center gap-1">
+                    <Home className="h-4 w-4" />
+                    بازگشت به صفحه اصلی
+                </Link>
             </div>
           </CardContent>
         </Card>
