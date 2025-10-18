@@ -1,3 +1,4 @@
+
 'use client'
 import { MotivationTip } from '@/components/student/MotivationTip';
 import PersonalStats from '@/components/student/PersonalStats';
@@ -5,10 +6,10 @@ import { StudentRecommendationCard } from '@/components/student/StudentRecommend
 import { Button } from '@/components/ui/button';
 import { useCollection, useFirebase, useMemoFirebase, FirestorePermissionError, errorEmitter, useDoc } from '@/firebase';
 import { downloadJson } from '@/lib/utils';
-import { collection, doc, getDocs, query, orderBy, limit, getDoc, where } from 'firebase/firestore';
+import { collection, doc, getDocs, query, orderBy, limit, where } from 'firebase/firestore';
 import { Download, ClipboardEdit, BrainCircuit, ClipboardPen, BookCopy, BarChart3, HelpCircle, FileText, Map, Calendar, BookOpen, ClipboardCheck, ClipboardList, LineChart } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import type { Student, StudentRecommendation, DailyReport } from '@/lib/types';
+import type { Student, DailyReport } from '@/lib/types';
 import React, { useMemo } from 'react';
 import Link from 'next/link';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
@@ -191,7 +192,7 @@ export default function StudentDashboardPage() {
   }, [firestore, user, teacherId]);
 
   const { data: reports, isLoading: isReportLoading } = useCollection<DailyReport>(reportsQuery);
-  const { data: recommendations, isLoading: isRecommendationLoading } = useCollection<StudentRecommendation>(recommendationQuery);
+  const { data: recommendations, isLoading: isRecommendationLoading } = useCollection<any>(recommendationQuery);
   
   const dailyReportsForGenkit = useMemo(() => getDailyReportsForGenkit(reports?.slice(0, 14) || []), [reports]);
   const latestReport = reports?.[0];
@@ -213,24 +214,7 @@ export default function StudentDashboardPage() {
     });
 
     const studentDocRef = doc(firestore, `teachers/${teacherId}/students`, user.uid);
-    const studentDocSnap = await getDoc(studentDocRef).catch(serverError => {
-        const permissionError = new FirestorePermissionError({
-            path: studentDocRef.path,
-            operation: 'get'
-        });
-        errorEmitter.emit('permission-error', permissionError);
-        throw permissionError; // Stop further execution
-    });
-    
-    if (!studentDocSnap.exists()) {
-        toast({
-            title: "خطا",
-            description: "اطلاعات دانش‌آموز یافت نشد.",
-            variant: "destructive",
-        });
-        return;
-    }
-    const fullStudentData = studentDocSnap.data();
+    const fullStudentData = student; // Already fetched with useDoc
 
     const exportData: any = {
       ...fullStudentData,
