@@ -15,42 +15,19 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { SidebarTrigger } from '@/components/ui/sidebar';
-import { useFirebase, initiateSignOut, useAuth, setDocumentNonBlocking } from '@/firebase';
-import { collection, doc, serverTimestamp } from 'firebase/firestore';
-import type { LoginHistory } from '@/lib/types';
-import { ROLES } from '@/lib/roles';
+import { useFirebase, initiateSignOut, useAuth } from '@/firebase';
 
 type AppHeaderProps = {
   role: 'student' | 'teacher';
 };
 
 export function AppHeader({ role }: AppHeaderProps) {
-  const { user, firestore } = useFirebase();
+  const { user } = useFirebase();
   const auth = useAuth();
   const settingsPath = role === 'teacher' ? '/teacher/settings' : '/student/settings';
 
 
   const handleSignOut = () => {
-    if (auth && user && role === ROLES.STUDENT) {
-      // Log the logout event for the student before signing out
-      const roleInfo = user.photoURL || '';
-      const teacherId = roleInfo.split(':')[1];
-      if (teacherId) {
-        const historyCol = collection(firestore, 'teachers', teacherId, 'loginHistory');
-        const newHistoryRef = doc(historyCol);
-        const historyData: Omit<LoginHistory, 'id'> = {
-            studentId: user.uid,
-            studentName: user.displayName || 'نامشخص',
-            email: user.email || 'نامشخص',
-            timestamp: serverTimestamp(),
-            type: 'logout',
-            status: 'success',
-        };
-        // This is a fire-and-forget operation, but we still add it
-        setDocumentNonBlocking(newHistoryRef, { ...historyData, id: newHistoryRef.id }, {});
-      }
-    }
-    // Proceed with sign out regardless of logging result
     if (auth) {
         initiateSignOut(auth);
     }

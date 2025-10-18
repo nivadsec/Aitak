@@ -29,7 +29,8 @@ if (!admin.apps.length) {
 }
 
 /**
- * A Server Action to create a new Firebase Authentication user for a student.
+ * A Server Action to create a new Firebase Authentication user for a student
+ * and set their custom role claim.
  * @param email The student's email.
  * @param password The student's password.
  * @param displayName The student's full name.
@@ -50,8 +51,12 @@ export async function createStudentAuth(email: string, password: string, display
             password,
             displayName,
             emailVerified: true, // Automatically verify email for teacher-created accounts
-            photoURL: `${ROLES.STUDENT}:${teacherId}`
         });
+
+        // Set a custom claim for the student role
+        const studentRole = `${ROLES.STUDENT}:${teacherId}`;
+        await admin.auth().setCustomUserClaims(userRecord.uid, { role: studentRole });
+
         return { success: true, uid: userRecord.uid };
     } catch (error: any) {
         console.error('Error creating student auth user:', error);

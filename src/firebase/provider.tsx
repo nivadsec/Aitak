@@ -4,7 +4,7 @@
 import React, { DependencyList, createContext, useContext, ReactNode, useMemo, useState, useEffect } from 'react';
 import { FirebaseApp } from 'firebase/app';
 import { Firestore, collection, doc } from 'firebase/firestore';
-import { Auth, User, onAuthStateChanged } from 'firebase/auth';
+import { Auth, User, onAuthStateChanged, getIdTokenResult } from 'firebase/auth';
 import { useRouter, usePathname } from 'next/navigation';
 
 import { FirebaseErrorListener } from '@/components/FirebaseErrorListener';
@@ -64,6 +64,28 @@ export interface UserHookResult { // Renamed from UserAuthHookResult for consist
 // React Context
 export const FirebaseContext = createContext<FirebaseContextState | undefined>(undefined);
 
+
+// Helper function to log student login events
+const initiateLoginHistory = (firestore: Firestore, user: User, role: string) => {
+  if (role.startsWith(ROLES.STUDENT)) {
+      const teacherId = role.split(':')[1];
+      if (teacherId && teacherId !== 'unknown') {
+          const historyCol = collection(firestore, 'teachers', teacherId, 'loginHistory');
+          const newHistoryRef = doc(historyCol);
+          const historyData: Omit<LoginHistory, 'id'> = {
+              studentId: user.uid,
+              studentName: user.displayName || 'نامشخص',
+              email: user.email || 'نامشخص',
+              timestamp: serverTimestamp(),
+              type: 'login',
+              status: 'success',
+          };
+          setDocumentNonBlocking(newHistoryRef, { ...historyData, id: newHistoryRef.id }, {});
+      }
+  }
+};
+
+
 /**
  * FirebaseProvider manages and provides Firebase services and user authentication state.
  */
@@ -94,13 +116,17 @@ export const FirebaseProvider: React.FC<FirebaseProviderProps> = ({
       auth,
       async (firebaseUser) => { // Auth state determined
         if (firebaseUser) {
-           // If the user is anonymous, don't assign a role. The role will be set upon full login.
-          const roleInfo = firebaseUser.isAnonymous ? null : (firebaseUser.photoURL || `${ROLES.STUDENT}:unknown`);
+          const idTokenResult = await getIdTokenResult(firebaseUser);
+          const roleInfo = (idTokenResult.claims.role as string) || null;
           
           setUserAuthState({ user: firebaseUser, isUserLoading: false, userError: null, role: roleInfo });
 
+          if (roleInfo) {
+              initiateLoginHistory(firestore, firebaseUser, roleInfo);
+          }
+
           const isAuthPage = pathname === '/login' || pathname === '/signup' || pathname.startsWith('/teacher/login');
-          if (isAuthPage && roleInfo) { // Only redirect if not an anonymous user on an auth page
+          if (isAuthPage && roleInfo) {
             if (roleInfo.startsWith(ROLES.TEACHER)) {
               router.push('/teacher/dashboard');
             } else if (roleInfo.startsWith(ROLES.STUDENT)) {
@@ -108,9 +134,11 @@ export const FirebaseProvider: React.FC<FirebaseProviderProps> = ({
             }
           }
         } else {
-          // If no user, sign in anonymously to allow access to public data like announcements
-          initiateAnonymousSignIn(auth);
-          // State will be updated in the next onAuthStateChanged cycle
+          // If no user, sign in anonymously to allow access to public data
+           if (!userAuthState.user) { // Only sign in anon if there wasn't a user before
+             initiateAnonymousSignIn(auth);
+           }
+           setUserAuthState({ user: null, isUserLoading: false, userError: null, role: null });
         }
       },
       (error) => { // Auth listener error
@@ -129,12 +157,12 @@ export const FirebaseProvider: React.FC<FirebaseProviderProps> = ({
 
     const isProtectedRoute = (pathname.startsWith('/teacher/') && pathname !== '/teacher/login') || pathname.startsWith('/student/');
     
-    // If on a protected route and there's no real user (not anonymous), redirect to login
-    if (isProtectedRoute && (!userAuthState.user || userAuthState.user.isAnonymous)) {
+    // If on a protected route and there's no real user (no role), redirect to login
+    if (isProtectedRoute && !userAuthState.role) {
         router.push('/login');
     }
 
-  }, [pathname, userAuthState.isUserLoading, userAuthState.user, router]);
+  }, [pathname, userAuthState.isUserLoading, userAuthState.role, router]);
 
 
   // Memoize the context value
