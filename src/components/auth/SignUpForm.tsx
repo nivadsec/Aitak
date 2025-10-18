@@ -38,10 +38,11 @@ const formSchema = z.object({
   major: z.enum(['انسانی', 'تجربی', 'ریاضی'], {
     required_error: 'انتخاب رشته تحصیلی الزامی است.',
   }),
-  teacherCode: z.string().min(1, "کد معلم الزامی است."),
 });
 
 type FormValues = z.infer<typeof formSchema>;
+
+const STATIC_TEACHER_ID = '05OiQevVDkNy9MmhveRs9h2w81y2';
 
 export function SignUpForm() {
   const { toast } = useToast();
@@ -57,7 +58,6 @@ export function SignUpForm() {
       lastName: '',
       email: '',
       password: '',
-      teacherCode: '',
     },
   });
 
@@ -69,27 +69,25 @@ export function SignUpForm() {
             data.email,
             data.password,
             `${data.firstName} ${data.lastName}`,
-            data.teacherCode,
+            STATIC_TEACHER_ID,
         );
 
         if (!authResult.success || !authResult.uid) {
             throw new Error(authResult.error || 'خطا در ایجاد حساب کاربری');
         }
         
-        // After successful auth creation, create the student document in Firestore
         const studentUid = authResult.uid;
-        const studentRef = doc(firestore, 'teachers', data.teacherCode, 'students', studentUid);
+        const studentRef = doc(firestore, 'teachers', STATIC_TEACHER_ID, 'students', studentUid);
 
         const studentData: Student = {
             id: studentUid,
-            teacherId: data.teacherCode,
+            teacherId: STATIC_TEACHER_ID,
             firstName: data.firstName,
             lastName: data.lastName,
             email: data.email,
             gradeLevel: data.gradeLevel,
             major: data.major,
-            isActive: true, // Active by default
-            // Enable all features by default for new students
+            isActive: true,
             assistantEnabled: true,
             canViewDailyAnalysis: true,
             canViewStats: true,
@@ -263,19 +261,6 @@ export function SignUpForm() {
             )}
           />
         </div>
-         <FormField
-            control={form.control}
-            name="teacherCode"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>کد معلم</FormLabel>
-                <FormControl>
-                  <Input placeholder="کد معلم خود را وارد کنید" {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
         
         <div className="flex justify-end pt-4">
           <Button type="submit" disabled={isLoading} size="lg">
