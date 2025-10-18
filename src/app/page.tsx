@@ -53,8 +53,8 @@ export default function LandingPage() {
             
             <footer className="border-t">
                 <div className="container mx-auto py-6 px-4 md:px-6">
-                <div className="flex flex-col md:flex-row items-center justify-between gap-4">
-                    <p className="text-sm text-muted-foreground text-center md:text-left">
+                <div className="flex items-center justify-center">
+                    <p className="text-sm text-muted-foreground text-center">
                         © 1404 آی‌تاک. تمام حقوق محفوظ است. | طراحی و توسعه توسط <span className="font-semibold text-foreground">حسین طاهری</span>
                     </p>
                 </div>
