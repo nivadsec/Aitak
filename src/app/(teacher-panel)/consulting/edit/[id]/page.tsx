@@ -7,7 +7,7 @@ import { notFound, useRouter } from 'next/navigation';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { BookOpen } from 'lucide-react';
-import { ContentForm } from '../../ContentForm';
+import { ContentForm } from '@/app/(teacher-panel)/consulting/ContentForm';
 
 
 export default function EditContentPage({ params }: { params: { id: string } }) {

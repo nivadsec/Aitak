@@ -1,7 +1,7 @@
 'use client';
 
 import { useRouter } from "next/navigation";
-import { ScheduleForm } from "../ScheduleForm";
+import { ScheduleForm } from "@/app/(teacher-panel)/schedule/ScheduleForm";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Calendar } from "lucide-react";
 

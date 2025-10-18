@@ -3,7 +3,7 @@
 import { useRouter } from "next/navigation";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { BookOpen } from "lucide-react";
-import { ContentForm } from "../ContentForm";
+import { ContentForm } from "@/app/(teacher-panel)/consulting/ContentForm";
 
 
 export default function NewContentPage() {

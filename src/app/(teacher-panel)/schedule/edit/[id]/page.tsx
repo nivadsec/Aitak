@@ -5,7 +5,7 @@ import { doc } from 'firebase/firestore';
 import type { ScheduleItem } from '@/lib/types';
 import { notFound, useRouter } from 'next/navigation';
 import { Skeleton } from '@/components/ui/skeleton';
-import { ScheduleForm } from '../../ScheduleForm';
+import { ScheduleForm } from '@/app/(teacher-panel)/schedule/ScheduleForm';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Calendar } from 'lucide-react';
 
