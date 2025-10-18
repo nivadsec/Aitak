@@ -6,6 +6,7 @@ import * as z from 'zod';
 import { Loader2, UserPlus, Eye, EyeOff } from 'lucide-react';
 import React, { useState } from 'react';
 import Link from 'next/link';
+import { doc } from 'firebase/firestore';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -20,7 +21,10 @@ import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 import { Alert, AlertDescription, AlertTitle } from '../ui/alert';
-import { createStudentAuth } from '@/app/actions/update-password';
+import { createStudentAuth } from '@/app/actions/auth';
+import { useFirebase } from '@/firebase';
+import { setDocumentNonBlocking } from '@/firebase/non-blocking-updates';
+import type { Student } from '@/lib/types';
 
 
 const formSchema = z.object({
@@ -41,6 +45,7 @@ type FormValues = z.infer<typeof formSchema>;
 
 export function SignUpForm() {
   const { toast } = useToast();
+  const { firestore } = useFirebase();
   const [isLoading, setIsLoading] = React.useState(false);
   const [isSuccess, setIsSuccess] = React.useState(false);
   const [showPassword, setShowPassword] = useState(false);
@@ -70,6 +75,39 @@ export function SignUpForm() {
         if (!authResult.success || !authResult.uid) {
             throw new Error(authResult.error || 'خطا در ایجاد حساب کاربری');
         }
+        
+        // After successful auth creation, create the student document in Firestore
+        const studentUid = authResult.uid;
+        const studentRef = doc(firestore, 'teachers', data.teacherCode, 'students', studentUid);
+
+        const studentData: Student = {
+            id: studentUid,
+            teacherId: data.teacherCode,
+            firstName: data.firstName,
+            lastName: data.lastName,
+            email: data.email,
+            gradeLevel: data.gradeLevel,
+            major: data.major,
+            isActive: true, // Active by default
+            // Enable all features by default for new students
+            assistantEnabled: true,
+            canViewDailyAnalysis: true,
+            canViewStats: true,
+            canViewSchedule: true,
+            canSubmitDailyReport: true,
+            canViewQuestionnaires: true,
+            canViewTests: true,
+            canSubmitWeeklyReport: true,
+            canSubmitExamAnalysis: true,
+            canSubmitFocusLadder: true,
+            canSubmitTopicInvestment: true,
+            canViewStrategicPlans: true,
+            canViewConsultingContent: true,
+            canSubmitOverallExamAnalysis: true,
+            canSubmitDetailedExamChecklist: true,
+        };
+
+        setDocumentNonBlocking(studentRef, studentData, {});
         
         toast({
             title: 'ثبت‌نام موفق',
