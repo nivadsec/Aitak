@@ -3,7 +3,7 @@
 
 import React, { DependencyList, createContext, useContext, ReactNode, useMemo, useState, useEffect } from 'react';
 import { FirebaseApp } from 'firebase/app';
-import { Firestore, collection, doc, getDoc, setDoc } from 'firebase/firestore';
+import { Firestore, collection, doc } from 'firebase/firestore';
 import { Auth, User, onAuthStateChanged, getIdTokenResult } from 'firebase/auth';
 import { useRouter, usePathname } from 'next/navigation';
 
@@ -12,8 +12,6 @@ import { ROLES } from '@/lib/roles';
 import { setDocumentNonBlocking } from './non-blocking-updates';
 import type { LoginHistory } from '@/lib/types';
 import { serverTimestamp } from 'firebase/firestore';
-import { initiateAnonymousSignIn } from './non-blocking-login';
-import { createAuthUser } from '@/app/actions/auth';
 
 interface FirebaseProviderProps {
   children: ReactNode;
@@ -116,26 +114,12 @@ export const FirebaseProvider: React.FC<FirebaseProviderProps> = ({
         if (firebaseUser) {
             const idTokenResult = await getIdTokenResult(firebaseUser);
             const roleInfo = (idTokenResult.claims.role as string) || null;
-            
             setUserAuthState({ user: firebaseUser, isUserLoading: false, userError: null, role: roleInfo });
-
             if (roleInfo) {
-                initiateLoginHistory(firestore, firebaseUser, roleInfo);
-                const isAuthPage = ['/login', '/signup', '/teacher/login'].includes(pathname);
-                if (isAuthPage) {
-                    if (roleInfo === ROLES.TEACHER) {
-                        router.push('/teacher/dashboard');
-                    } else if (roleInfo.startsWith(ROLES.STUDENT)) {
-                        router.push('/student/dashboard');
-                    }
-                }
+              initiateLoginHistory(firestore, firebaseUser, roleInfo);
             }
         } else {
             setUserAuthState({ user: null, isUserLoading: false, userError: null, role: null });
-            const isProtectedRoute = pathname.startsWith('/teacher/') || pathname.startsWith('/student/');
-            if (isProtectedRoute) {
-                router.push('/login');
-            }
         }
     }, (error) => {
         console.error("FirebaseProvider: onAuthStateChanged error:", error);
@@ -143,7 +127,33 @@ export const FirebaseProvider: React.FC<FirebaseProviderProps> = ({
     });
 
     return () => unsubscribe();
-  }, [auth, firestore, pathname, router]);
+  }, [auth, firestore]);
+  
+  const { user, isUserLoading, role } = userAuthState;
+  
+  useEffect(() => {
+    if (isUserLoading) {
+      return; // Wait until auth state is determined
+    }
+
+    const isAuthPage = pathname.startsWith('/login') || pathname.startsWith('/signup') || pathname.startsWith('/teacher/login');
+    const isStudentPage = pathname.startsWith('/student');
+    const isTeacherPage = pathname.startsWith('/teacher');
+
+    if (user && role) {
+      // User is logged in
+      if (role === ROLES.TEACHER && isAuthPage) {
+        router.push('/teacher/dashboard');
+      } else if (role.startsWith(ROLES.STUDENT) && isAuthPage) {
+        router.push('/student/dashboard');
+      }
+    } else {
+      // User is not logged in
+      if (isStudentPage || isTeacherPage) {
+        router.push('/login');
+      }
+    }
+  }, [user, isUserLoading, role, pathname, router]);
 
   const contextValue = useMemo((): FirebaseContextState => {
     const servicesAvailable = !!(firebaseApp && firestore && auth);
