@@ -63,7 +63,7 @@ export function LoginForm({ role }: LoginFormProps) {
     try {
       await initiateEmailSignIn(auth, data.email, data.password);
       // On successful login, the onAuthStateChanged listener in FirebaseProvider
-      // will handle user state updates and redirects based on the role stored in auth.
+      // will handle user state updates and redirects.
     } catch (error: any) {
       console.error('Login Error:', error);
       let description = 'مشکلی در هنگام ورود پیش آمد. لطفاً دوباره تلاش کنید.';
@@ -82,6 +82,8 @@ export function LoginForm({ role }: LoginFormProps) {
         variant: 'destructive',
         className: 'font-body',
       });
+       // Reload to clear any anonymous user state
+       window.location.reload();
     }
   }
 
